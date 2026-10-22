@@ -250,6 +250,40 @@ class TestPublishWindowsApp(unittest.TestCase):
         self.assertFalse((self.web_root / "aimon").exists())
         self.assertFalse((self.web_root / "version.json").exists())
 
+    def test_robohero_installer_metadata(self):
+        for slug, pkg_name, rel_path in [
+            (
+                "robohero-teleop",
+                "robohero_teleop-setup.exe",
+                "robohero/app/teleop/build/windows/robohero_teleop-setup-2.1.23.exe",
+            ),
+            (
+                "robohero-motion",
+                "robohero_motion-setup.exe",
+                "robohero/app/motion/build/windows/robohero_motion-setup-2.1.23.exe",
+            ),
+        ]:
+            src_exe = self._create_mock_exe(
+                rel_path,
+                slug=slug,
+                version_str="2.1.23",
+                file_version=(2, 1, 23, 0),
+            )
+            chosen = find_candidate_package(slug, workspace_root=self.ws_root)
+            self.assertIsNotNone(chosen)
+            self.assertEqual(chosen.resolve(), src_exe.resolve())
+
+            manifest = publish_app(
+                slug=slug,
+                package_path=src_exe,
+                web_root=self.web_root,
+                workspace_root=self.ws_root,
+            )
+            self.assertEqual(manifest["installType"], "installer")
+            self.assertEqual(manifest["installerArgs"], "/S")
+            self.assertEqual(manifest["packageFilename"], pkg_name)
+            self.assertTrue((self.web_root / slug / pkg_name).is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,7 +22,7 @@ from gen_version_json import compute_sha256, find_aapt2, generate_manifest
 KNOWN_APPS: Dict[str, Dict[str, Any]] = {
     "aimon": {
         "title": "AIMon Companion",
-        "applicationId": "dev.saifmukhtar.antimatter",
+        "applicationId": "com.selfso.aimon",
         "apkFilename": "aimon-companion.apk",
         "tagline": "Ed25519-authenticated AI quota monitor, telemetry dashboard & mobile approval relay.",
         "description": "Mobile companion application for the AIMon daemon, providing real-time AI coding assistant quota tracking, usage insights, hardware bridge status, and cryptographic Ed25519 mobile approval workflows.",

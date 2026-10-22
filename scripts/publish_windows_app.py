@@ -63,10 +63,10 @@ KNOWN_WINDOWS_APPS: Dict[str, Dict[str, Any]] = {
     "robohero-teleop": {
         "title": "RoboHero Teleop Studio",
         "applicationId": "com.selfso.robohero.teleop",
-        "packageFilename": "robohero_teleop.exe",
+        "packageFilename": "robohero_teleop-setup.exe",
         "executableName": "robohero_teleop.exe",
-        "installType": "binary",
-        "installerArgs": "",
+        "installType": "installer",
+        "installerArgs": "/S",
         "arch": "x86_64",
         "minOs": "Windows 10 (64-bit)+",
         "tagline": "Real-time AI pose-tracking teleoperation & 3D URDF visualization studio for RoboHero.",
@@ -74,6 +74,7 @@ KNOWN_WINDOWS_APPS: Dict[str, Dict[str, Any]] = {
         "category": "Robotics & Control",
         "projectUrl": "/projects/",
         "defaultPackageCandidates": [
+            "robohero/app/teleop/build/windows/robohero_teleop-setup-*.exe",
             "robohero/app/teleop/build/windows-msvc/Release/robohero_teleop.exe",
             "robohero/app/teleop/build/windows/robohero_teleop.exe",
         ],
@@ -81,10 +82,10 @@ KNOWN_WINDOWS_APPS: Dict[str, Dict[str, Any]] = {
     "robohero-motion": {
         "title": "RoboHero Motion Studio",
         "applicationId": "com.selfso.robohero.motion",
-        "packageFilename": "robohero_motion.exe",
+        "packageFilename": "robohero_motion-setup.exe",
         "executableName": "robohero_motion.exe",
-        "installType": "binary",
-        "installerArgs": "",
+        "installType": "installer",
+        "installerArgs": "/S",
         "arch": "x86_64",
         "minOs": "Windows 10 (64-bit)+",
         "tagline": "Keyframe motion timeline editor, parametric gait generator & 3D URDF previewer.",
@@ -92,6 +93,7 @@ KNOWN_WINDOWS_APPS: Dict[str, Dict[str, Any]] = {
         "category": "Robotics & Control",
         "projectUrl": "/projects/",
         "defaultPackageCandidates": [
+            "robohero/app/motion/build/windows/robohero_motion-setup-*.exe",
             "robohero/app/motion/build/windows-msvc/Release/robohero_motion.exe",
             "robohero/app/motion/build/windows/robohero_motion.exe",
         ],

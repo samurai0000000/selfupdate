@@ -164,7 +164,7 @@ class TestEndToEndManifest(unittest.TestCase):
             "aimon": {
                 "rel_path": "aimon/third_party/antimatter/android/app/build/outputs/apk/release/app-release.apk",
                 "content": b"AIMon Companion AI Quota Monitor Bytes v1.8.4",
-                "app_id": "dev.saifmukhtar.antimatter",
+                "app_id": "com.selfso.aimon",
                 "version_code": 10804,
                 "version_name": "1.8.4",
                 "min_sdk": 24,

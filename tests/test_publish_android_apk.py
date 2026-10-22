@@ -172,7 +172,7 @@ class TestPublishAndroidApk(unittest.TestCase):
             json.dumps(
                 {
                     "version": 3,
-                    "applicationId": "dev.saifmukhtar.antimatter",
+                    "applicationId": "com.selfso.aimon",
                     "elements": [{"versionCode": 7, "versionName": "2.0.5"}],
                 }
             )
@@ -193,7 +193,7 @@ class TestPublishAndroidApk(unittest.TestCase):
 
         self.assertEqual(len(catalog["apps"]), 2)
         self.assertIn("com.selfso.octi", catalog["apps"])
-        self.assertIn("dev.saifmukhtar.antimatter", catalog["apps"])
+        self.assertIn("com.selfso.aimon", catalog["apps"])
 
         # Check master index.html has both apps
         portal_content = (self.web_root / "index.html").read_text(encoding="utf-8")
@@ -226,7 +226,7 @@ class TestPublishAndroidApk(unittest.TestCase):
         self.assertEqual(updated_catalog["apps"]["com.selfso.octi"]["versionCode"], 20003)
         self.assertEqual(updated_catalog["apps"]["com.selfso.octi"]["versionName"], "2.0.3")
         self.assertEqual(
-            updated_catalog["apps"]["dev.saifmukhtar.antimatter"]["versionCode"], 7
+            updated_catalog["apps"]["com.selfso.aimon"]["versionCode"], 7
         )
 
     def test_missing_source_apk_error(self):
