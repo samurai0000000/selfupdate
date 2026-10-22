@@ -126,7 +126,7 @@ bool spawnDetachedProcess(const std::string& exePath, const std::vector<std::str
     ZeroMemory(&pi, sizeof(pi));
 
     BOOL ok = CreateProcessW(nullptr, &cmdLine[0], nullptr, nullptr, FALSE,
-                             CREATE_NO_WINDOW | DETACHED_PROCESS, nullptr, nullptr, &si, &pi);
+                             CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
     if (ok) {
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
@@ -164,7 +164,7 @@ bool launchTrampoline(const std::string& scriptPath)
     ZeroMemory(&pi, sizeof(pi));
 
     BOOL ok = CreateProcessW(nullptr, &cmdLine[0], nullptr, nullptr, FALSE,
-                             CREATE_NO_WINDOW | DETACHED_PROCESS, nullptr, nullptr, &si, &pi);
+                             CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
     if (ok) {
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
@@ -201,7 +201,7 @@ std::string generateInstallerTrampolineScript(const std::string& stagedInstaller
 
 #ifdef _WIN32
     std::filesystem::path scriptPath = scriptDir / "selfupdate_trampoline.cmd";
-    std::ofstream out(scriptPath.string(), std::ios::out | std::ios::trunc);
+    std::ofstream out(scriptPath.string(), std::ios::out | std::ios::trunc | std::ios::binary);
     if (!out.is_open()) {
         return "";
     }
@@ -280,7 +280,7 @@ std::string generateBinaryCopyTrampolineScript(const std::string& stagedBinaryPa
 
 #ifdef _WIN32
     std::filesystem::path scriptPath = scriptDir / "selfupdate_copy_trampoline.cmd";
-    std::ofstream out(scriptPath.string(), std::ios::out | std::ios::trunc);
+    std::ofstream out(scriptPath.string(), std::ios::out | std::ios::trunc | std::ios::binary);
     if (!out.is_open()) {
         return "";
     }
