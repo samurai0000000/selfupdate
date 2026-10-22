@@ -98,6 +98,24 @@ KNOWN_WINDOWS_APPS: Dict[str, Dict[str, Any]] = {
             "robohero/app/motion/build/windows/robohero_motion.exe",
         ],
     },
+    "vidaicut": {
+        "title": "VidAICut Studio",
+        "applicationId": "com.selfso.vidaicut",
+        "packageFilename": "vidaicut-setup.exe",
+        "executableName": "vidaicut.exe",
+        "installType": "installer",
+        "installerArgs": "/S",
+        "arch": "x86_64",
+        "minOs": "Windows 10 (64-bit)+",
+        "tagline": "AI-assisted video editing suite for automated scene segmentation, speed-ramping, pause excision & subtitle/marker generation.",
+        "description": "64-bit Windows Qt6 and FFmpeg desktop video editing studio powered by Google Gemini 3.8 Flash for automated scene classification, speed-ramping, idle pause removal, DaVinci Resolve marker export, and SubRip subtitle generation.",
+        "category": "AI Video Production",
+        "projectUrl": "/projects/",
+        "defaultPackageCandidates": [
+            "vidaicut/build/windows/vidaicut-setup-*.exe",
+            "vidaicut/build/windows/vidaicut.exe",
+        ],
+    },
 }
 
 
@@ -159,6 +177,8 @@ def detect_slug_from_cwd(workspace_root: Optional[Union[str, Path]] = None) -> O
         return "octi"
     elif "aimon" in cwd_str:
         return "aimon"
+    elif "vidaicut" in cwd_str:
+        return "vidaicut"
 
     for slug in KNOWN_WINDOWS_APPS.keys():
         if slug in cwd.parts:
@@ -231,7 +251,7 @@ def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
     apps = catalog.get("apps", {})
 
     # Display in preferred order
-    preferred_order = ["octi", "aimon", "robohero-teleop", "robohero-motion"]
+    preferred_order = ["octi", "aimon", "robohero-teleop", "robohero-motion", "vidaicut"]
     seen = set()
 
     for slug in preferred_order:
