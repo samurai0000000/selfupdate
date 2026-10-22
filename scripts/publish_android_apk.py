@@ -257,9 +257,7 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
         <ul class="nav-menu" id="navMenu">
           <li><a href="/" class="nav-link">Home</a></li>
           <li><a href="/news.html" class="nav-link">News</a></li>
-          <li><a href="/projects/" class="nav-link">Projects</a></li>
-          <li><a href="/software/android/" class="nav-link active">Android</a></li>
-          <li><a href="/software/windows/" class="nav-link">Windows</a></li>
+          <li><a href="/projects/" class="nav-link active">Projects</a></li>
           <li><a href="/info.html" class="nav-link">Info</a></li>
           <li><a href="/links.html" class="nav-link">Links</a></li>
           <li><a href="/contact.html" class="nav-link">Contact</a></li>
@@ -271,8 +269,11 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
   <main class="site-wrapper">
     <div class="container" style="padding-top: 3.5rem; padding-bottom: 4rem;">
       <div style="margin-bottom: 2.5rem;">
-        <span class="badge" style="margin-bottom: 0.75rem;">OTA Distribution Portal</span>
-        <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">Selfso Android Applications</h1>
+        <a href="/projects/" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none;">&larr; Back to Projects</a>
+        <div style="margin-top: 0.75rem;">
+          <span class="badge" style="margin-bottom: 0.75rem;">OTA Distribution Portal</span>
+          <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">Selfso Android Applications</h1>
+        </div>
         <p style="color: var(--text-secondary); max-width: 720px; font-size: 1.05rem; line-height: 1.6;">
           Independent, open-source Android applications and mobile companion tools engineered for robotics, artificial intelligence, abstract gaming, and systems telemetry. Distributed directly via cryptographic OTA updates.
         </p>
@@ -431,9 +432,7 @@ def render_app_html(
         <ul class="nav-menu" id="navMenu">
           <li><a href="/" class="nav-link">Home</a></li>
           <li><a href="/news.html" class="nav-link">News</a></li>
-          <li><a href="/projects/" class="nav-link">Projects</a></li>
-          <li><a href="/software/android/" class="nav-link active">Android</a></li>
-          <li><a href="/software/windows/" class="nav-link">Windows</a></li>
+          <li><a href="/projects/" class="nav-link active">Projects</a></li>
           <li><a href="/info.html" class="nav-link">Info</a></li>
           <li><a href="/links.html" class="nav-link">Links</a></li>
           <li><a href="/contact.html" class="nav-link">Contact</a></li>

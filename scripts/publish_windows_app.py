@@ -283,10 +283,9 @@ def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
         <ul class="nav-menu" id="navMenu">
           <li><a href="/" class="nav-link">Home</a></li>
           <li><a href="/news.html" class="nav-link">News</a></li>
-          <li><a href="/projects/" class="nav-link">Projects</a></li>
-          <li><a href="/software/android/" class="nav-link">Android</a></li>
-          <li><a href="/software/windows/" class="nav-link active">Windows</a></li>
+          <li><a href="/projects/" class="nav-link active">Projects</a></li>
           <li><a href="/info.html" class="nav-link">Info</a></li>
+          <li><a href="/links.html" class="nav-link">Links</a></li>
           <li><a href="/contact.html" class="nav-link">Contact</a></li>
         </ul>
       </nav>
@@ -296,8 +295,11 @@ def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
   <main class="site-wrapper">
     <div class="container" style="padding-top: 3.5rem; padding-bottom: 4rem;">
       <div style="margin-bottom: 2.5rem;">
-        <span class="badge" style="margin-bottom: 0.75rem;">Native Windows Desktop Portal</span>
-        <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">Selfso Windows Desktop Applications</h1>
+        <a href="/projects/" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none;">&larr; Back to Projects</a>
+        <div style="margin-top: 0.75rem;">
+          <span class="badge" style="margin-bottom: 0.75rem;">Native Windows Desktop Portal</span>
+          <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">Selfso Windows Desktop Applications</h1>
+        </div>
         <p style="color: var(--text-secondary); max-width: 760px; font-size: 1.05rem; line-height: 1.6;">
           Independent, native 64-bit Windows Qt6 desktop applications, robotics control studios, and local EDA/CAD hardware automation bridges. Distributed directly with zero-dependency C++17 cryptographic self-update support.
         </p>
@@ -461,10 +463,9 @@ def render_app_html(
         <ul class="nav-menu" id="navMenu">
           <li><a href="/" class="nav-link">Home</a></li>
           <li><a href="/news.html" class="nav-link">News</a></li>
-          <li><a href="/projects/" class="nav-link">Projects</a></li>
-          <li><a href="/software/android/" class="nav-link">Android</a></li>
-          <li><a href="/software/windows/" class="nav-link active">Windows</a></li>
+          <li><a href="/projects/" class="nav-link active">Projects</a></li>
           <li><a href="/info.html" class="nav-link">Info</a></li>
+          <li><a href="/links.html" class="nav-link">Links</a></li>
           <li><a href="/contact.html" class="nav-link">Contact</a></li>
         </ul>
       </nav>
