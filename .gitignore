@@ -1,0 +1,21 @@
+.cursor
+.agents
+.claude
+plan/
+build/
+__pycache__/
+*.pyc
+*.swp
+*~
+.DS_Store
+
+# Android / Gradle
+.gradle/
+.kotlin/
+local.properties
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/build/
+*.apk
+*.aar
