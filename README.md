@@ -1,6 +1,6 @@
 # selfupdate
 
-Selfso Android Over-The-Air (OTA) update library, static web distribution portal, and publishing automation tooling.
+Selfso Over-The-Air (OTA) and desktop self-update libraries, static web distribution portals, and automated publishing tooling for Android (`android/`) and Windows C++ / Qt6 (`windows/`).
 
 Copyright (C) 2026, Charles Chiou
 
@@ -8,133 +8,95 @@ Copyright (C) 2026, Charles Chiou
 
 ## 1. Overview & Architecture
 
-`selfupdate` is a first-party, unversioned shared Android library and distribution toolkit designed for personal Android applications (`aimon`, `robohero`, `octi`, `nigosh`). It powers off-market direct distribution via static HTTP/HTTPS hosting:
+`selfupdate` is a first-party, zero-dependency self-update engine and distribution toolkit designed for personal applications across Android and Windows (`aimon`, `robohero`, `octi`, `nigosh`):
 
-- **Static Distribution Portal**: Hosted under `https://www.selfso.com/software/android/`, providing static HTML catalog and app detail pages, downloadable APK binaries, and cryptographic `version.json` manifests.
-- **Android Runtime Library (`com.selfso.selfupdate`)**: Lightweight in-app update checker and installer that polls `version.json`, verifies streaming SHA-256 digests, and initiates in-place package installations via Android's `PackageInstaller` Session API.
-- **Publishing Automation (`scripts/`)**: CLI tools to inspect built APK binaries (`aapt2` and AGP `output-metadata.json`), calculate SHA-256 digests, stage files to the web portal directory, update both master and single-app `version.json` manifests, and regenerate static HTML pages styled with `selfso.com`'s Zen / Editorial Paper design system.
-
-### Architectural Diagram
-
-```text
-  +-------------------------------------------------------+
-  |                   Build Machine                       |
-  |  [Compiled APK]                                       |
-  |         |                                             |
-  |         v                                             |
-  |  [scripts/publish_android_apk.py]                     |
-  |         |                                             |
-  |         +---> [~/work/www/selfso/html/software/android/]
-  |                   |-- index.html                      |
-  |                   |-- version.json (master catalog)   |
-  |                   \-- <slug>/                         |
-  |                         |-- index.html                |
-  |                         |-- version.json (single app) |
-  |                         \-- <slug>.apk                |
-  +-------------------------------------------------------+
-                            | (rsync / static web)
-                            v
-  +-------------------------------------------------------+
-  |       Web Portal: https://www.selfso.com/             |
-  +-------------------------------------------------------+
-                            | (HTTPS GET)
-                            v
-  +-------------------------------------------------------+
-  |                   Android Client                      |
-  |  [SelfUpdateChecker]  (polls version.json)            |
-  |         |                                             |
-  |         v (if versionCode > installed)                |
-  |  [ApkDownloader]      (SHA-256 streaming verify)     |
-  |         |                                             |
-  |         v                                             |
-  |  [ApkInstaller]       (PackageInstaller.Session)      |
-  |         |                                             |
-  |  [SelfUpdateBanner / SelfUpdateDialog] (Compose UI)   |
-  +-------------------------------------------------------+
-```
+- **Android OTA Library (`com.selfso.selfupdate`)**: In-app update engine (`android/`) using Android's `PackageInstaller` Session API and Jetpack Compose UI components, distributed via `https://www.selfso.com/software/android/`.
+- **Windows C++ / Qt6 Library (`namespace selfupdate`)**: Zero-dependency C++17 library (`windows/`) using native Win32 WinHTTP (POSIX socket fallback on Linux), RFC 6234 SHA-256 verification, detached PID-wait setup installer execution or atomic `.old` in-place binary copy, and an optional header-only Qt6 GUI thread-marshaling bridge (`QtSelfUpdateBridge.hxx`), distributed via `https://www.selfso.com/software/windows/`.
+- **Static Distribution Portals**: Pure static HTML distribution portals hosted on `selfso.com` providing browsable catalogs, app detail pages, downloadable binaries, and cryptographic `version.json` manifests.
+- **Automated Publishing Tooling (`scripts/`)**: CLI tools to inspect built APKs (`aapt2`) or Windows executables (PE header & `.rsrc` `RT_VERSION` parsing), stage binaries into static web directories, update per-app and master `version.json` manifests non-destructively, and generate static HTML pages.
 
 ---
 
-## 2. Manifest Specifications (`version.json`)
+## 2. Windows C++ / Qt6 Integration (`windows/`)
 
-The update system uses a dual-schema manifest design:
+### 2.1 Source-Level CMake Integration (`windows/selfupdate.cmake`)
 
-### 2.1 Master Multi-App Catalog (`https://www.selfso.com/software/android/version.json`)
+Consumer Windows C++ applications compile `selfupdate` directly from source without requiring prebuilt library binaries or third-party dependencies (`Qt6Network`, OpenSSL, and external JSON libraries are **not** required).
 
-```json
-{
-  "schemaVersion": 1,
-  "baseUrl": "https://www.selfso.com/software/android/",
-  "updatedAt": "2026-10-22T09:15:00Z",
-  "apps": {
-    "com.selfso.octi": {
-      "slug": "octi",
-      "title": "OCTI Strategy Game",
-      "applicationId": "com.selfso.octi",
-      "versionCode": 20002,
-      "versionName": "2.0.2",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "apkUrl": "https://www.selfso.com/software/android/octi/octi.apk",
-      "pageUrl": "https://www.selfso.com/software/android/octi/",
-      "sha256": "3a8b4c...",
-      "sizeBytes": 5412890,
-      "publishedAt": "2026-10-22T09:15:00Z",
-      "releaseNotes": "OCTI abstract strategy board game and minimax AI engine for Android."
+In the host application's `CMakeLists.txt`:
+
+```cmake
+# Include selfupdate CMake module from relative path
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../selfupdate/windows/selfupdate.cmake")
+
+# Attach selfupdate C++17 sources, include directories, and Win32 platform libraries
+selfupdate_target_sources(my_app_target)
+```
+
+`selfupdate.cmake` automatically configures:
+- Sources: `UpdateManifest.cxx`, `UpdateState.cxx`, `Sha256.cxx`, `HttpTransport.cxx`, `SelfUpdateChecker.cxx`, `PackageDownloader.cxx`, `UpdateInstaller.cxx`, `SelfUpdateController.cxx`.
+- Includes: `windows/include/` (`#include <selfupdate/SelfUpdateController.hxx>`).
+- Platform Libraries: links `winhttp`, `version`, `shell32`, `ole32`, `advapi32` on Windows, and `Threads::Threads` on POSIX.
+
+### 2.2 Host Application Lifecycle & Qt6 GUI Bridge
+
+`SelfUpdateController` runs update checks and downloads asynchronously on a worker thread. For Qt6 applications, `QtSelfUpdateBridge.hxx` safely marshals background `UpdateState` transitions to the Qt GUI event loop via `QMetaObject::invokeMethod(..., Qt::QueuedConnection)`:
+
+```cpp
+#include <selfupdate/SelfUpdateController.hxx>
+#include <selfupdate/QtSelfUpdateBridge.hxx>
+#include <QCoreApplication>
+#include <QMessageBox>
+
+// Initialize controller with app configuration
+selfupdate::CheckerConfig config;
+config.applicationId = "com.selfso.octi";
+config.slug = "octi";
+config.manifestUrl = "https://www.selfso.com/software/windows/";
+
+auto controller = std::make_shared<selfupdate::SelfUpdateController>(config);
+
+// Bind Qt GUI thread marshaling and quit callback
+selfupdate::bindQtController(controller, qApp, [](const selfupdate::UpdateState& state) {
+    if (state.phase == selfupdate::UpdatePhase::Available) {
+        // Prompt user on Qt GUI thread
+        auto reply = QMessageBox::question(
+            nullptr, "Update Available",
+            QString("A new version (%1) is available. Download and update now?")
+                .arg(QString::fromStdString(state.manifest.versionName)));
+        if (reply == QMessageBox::Yes) {
+            // Initiate streaming download and installation
+        }
+    } else if (state.phase == selfupdate::UpdatePhase::Downloading) {
+        // Update download progress dialog or status bar
+        int percent = state.percent();
+    } else if (state.phase == selfupdate::UpdatePhase::Relaunching) {
+        // Host app will quit as the update trampoline hands off execution
     }
-  }
-}
+});
+
+// Trigger startup update check (non-blocking)
+controller->checkForUpdates(/* isManualCheck */ false);
 ```
 
-### 2.2 Per-App Single Manifest (`https://www.selfso.com/software/android/<slug>/version.json`)
+### 2.3 Install Modes & File-Lock Safety
 
-The per-app manifest contains the single app's manifest object directly at the JSON root:
-
-```json
-{
-  "slug": "octi",
-  "title": "OCTI Strategy Game",
-  "applicationId": "com.selfso.octi",
-  "versionCode": 20002,
-  "versionName": "2.0.2",
-  "minSdk": 24,
-  "targetSdk": 35,
-  "apkUrl": "https://www.selfso.com/software/android/octi/octi.apk",
-  "pageUrl": "https://www.selfso.com/software/android/octi/",
-  "sha256": "3a8b4c...",
-  "sizeBytes": 5412890,
-  "publishedAt": "2026-10-22T09:15:00Z",
-  "releaseNotes": "OCTI abstract strategy board game and minimax AI engine for Android."
-}
-```
-
-### 2.3 Dual-Schema Resolution Logic
-
-When `com.selfso.selfupdate` checks an update endpoint:
-1. If the URL ends with `/`, it appends `version.json`.
-2. It fetches the JSON payload via standard `HttpsURLConnection`.
-3. If the payload contains an `"apps"` dictionary, it looks up the running app by `context.packageName` (and automatically falls back to `context.packageName.removeSuffix(".debug")`).
-4. If `"apps"` is not present, it parses the root object directly as a single-app manifest.
-5. If `apkUrl` is relative, it resolves it against `manifestUrl`.
-6. An update is offered only when `remote.versionCode > installedVersionCode`.
+Windows prohibits overwriting the binary file of an active process (`ERROR_SHARING_VIOLATION`). `UpdateInstaller` handles this transparently:
+1. **Setup Installers (`InstallMode::Installer`)**: Launches a detached PID-wait trampoline (`selfupdate_trampoline.cmd`) that waits for the host PID to exit, executes the setup executable with silent arguments (`/S` or `--silent`), and relaunches the application.
+2. **Binary Copy (`InstallMode::BinaryCopy`)**: Renames the running `<app>.exe` to `<app>.exe.old`, copies the verified new binary into `<app>.exe` (with automatic rollback on failure), launches the new binary, and invokes the host app's `quitCallback()`. Stale `.old` files are cleaned up on subsequent launches via `UpdateInstaller::cleanupStaleBackup()`.
 
 ---
 
-## 3. Consumer Android App Integration
+## 3. Android OTA Integration (`android/`)
 
-### 3.1 Mounting the Library Module
-
-In the host application's `settings.gradle.kts`:
+### 3.1 Gradle Module Inclusion (`settings.gradle.kts`)
 
 ```kotlin
-// Mount :selfupdate module from shared workspace or submodule
 include(":selfupdate")
-project(":selfupdate").projectDir = file("../../selfupdate/android") // or relative path
+project(":selfupdate").projectDir = file("../../selfupdate/android")
 ```
 
-### 3.2 Adding the Dependency
-
-In the host application's module `build.gradle.kts`:
+### 3.2 App Dependency (`app/build.gradle.kts`)
 
 ```kotlin
 dependencies {
@@ -142,18 +104,7 @@ dependencies {
 }
 ```
 
-### 3.3 Adding Required Permissions
-
-In `AndroidManifest.xml`:
-
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-```
-
-### 3.4 Jetpack Compose UI Integration
-
-In your main screen or top-level layout:
+### 3.3 Jetpack Compose UI Integration
 
 ```kotlin
 val context = LocalContext.current
@@ -164,15 +115,7 @@ LaunchedEffect(Unit) {
     controller.checkForUpdates()
 }
 
-// Option A: Non-intrusive top banner
 SelfUpdateBanner(
-    state = updateState,
-    onDownloadClick = { controller.downloadAndInstall() },
-    onDismiss = { controller.dismiss() }
-)
-
-// Option B: Detailed modal dialog
-SelfUpdateDialog(
     state = updateState,
     onDownloadClick = { controller.downloadAndInstall() },
     onDismiss = { controller.dismiss() }
@@ -181,32 +124,85 @@ SelfUpdateDialog(
 
 ---
 
-## 4. Publishing CLI Tools
+## 4. Manifest Specifications (`version.json`)
 
-### 4.1 Generating Manifest Metadata (`scripts/gen_version_json.py`)
+The update architecture uses dual-schema JSON manifests supporting both master catalogs and single-app manifests.
 
-Inspects an `.apk` file, parses badging metadata via `aapt2` or AGP `output-metadata.json`, computes the SHA-256 digest, and emits JSON:
+### 4.1 Windows Manifest Schema (`https://www.selfso.com/software/windows/version.json`)
 
-```bash
-python3 scripts/gen_version_json.py --apk path/to/app-release.apk --slug octi --title "OCTI Strategy Game"
+```json
+{
+  "schemaVersion": 1,
+  "baseUrl": "https://www.selfso.com/software/windows/",
+  "updatedAt": "2026-10-22T12:00:00Z",
+  "apps": {
+    "com.selfso.octi": {
+      "slug": "octi",
+      "title": "OCTI Desktop Player",
+      "applicationId": "com.selfso.octi",
+      "versionCode": 20003,
+      "versionName": "2.0.3",
+      "installType": "installer",
+      "installerArgs": "/S",
+      "executableName": "octi.exe",
+      "arch": "x86_64",
+      "minOs": "Windows 10 (64-bit)+",
+      "packageUrl": "https://www.selfso.com/software/windows/octi/octi-setup.exe",
+      "pageUrl": "https://www.selfso.com/software/windows/octi/",
+      "sha256": "ec9f1da66a3ca38145225b765381ddd17a4cc2ae50db736dc07c9d5d52101ac0",
+      "sizeBytes": 22458182,
+      "publishedAt": "2026-10-22T12:00:00Z",
+      "releaseNotes": "64-bit Windows Qt6 desktop client, minimax AI opponent & P2P voice lobby for OCTI."
+    }
+  }
+}
 ```
 
-### 4.2 Publishing APKs to Web Portal (`scripts/publish_android_apk.py`)
+---
 
-Publishes an APK into the local static web directory:
-- Copies the APK to `<web-root>/<slug>/<apkFilename>`.
-- Generates `<web-root>/<slug>/version.json`.
-- Updates the master multi-app catalog `<web-root>/version.json`.
-- Renders `<web-root>/<slug>/index.html` and `<web-root>/index.html` using `selfso.com`'s `/css/main.css` styling.
+## 5. Publishing CLI Tooling
 
-Publish a single app:
+### 5.1 Windows Application Publishing (`scripts/`)
+
+- **`scripts/gen_windows_version_json.py`**: Parses PE header and traverses `.rsrc` table down to `RT_VERSION` (type ID 16) to extract machine architecture, `VS_FIXEDFILEINFO`, and `StringFileInfo` keys while remaining immune to embedded `RT_RCDATA` payloads. Emits single-app manifest JSON.
+- **`scripts/publish_windows_app.py`**: Staged publisher for Windows applications. Non-destructively updates `~/work/www/selfso/html/software/windows/version.json`, stages packages, and renders static HTML portal pages.
 
 ```bash
-python3 scripts/publish_android_apk.py --slug octi --apk path/to/app-release.apk
+# Publish a single Windows application from its build output:
+python3 scripts/publish_windows_app.py --slug octi
+
+# Batch-publish all known Windows applications across the workspace:
+python3 scripts/publish_windows_app.py --publish-all
 ```
 
-Publish all known apps across personal projects:
+### 5.2 Android APK Publishing (`scripts/`)
+
+- **`scripts/gen_version_json.py`**: Inspects Android `.apk` files using `aapt2` or AGP `output-metadata.json`.
+- **`scripts/publish_android_apk.py`**: Stages APKs to `~/work/www/selfso/html/software/android/` and updates Android portal pages.
 
 ```bash
+# Publish a single Android application:
+python3 scripts/publish_android_apk.py --slug octi
+
+# Batch-publish all known Android applications:
 python3 scripts/publish_android_apk.py --publish-all
+```
+
+---
+
+## 6. Build & Test Commands (`Makefile`)
+
+```bash
+# Run all unit tests (Python unittests, Android tests, C++ CppUTest + RapidCheck suites, and MinGW cross-compile check)
+make test
+
+# Run C++ suites with AddressSanitizer and UndefinedBehaviorSanitizer enabled
+SANITIZE=1 make test
+
+# Batch-publish all Android and Windows software
+make publish-all
+
+# Or publish individual platforms
+make publish-android
+make publish-windows
 ```

@@ -1,0 +1,24 @@
+/*
+ * TestMain.cxx
+ *
+ * Copyright (C) 2026, Charles Chiou
+ */
+
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
+
+int main(int argc, char** argv)
+{
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+    return CommandLineTestRunner::RunAllTests(argc, argv);
+}
+
+/*
+ * Local variables:
+ * mode: C++
+ * c-file-style: "BSD"
+ * c-basic-offset: 4
+ * tab-width: 4
+ * indent-tabs-mode: nil
+ * End:
+ */

@@ -258,6 +258,8 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
           <li><a href="/" class="nav-link">Home</a></li>
           <li><a href="/news.html" class="nav-link">News</a></li>
           <li><a href="/projects/" class="nav-link">Projects</a></li>
+          <li><a href="/software/android/" class="nav-link active">Android</a></li>
+          <li><a href="/software/windows/" class="nav-link">Windows</a></li>
           <li><a href="/info.html" class="nav-link">Info</a></li>
           <li><a href="/links.html" class="nav-link">Links</a></li>
           <li><a href="/contact.html" class="nav-link">Contact</a></li>
@@ -274,6 +276,13 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
         <p style="color: var(--text-secondary); max-width: 720px; font-size: 1.05rem; line-height: 1.6;">
           Independent, open-source Android applications and mobile companion tools engineered for robotics, artificial intelligence, abstract gaming, and systems telemetry. Distributed directly via cryptographic OTA updates.
         </p>
+
+        <!-- Cross-link banner to Windows desktop portal -->
+        <div style="margin-top: 1.25rem; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.88rem;">
+          <span style="color: var(--accent); font-weight: 600;">Windows Portal:</span>
+          <span>Looking for native 64-bit Windows desktop apps?</span>
+          <a href="/software/windows/" style="color: var(--accent); text-decoration: underline; margin-left: 0.25rem;">Visit the Windows Software Portal &rarr;</a>
+        </div>
       </div>
 
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));">
@@ -331,6 +340,8 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
             <li><a href="/">Home</a></li>
             <li><a href="/news.html">News &amp; Timeline</a></li>
             <li><a href="/projects/">Projects</a></li>
+            <li><a href="/software/android/">Android Software</a></li>
+            <li><a href="/software/windows/">Windows Software</a></li>
           </ul>
         </div>
         <div class="footer-col">
@@ -421,6 +432,8 @@ def render_app_html(
           <li><a href="/" class="nav-link">Home</a></li>
           <li><a href="/news.html" class="nav-link">News</a></li>
           <li><a href="/projects/" class="nav-link">Projects</a></li>
+          <li><a href="/software/android/" class="nav-link active">Android</a></li>
+          <li><a href="/software/windows/" class="nav-link">Windows</a></li>
           <li><a href="/info.html" class="nav-link">Info</a></li>
           <li><a href="/links.html" class="nav-link">Links</a></li>
           <li><a href="/contact.html" class="nav-link">Contact</a></li>
@@ -520,6 +533,8 @@ def render_app_html(
             <li><a href="/">Home</a></li>
             <li><a href="/news.html">News &amp; Timeline</a></li>
             <li><a href="/projects/">Projects</a></li>
+            <li><a href="/software/android/">Android Software</a></li>
+            <li><a href="/software/windows/">Windows Software</a></li>
           </ul>
         </div>
         <div class="footer-col">
