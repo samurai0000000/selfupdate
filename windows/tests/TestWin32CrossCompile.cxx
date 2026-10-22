@@ -47,6 +47,24 @@ int main(int argc, char* argv[])
     std::cout << "Win32 cross-compile smoke test initialized: " << exePath
               << " cleanup=" << cleanup << " detectedApp=" << info.applicationId
               << std::endl;
+
+    if (argc > 1 && std::string(argv[1]) == "--live-check") {
+        selfupdate::CheckerConfig liveCfg;
+        liveCfg.applicationId = "com.selfso.octi";
+        liveCfg.installedVersionName = "1.0.0";
+        liveCfg.installedVersionCode = 10000;
+        liveCfg.manifestUrl = "https://www.selfso.com/software/windows/";
+        selfupdate::SelfUpdateChecker liveChecker(liveCfg);
+        selfupdate::UpdateState state = liveChecker.checkForUpdate(true);
+        if (state.phase != selfupdate::UpdatePhase::Available) {
+            std::cerr << "LIVE CHECK FAILED: phase=" << selfupdate::updatePhaseToString(state.phase)
+                      << " error=" << state.errorMessage << std::endl;
+            return 1;
+        }
+        std::cout << "LIVE CHECK OK: fetched com.selfso.octi versionName="
+                  << state.manifest.versionName << " versionCode=" << state.manifest.versionCode
+                  << " packageUrl=" << state.manifest.packageUrl << std::endl;
+    }
     return 0;
 }
 

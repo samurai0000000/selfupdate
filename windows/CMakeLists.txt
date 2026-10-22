@@ -33,6 +33,9 @@ if(WIN32)
         tests/TestWin32CrossCompile.cxx
     )
     selfupdate_target_sources(test_win32_cross_compile)
+    if(MINGW)
+        target_link_options(test_win32_cross_compile PRIVATE -static-libgcc -static-libstdc++ -static)
+    endif()
 endif()
 
 option(SELFUPDATE_BUILD_TESTS "Build CppUTest + RapidCheck test suites" ON)

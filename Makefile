@@ -59,6 +59,7 @@ test-windows-cpp:
 
 test-windows-mingw:
 	@if which x86_64-w64-mingw32-g++-posix >/dev/null 2>&1; then \
+		set -e; \
 		mkdir -p build/windows-mingw; \
 		$(CMAKE) -B build/windows-mingw -S windows -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++-posix; \
 		$(CMAKE) --build build/windows-mingw; \

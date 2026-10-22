@@ -26,6 +26,8 @@ public:
 
     static std::string hashBytes(const void* data, size_t len);
     static std::string hashString(const std::string& str);
+    static std::string hashHex(const std::string& str) { return hashString(str); }
+    static std::string hashHex(const void* data, size_t len) { return hashBytes(data, len); }
     static std::string hashFile(const std::string& path);
 
 private:

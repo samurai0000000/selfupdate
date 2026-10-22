@@ -64,7 +64,8 @@ public:
             connectTimeoutMs,
             readTimeoutMs,
             cancelFlag,
-            &response.errorMessage);
+            &response.errorMessage,
+            &response);
         return response;
     }
 
@@ -75,6 +76,21 @@ public:
                         const std::atomic<bool>* cancelFlag,
                         std::string* outError) override
     {
+        return downloadStream(url, onChunk, connectTimeoutMs, readTimeoutMs, cancelFlag, outError, nullptr);
+    }
+
+private:
+    bool downloadStream(const std::string& url,
+                        StreamChunkCallback onChunk,
+                        int connectTimeoutMs,
+                        int readTimeoutMs,
+                        const std::atomic<bool>* cancelFlag,
+                        std::string* outError,
+                        HttpResponse* outResponse)
+    {
+        if (outResponse) {
+            outResponse->statusCode = 0;
+        }
         std::wstring currentUrl = toWide(url);
         int maxRedirects = 5;
 
@@ -191,6 +207,9 @@ public:
                 &statusCode,
                 &headerSize,
                 WINHTTP_NO_HEADER_INDEX);
+            if (outResponse) {
+                outResponse->statusCode = static_cast<int>(statusCode);
+            }
 
             if (statusCode == 301 || statusCode == 302 || statusCode == 303 ||
                 statusCode == 307 || statusCode == 308) {
@@ -271,6 +290,8 @@ public:
             WinHttpCloseHandle(hConnect);
             if (!streamAborted) {
                 success = true;
+            } else if (outResponse) {
+                outResponse->statusCode = 0;
             }
             break;
         }
