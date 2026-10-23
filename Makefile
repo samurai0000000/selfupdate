@@ -17,7 +17,7 @@ ifeq ($(SANITIZE),1)
 CPP_BUILD_DIR := build/windows-cpp-asan
 endif
 
-.PHONY: all test test-python test-android test-windows-cpp test-windows-mingw publish-all publish-android publish-windows clean distclean
+.PHONY: all test test-python test-android test-windows-cpp test-windows-mingw publish-all publish-android publish-windows publish-ubuntu clean distclean
 
 all:
 	@if [ -f android/build.gradle.kts ]; then \
@@ -67,13 +67,16 @@ test-windows-mingw:
 		x86_64-w64-mingw32-objdump -p build/windows-mingw/test_win32_cross_compile.exe | grep -i "DLL Name"; \
 	fi
 
-publish-all: publish-android publish-windows
+publish-all: publish-android publish-windows publish-ubuntu
 
 publish-android:
 	python3 scripts/publish_android_apk.py --publish-all
 
 publish-windows:
 	python3 scripts/publish_windows_app.py --publish-all
+
+publish-ubuntu:
+	python3 scripts/publish_ubuntu_deb.py --publish-all
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
