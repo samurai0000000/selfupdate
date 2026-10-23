@@ -24,8 +24,8 @@ KNOWN_APPS: Dict[str, Dict[str, Any]] = {
         "title": "AIMon Companion",
         "applicationId": "com.selfso.aimon",
         "apkFilename": "aimon-companion.apk",
-        "tagline": "Ed25519-authenticated AI quota monitor, telemetry dashboard & mobile approval relay.",
-        "description": "Mobile companion application for the AIMon daemon, providing real-time AI coding assistant quota tracking, usage insights, hardware bridge status, and cryptographic Ed25519 mobile approval workflows.",
+        "tagline": "AI quota monitor, telemetry dashboard & mobile agent chat companion.",
+        "description": "Mobile companion application for the AIMon daemon, providing real-time AI coding assistant quota tracking, usage insights, hardware bridge status, and remote agent chat.",
         "category": "AI & Infrastructure",
         "projectUrl": "/projects/",
         "defaultApkCandidates": [
