@@ -22,6 +22,10 @@ KNOWN_UBUNTU_PACKAGES: Dict[str, Dict[str, Any]] = {
         "binaryPath": "/usr/sbin/octi-server",
         "serviceName": "octi-server.service",
         "defaultPort": 6874,
+        "stateDir": "/var/lib/octi",
+        "configLabel": "OIDC SSO Configuration",
+        "configPath": "/etc/octi/oidc.json",
+        "envConfigPath": "/etc/default/octi-server",
         "suite": "noble",
         "component": "main",
         "arch": "amd64",
@@ -32,6 +36,29 @@ KNOWN_UBUNTU_PACKAGES: Dict[str, Dict[str, Any]] = {
         "projectUrl": "/projects/octi/",
         "defaultDebCandidates": [
             "octi/server/build/octi-server_*_amd64.deb",
+        ],
+    },
+    "abc-80": {
+        "title": "ABC-80 Microcomputer Emulator & Web Server",
+        "packageName": "abc-80",
+        "binaryPath": "/usr/sbin/abc80_server",
+        "cliBinaryPath": "/usr/bin/abc80_cli",
+        "serviceName": "abc-80.service",
+        "defaultPort": 8008,
+        "stateDir": "/etc/abc-80",
+        "configLabel": "Daemon & Hardware Configuration",
+        "configPath": "/etc/abc-80/abc-80.cfg",
+        "envConfigPath": "/etc/default/abc-80",
+        "suite": "noble",
+        "component": "main",
+        "arch": "amd64",
+        "minOs": "Ubuntu 24.04 LTS (Noble Numbat) amd64",
+        "tagline": "Cycle-accurate Z80 microcomputer emulator, CLI, and WebSocket/HTTP interactive front-panel server daemon for the 1980s Taiwanese ABC-80 educational kit.",
+        "description": "Production Ubuntu 24.04 LTS (noble) systemd daemon (/usr/sbin/abc80_server) and interactive CLI (/usr/bin/abc80_cli) for the ABC-80 Z80 single-board microcomputer, featuring cycle-accurate Z80/8255 PPI emulation, WebSocket front-panel UI, Kansas City cassette tape library, and QBasic exercise host.",
+        "category": "Hardware Emulator & Web Server",
+        "projectUrl": "/projects/",
+        "defaultDebCandidates": [
+            "abc-80/build/abc-80_*_amd64.deb",
         ],
     },
 }
@@ -229,14 +256,19 @@ def find_candidate_deb(
     return found[0]
 
 
-def detect_slug_from_cwd(workspace_root: Optional[Union[str, Path]] = None) -> Optional[str]:
+def detect_slug_from_cwd(
+    workspace_root: Optional[Union[str, Path]] = None,
+    cwd: Optional[Union[str, Path]] = None,
+) -> Optional[str]:
     """Detect package slug from current working directory."""
-    cwd = Path.cwd().resolve()
-    cwd_str = str(cwd)
+    cwd_path = Path(cwd).resolve() if cwd is not None else Path.cwd().resolve()
+    cwd_str = str(cwd_path)
     if "octi" in cwd_str:
         return "octi-server"
+    if "abc-80" in cwd_str:
+        return "abc-80"
     for slug in KNOWN_UBUNTU_PACKAGES.keys():
-        if slug in cwd.parts:
+        if slug in cwd_path.parts:
             return slug
     return None
 
@@ -573,21 +605,21 @@ def render_portal_html(catalog: Dict[str, Any], base_apt_url: str) -> str:
           Configure your Ubuntu 24.04 LTS machine to trust and install packages directly from <code>ppa.selfso.com</code>:
         </p>
 
-        <div style="background: var(--bg-code); color: #f4f4f5; padding: 1.25rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.5rem; overflow-x: auto;">
-<span style="color: #a1a1aa;"># 1. Install Selfso GPG Archive Signing Key</span>
+        <pre style="background: var(--bg-code); color: #f4f4f5; padding: 1.25rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.5rem; overflow-x: auto; white-space: pre;"><span style="color: #a1a1aa;"># 1. Install Selfso GPG Archive Signing Key</span>
 sudo install -d -m 0755 /etc/apt/keyrings
 curl -fsSL https://ppa.selfso.com/ubuntu/selfso-archive-keyring.gpg | sudo tee /etc/apt/keyrings/selfso-archive-keyring.gpg > /dev/null
 
 <span style="color: #a1a1aa;"># 2. Add repository source list</span>
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/selfso-archive-keyring.gpg] https://ppa.selfso.com/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/selfso.list
 
-<span style="color: #a1a1aa;"># 3. Update and install octi-server</span>
+<span style="color: #a1a1aa;"># 3. Update and install Selfso Ubuntu packages (octi-server, abc-80)</span>
 sudo apt-get update
-sudo apt-get install -y octi-server
+sudo apt-get install -y octi-server abc-80
 
 <span style="color: #a1a1aa;"># 4. Verify systemd daemon status</span>
-systemctl status octi-server
-/usr/sbin/octi-server --version</div>
+systemctl status octi-server.service abc-80.service
+/usr/sbin/octi-server --version
+/usr/sbin/abc80_server --version</pre>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; font-size: 0.88rem;">
           <div>
@@ -703,6 +735,10 @@ def render_package_html(pkg: Dict[str, Any], base_apt_url: str) -> str:
     sha1 = html.escape(pkg.get("sha1", ""))
     md5 = html.escape(pkg.get("md5", ""))
     fingerprint = html.escape(pkg.get("gpgFingerprint", ""))
+    state_dir = html.escape(pkg.get("stateDir", "/var/lib/octi"))
+    config_label = html.escape(pkg.get("configLabel", "OIDC SSO Configuration"))
+    config_path = html.escape(pkg.get("configPath", "/etc/octi/oidc.json"))
+    env_config_path = html.escape(pkg.get("envConfigPath", "/etc/default/octi-server"))
     deb_filename = f"{slug}_{arch}.deb"
     pool_deb = pkg.get("poolDebPath", "")
     deb_download_url = f"{base_apt_url}/{pool_deb}" if pool_deb else deb_filename
@@ -804,16 +840,16 @@ def render_package_html(pkg: Dict[str, Any], base_apt_url: str) -> str:
             <div style="font-weight: 600; font-size: 0.85rem;">{maintainer}</div>
           </div>
           <div>
-            <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.25rem;">State &amp; DB Directory</div>
-            <div style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem;">/var/lib/octi</div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.25rem;">State &amp; Asset Directory</div>
+            <div style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem;">{state_dir}</div>
           </div>
           <div>
-            <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.25rem;">OIDC SSO Configuration</div>
-            <div style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem;">/etc/octi/oidc.json</div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.25rem;">{config_label}</div>
+            <div style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem;">{config_path}</div>
           </div>
           <div>
-            <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.25rem;">Environment Config</div>
-            <div style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem;">/etc/default/octi-server</div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.25rem;">Environment Overrides</div>
+            <div style="font-weight: 600; font-family: var(--font-mono); font-size: 0.85rem;">{env_config_path}</div>
           </div>
         </div>
 
@@ -852,8 +888,7 @@ def render_package_html(pkg: Dict[str, Any], base_apt_url: str) -> str:
         <p class="card-desc" style="margin-bottom: 1rem;">
           Execute in your Ubuntu 24.04 terminal to configure the archive key and install <code>{pkg.get('packageName', slug)}</code>:
         </p>
-        <div style="background: var(--bg-code); color: #f4f4f5; padding: 1.25rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; overflow-x: auto;">
-<span style="color: #a1a1aa;"># 1. Install Selfso GPG archive keyring</span>
+        <pre style="background: var(--bg-code); color: #f4f4f5; padding: 1.25rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; overflow-x: auto; white-space: pre;"><span style="color: #a1a1aa;"># 1. Install Selfso GPG archive keyring</span>
 sudo install -d -m 0755 /etc/apt/keyrings
 curl -fsSL https://ppa.selfso.com/ubuntu/selfso-archive-keyring.gpg | sudo tee /etc/apt/keyrings/selfso-archive-keyring.gpg > /dev/null
 
@@ -866,7 +901,7 @@ sudo apt-get install -y {pkg.get('packageName', slug)}
 
 <span style="color: #a1a1aa;"># 4. Inspect daemon service status</span>
 systemctl status {service_name}
-{binary_path} --version</div>
+{binary_path} --version</pre>
       </div>
     </div>
   </main>
@@ -1017,6 +1052,10 @@ def publish_ubuntu_package(
         "binaryPath": meta.get("binaryPath", f"/usr/sbin/{pkg_name}"),
         "serviceName": meta.get("serviceName", f"{pkg_name}.service"),
         "defaultPort": meta.get("defaultPort", 6874),
+        "stateDir": meta.get("stateDir", f"/etc/{pkg_name}"),
+        "configLabel": meta.get("configLabel", "Daemon Configuration"),
+        "configPath": meta.get("configPath", f"/etc/{pkg_name}/{pkg_name}.cfg"),
+        "envConfigPath": meta.get("envConfigPath", f"/etc/default/{pkg_name}"),
         "poolDebPath": rel_pool_path,
         "debUrl": f"{base_apt_url}/{rel_pool_path}",
         "directDownloadUrl": f"{base_apt_url}/{slug}/{slug}_{arch}.deb",

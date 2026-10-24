@@ -25,6 +25,7 @@ from scripts.publish_ubuntu_deb import (
     main,
     publish_ubuntu_package,
     rebuild_apt_metadata,
+    render_package_html,
 )
 
 
@@ -271,11 +272,91 @@ class TestPublishUbuntuDeb(unittest.TestCase):
         self.assertEqual(cand.name, "octi-server_2.0.5_amd64.deb")
 
     def test_detect_slug_from_cwd(self):
-        """Verify detect_slug_from_cwd detects octi-server slug from octi path."""
+        """Verify detect_slug_from_cwd detects octi-server and abc-80 slugs from paths."""
         slug = detect_slug_from_cwd()
-        # When run inside an octi workspace directory, detect_slug_from_cwd detects octi-server
         if "octi" in str(Path.cwd()):
             self.assertEqual(slug, "octi-server")
+        elif "abc-80" in str(Path.cwd()):
+            self.assertEqual(slug, "abc-80")
+
+        abc80_dir = self.ws_root / "abc-80"
+        abc80_dir.mkdir(parents=True, exist_ok=True)
+        octi_dir = self.ws_root / "octi" / "server"
+        octi_dir.mkdir(parents=True, exist_ok=True)
+
+        self.assertEqual(detect_slug_from_cwd(cwd=abc80_dir), "abc-80")
+        self.assertEqual(detect_slug_from_cwd(cwd=octi_dir), "octi-server")
+
+        orig_cwd = Path.cwd()
+        try:
+            os.chdir(str(abc80_dir))
+            self.assertEqual(detect_slug_from_cwd(), "abc-80")
+        finally:
+            os.chdir(str(orig_cwd))
+
+    def test_abc80_metadata_and_publish(self):
+        """Verify abc-80 metadata in KNOWN_UBUNTU_PACKAGES, candidate discovery, and HTML rendering."""
+        self.assertIn("abc-80", KNOWN_UBUNTU_PACKAGES)
+        meta = KNOWN_UBUNTU_PACKAGES["abc-80"]
+        self.assertEqual(meta["packageName"], "abc-80")
+        self.assertEqual(meta["binaryPath"], "/usr/sbin/abc80_server")
+        self.assertEqual(meta["serviceName"], "abc-80.service")
+        self.assertEqual(meta["defaultPort"], 8008)
+        self.assertEqual(meta["stateDir"], "/etc/abc-80")
+        self.assertEqual(meta["configLabel"], "Daemon & Hardware Configuration")
+        self.assertEqual(meta["configPath"], "/etc/abc-80/abc-80.cfg")
+        self.assertEqual(meta["envConfigPath"], "/etc/default/abc-80")
+
+        deb_path = self.ws_root / "abc-80/build/abc-80_1.0.0_amd64.deb"
+        create_synthetic_deb(
+            deb_path,
+            package="abc-80",
+            version="1.0.0",
+            arch="amd64",
+            depends="libc6 (>= 2.38), libconfig++9v5 (>= 1.5-0.4~), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)",
+            description="ABC-80 Microcomputer Emulator & Web Server\n Cycle-accurate Z80 microcomputer emulator.",
+        )
+
+        cand = find_candidate_deb("abc-80", workspace_root=self.ws_root)
+        self.assertIsNotNone(cand)
+        self.assertEqual(cand.name, "abc-80_1.0.0_amd64.deb")
+
+        manifest = publish_ubuntu_package(
+            slug="abc-80",
+            deb_path=deb_path,
+            web_root=self.web_root,
+            gnupg_home=self.gnupg_home,
+            workspace_root=self.ws_root,
+            base_apt_url="https://ppa.selfso.com/ubuntu",
+        )
+        self.assertEqual(manifest["slug"], "abc-80")
+        self.assertEqual(manifest["version"], "1.0.0")
+        self.assertEqual(manifest["binaryPath"], "/usr/sbin/abc80_server")
+        self.assertEqual(manifest["serviceName"], "abc-80.service")
+        self.assertEqual(manifest["defaultPort"], 8008)
+        self.assertEqual(manifest["stateDir"], "/etc/abc-80")
+        self.assertEqual(manifest["configPath"], "/etc/abc-80/abc-80.cfg")
+        self.assertEqual(manifest["envConfigPath"], "/etc/default/abc-80")
+
+        pool_deb = self.web_root / "pool" / "main" / "a" / "abc-80" / "abc-80_1.0.0_amd64.deb"
+        self.assertTrue(pool_deb.is_file())
+
+        pkg_html_path = self.web_root / "abc-80" / "index.html"
+        self.assertTrue(pkg_html_path.is_file())
+        html_text = pkg_html_path.read_text(encoding="utf-8")
+        self.assertIn("ABC-80 Microcomputer Emulator &amp; Web Server", html_text)
+        self.assertIn("/usr/sbin/abc80_server", html_text)
+        self.assertIn("abc-80.service", html_text)
+        self.assertIn("/etc/abc-80", html_text)
+        self.assertIn("Daemon &amp; Hardware Configuration", html_text)
+        self.assertIn("/etc/abc-80/abc-80.cfg", html_text)
+        self.assertIn("/etc/default/abc-80", html_text)
+
+        direct_html = render_package_html(manifest, "https://ppa.selfso.com/ubuntu")
+        self.assertIn("/usr/sbin/abc80_server", direct_html)
+        self.assertIn("abc-80.service", direct_html)
+        self.assertIn("/etc/abc-80/abc-80.cfg", direct_html)
+        self.assertIn("/etc/default/abc-80", direct_html)
 
     def test_dry_run_mode(self):
         """Verify dry-run mode computes manifest without writing files to web_root."""
