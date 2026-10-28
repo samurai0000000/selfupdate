@@ -34,6 +34,7 @@ class ApkDownloader(
      */
     suspend fun downloadAndVerify(
         manifest: UpdateManifest,
+        forceRedownload: Boolean = false,
         onProgress: (bytesRead: Long, totalBytes: Long) -> Unit = { _, _ -> }
     ): File = withContext(Dispatchers.IO) {
         if (!cacheRootDir.exists()) {
@@ -55,8 +56,12 @@ class ApkDownloader(
             }
         }
 
+        if (forceRedownload && targetFile.exists()) {
+            targetFile.delete()
+        }
+
         // Cache hit: check if the already downloaded target file has a valid SHA-256
-        if (targetFile.exists() && targetFile.length() > 0L) {
+        if (!forceRedownload && targetFile.exists() && targetFile.length() > 0L) {
             val existingSha256 = computeSha256(targetFile)
             if (existingSha256.equals(manifest.sha256.trim(), ignoreCase = true)) {
                 onProgress(targetFile.length(), targetFile.length())

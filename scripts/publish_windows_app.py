@@ -653,6 +653,7 @@ def publish_app(
     base_url: str = "https://www.selfso.com/software/windows/",
     release_notes: Optional[str] = None,
     published_at: Optional[str] = None,
+    force_public: bool = False,
     dry_run: bool = False,
 ) -> Dict[str, Any]:
     """Publish a single Windows package into the static web portal hierarchy."""
@@ -673,16 +674,9 @@ def publish_app(
     # Compute release notes
     notes = release_notes or app_meta.get("tagline") or f"{app_meta.get('title', slug)} release."
 
-    # If dry_run, generate manifest directly from source
-    eval_pkg = src_pkg if dry_run else staged_pkg
-
-    if not dry_run:
-        app_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src_pkg, staged_pkg)
-
-    # Generate single-app manifest
-    manifest = generate_manifest(
-        package_path=eval_pkg,
+    # Generate single-app manifest for the newly provided package first
+    new_manifest = generate_manifest(
+        package_path=src_pkg,
         slug=slug,
         title=app_meta.get("title"),
         application_id=app_meta.get("applicationId"),
@@ -699,14 +693,70 @@ def publish_app(
     )
 
     if app_meta.get("category"):
-        manifest["category"] = app_meta["category"]
+        new_manifest["category"] = app_meta["category"]
     if app_meta.get("tagline"):
-        manifest["tagline"] = app_meta["tagline"]
+        new_manifest["tagline"] = app_meta["tagline"]
     if app_meta.get("description"):
-        manifest["description"] = app_meta["description"]
+        new_manifest["description"] = app_meta["description"]
     if app_meta.get("projectUrl"):
-        manifest["projectUrl"] = app_meta["projectUrl"]
-    manifest["packageFilename"] = target_filename
+        new_manifest["projectUrl"] = app_meta["projectUrl"]
+    new_manifest["packageFilename"] = target_filename
+
+    # Check if per-app version.json and staged_pkg already exist on disk
+    per_app_json_path = app_dir / "version.json"
+    existing_app_manifest = None
+    if per_app_json_path.is_file():
+        try:
+            with open(per_app_json_path, "r", encoding="utf-8") as f:
+                existing_app_manifest = json.load(f)
+        except Exception:
+            existing_app_manifest = None
+
+    is_same_version = (
+        (not force_public)
+        and existing_app_manifest is not None
+        and staged_pkg.is_file()
+        and int(existing_app_manifest.get("versionCode", -1)) == int(new_manifest.get("versionCode", -2))
+        and str(existing_app_manifest.get("versionName", "")) == str(new_manifest.get("versionName", ""))
+    )
+
+    # Compute latest_filename
+    if target_filename.lower().endswith(".exe"):
+        latest_filename = target_filename[:-4] + "-latest.exe"
+    elif target_filename.lower().endswith(".zip"):
+        latest_filename = target_filename[:-4] + "-latest.zip"
+    else:
+        stem = Path(target_filename).stem
+        suffix = Path(target_filename).suffix
+        latest_filename = f"{stem}-latest{suffix}"
+
+    latest_pkg = app_dir / latest_filename
+    if not dry_run:
+        app_dir.mkdir(parents=True, exist_ok=True)
+        if src_pkg.resolve() != latest_pkg.resolve():
+            shutil.copy2(src_pkg, latest_pkg)
+
+    sha8 = new_manifest["sha256"][:8]
+    latest_entry: Dict[str, Any] = {
+        "packageFilename": latest_filename,
+        "packageUrl": f"{clean_base}/{slug}/{latest_filename}?sha={sha8}",
+        "sha256": new_manifest["sha256"],
+        "sizeBytes": new_manifest["sizeBytes"],
+        "publishedAt": new_manifest["publishedAt"],
+    }
+    if release_notes:
+        latest_entry["releaseNotes"] = release_notes
+
+    if is_same_version:
+        # Keep public binary untouched. Retain all top-level public fields from existing_app_manifest
+        manifest = dict(existing_app_manifest)
+        manifest["latest"] = latest_entry
+    else:
+        if not dry_run:
+            if src_pkg.resolve() != staged_pkg.resolve():
+                shutil.copy2(src_pkg, staged_pkg)
+        manifest = new_manifest
+        manifest["latest"] = latest_entry
 
     if dry_run:
         return manifest
@@ -817,6 +867,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="ISO-8601 publication timestamp.",
     )
     parser.add_argument(
+        "--force-public",
+        action="store_true",
+        help="Force overwriting the public release binary even if the version is unchanged.",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Simulate publication without modifying files.",
@@ -857,6 +912,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     base_url=args.base_url,
                     release_notes=args.release_notes,
                     published_at=args.published_at,
+                    force_public=args.force_public,
                     dry_run=args.dry_run,
                 )
                 print(
@@ -903,6 +959,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             base_url=args.base_url,
             release_notes=args.release_notes,
             published_at=args.published_at,
+            force_public=args.force_public,
             dry_run=args.dry_run,
         )
     except Exception as e:

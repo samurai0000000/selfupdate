@@ -23,13 +23,34 @@ data class UpdateManifest(
     val title: String = "",
     val pageUrl: String = "",
     val publishedAt: String = "",
-    val releaseNotes: String = ""
+    val releaseNotes: String = "",
+    val latestApkUrl: String = "",
+    val latestSha256: String = "",
+    val latestSizeBytes: Long = 0L,
+    val latestPublishedAt: String = ""
 ) {
 
     /**
      * Returns true if this manifest's [versionCode] is strictly greater than [installedVersionCode].
      */
     fun isNewerThan(installedVersionCode: Long): Boolean = versionCode > installedVersionCode
+
+    /**
+     * Returns a copy configured to download and verify the developer iteration '-latest' build,
+     * if [latestApkUrl] and [latestSha256] are present. Otherwise returns [this].
+     */
+    fun toReinstallManifest(): UpdateManifest {
+        return if (latestApkUrl.isNotBlank() && latestSha256.length == 64) {
+            copy(
+                apkUrl = latestApkUrl,
+                sha256 = latestSha256.lowercase(),
+                sizeBytes = if (latestSizeBytes > 0L) latestSizeBytes else sizeBytes,
+                publishedAt = latestPublishedAt.ifBlank { publishedAt }
+            )
+        } else {
+            this
+        }
+    }
 
     companion object {
         const val DEFAULT_MANIFEST_URL = "https://www.selfso.com/software/android/"
@@ -147,6 +168,27 @@ data class UpdateManifest(
             val publishedAt = appObj.optString("publishedAt", "")
             val releaseNotes = appObj.optString("releaseNotes", "")
 
+            val latestObj = appObj.optJSONObject("latest")
+            val latestRawUrl = latestObj?.let {
+                val a = it.optString("apkUrl").trim()
+                if (a.isNotBlank()) a else it.optString("packageUrl").trim()
+            } ?: ""
+            val resolvedLatestApkUrl = if (latestRawUrl.isNotBlank()) {
+                if (latestRawUrl.startsWith("http://", ignoreCase = true) ||
+                    latestRawUrl.startsWith("https://", ignoreCase = true)
+                ) {
+                    latestRawUrl
+                } else {
+                    val baseUri = URI(normalizeManifestUrl(manifestUrl))
+                    baseUri.resolve(latestRawUrl).toString()
+                }
+            } else {
+                ""
+            }
+            val latestSha256 = latestObj?.optString("sha256", "")?.trim()?.lowercase() ?: ""
+            val latestSizeBytes = latestObj?.optLong("sizeBytes", 0L) ?: 0L
+            val latestPublishedAt = latestObj?.optString("publishedAt", "")?.trim() ?: ""
+
             return UpdateManifest(
                 applicationId = normalizedAppId,
                 versionCode = versionCode,
@@ -160,7 +202,11 @@ data class UpdateManifest(
                 title = title,
                 pageUrl = pageUrl,
                 publishedAt = publishedAt,
-                releaseNotes = releaseNotes
+                releaseNotes = releaseNotes,
+                latestApkUrl = resolvedLatestApkUrl,
+                latestSha256 = latestSha256,
+                latestSizeBytes = latestSizeBytes,
+                latestPublishedAt = latestPublishedAt
             )
         }
     }

@@ -350,6 +350,175 @@ void SelfUpdateController::downloadAndInstall(const UpdateManifest* manifestOver
     });
 }
 
+void SelfUpdateController::reinstall()
+{
+    stopWorker();
+    _cancelFlag.store(false);
+
+    bool needsFetch = false;
+    UpdateManifest initialManifest;
+    UpdateState startState;
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        initialManifest = _state.manifest;
+        needsFetch = initialManifest.packageUrl.empty();
+        startState = _state;
+        if (needsFetch) {
+            startState.phase = UpdatePhase::Checking;
+        } else {
+            UpdateManifest target = initialManifest.reinstallManifest();
+            startState.phase = UpdatePhase::Downloading;
+            startState.manifest = target;
+            startState.bytesRead = 0;
+            startState.totalBytes = target.sizeBytes;
+        }
+        startState.errorMessage.clear();
+        _state = startState;
+    }
+
+    dispatchState(startState);
+
+    _workerThread = std::thread([this, needsFetch, initialManifest]() {
+        UpdateManifest manifest = initialManifest;
+        if (needsFetch) {
+            try {
+                manifest = _checker.fetchManifest(&_cancelFlag);
+                if (_cancelFlag.load()) {
+                    return;
+                }
+            } catch (const std::exception& e) {
+                if (_cancelFlag.load()) {
+                    return;
+                }
+                UpdateState errState;
+                {
+                    std::lock_guard<std::mutex> lock(_mutex);
+                    errState = _state;
+                    errState.phase = UpdatePhase::Error;
+                    errState.errorMessage = e.what();
+                }
+                dispatchState(errState);
+                return;
+            }
+        }
+
+        UpdateManifest target = manifest.reinstallManifest();
+        if (target.packageUrl.empty()) {
+            UpdateState errState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                errState = _state;
+                errState.phase = UpdatePhase::Error;
+                errState.errorMessage = "No package URL to download";
+            }
+            dispatchState(errState);
+            return;
+        }
+
+        if (needsFetch) {
+            UpdateState dlState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                dlState = _state;
+                dlState.phase = UpdatePhase::Downloading;
+                dlState.manifest = target;
+                dlState.bytesRead = 0;
+                dlState.totalBytes = target.sizeBytes;
+                _state = dlState;
+            }
+            dispatchState(dlState);
+        }
+
+        auto onProgress = [this, target](int64_t bytesRead, int64_t totalBytes) {
+            if (_cancelFlag.load()) {
+                return;
+            }
+            UpdateState st;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                st = _state;
+                st.phase = UpdatePhase::Downloading;
+                st.manifest = target;
+                st.bytesRead = bytesRead;
+                st.totalBytes = totalBytes;
+            }
+            dispatchState(st);
+        };
+
+        std::string staged;
+        try {
+            staged = _downloader.downloadAndVerify(target, onProgress, &_cancelFlag);
+            if (_cancelFlag.load()) {
+                return;
+            }
+            UpdateState readyState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                readyState = _state;
+                readyState.phase = UpdatePhase::ReadyToInstall;
+                readyState.manifest = target;
+                readyState.stagedPackagePath = staged;
+                readyState.bytesRead = readyState.totalBytes > 0 ? readyState.totalBytes : target.sizeBytes;
+                readyState.errorMessage.clear();
+            }
+            dispatchState(readyState);
+        } catch (const std::exception& e) {
+            if (_cancelFlag.load()) {
+                return;
+            }
+            UpdateState errState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                errState = _state;
+                errState.phase = UpdatePhase::Error;
+                errState.errorMessage = e.what();
+            }
+            dispatchState(errState);
+            return;
+        }
+
+        UpdateState installingState;
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            installingState = _state;
+            installingState.phase = UpdatePhase::Installing;
+            installingState.errorMessage.clear();
+            _state = installingState;
+        }
+        dispatchState(installingState);
+
+        InstallResult res = _installer.executeUpdate(target, staged);
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            _lastInstallResult = res;
+        }
+
+        if (res.success) {
+            UpdateState relaunchState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                relaunchState = _state;
+                relaunchState.phase = UpdatePhase::Relaunching;
+                relaunchState.errorMessage.clear();
+            }
+            dispatchState(relaunchState);
+
+            if (res.requiresAppExit) {
+                dispatchQuit();
+            }
+        } else {
+            UpdateState errState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                errState = _state;
+                errState.phase = UpdatePhase::Error;
+                errState.errorMessage = res.errorMessage.empty() ? "Installation failed" : res.errorMessage;
+            }
+            dispatchState(errState);
+        }
+    });
+}
+
 void SelfUpdateController::cancel()
 {
     _cancelFlag.store(true);

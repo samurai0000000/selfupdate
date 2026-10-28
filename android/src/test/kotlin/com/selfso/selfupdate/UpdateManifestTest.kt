@@ -311,4 +311,60 @@ class UpdateManifestTest {
             // Success
         }
     }
+
+    @Test
+    fun testParseLatestBlockAndToReinstallManifest() {
+        val json = """
+            {
+              "applicationId": "com.selfso.octi",
+              "versionCode": 20002,
+              "versionName": "2.0.2",
+              "apkUrl": "octi/octi.apk",
+              "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+              "sizeBytes": 5000000,
+              "publishedAt": "2026-10-22T09:00:00Z",
+              "latest": {
+                "apkFilename": "octi-latest.apk",
+                "apkUrl": "octi/octi-latest.apk?sha=abcdef01",
+                "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+                "sizeBytes": 5200000,
+                "publishedAt": "2026-10-28T12:00:00Z"
+              }
+            }
+        """.trimIndent()
+
+        val manifest = UpdateManifest.fromJson(json, "https://www.selfso.com/software/android/")
+        assertEquals("https://www.selfso.com/software/android/octi/octi.apk", manifest.apkUrl)
+        assertEquals("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", manifest.sha256)
+        assertEquals(5000000L, manifest.sizeBytes)
+        assertEquals("2026-10-22T09:00:00Z", manifest.publishedAt)
+
+        assertEquals("https://www.selfso.com/software/android/octi/octi-latest.apk?sha=abcdef01", manifest.latestApkUrl)
+        assertEquals("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789", manifest.latestSha256)
+        assertEquals(5200000L, manifest.latestSizeBytes)
+        assertEquals("2026-10-28T12:00:00Z", manifest.latestPublishedAt)
+
+        val reinstall = manifest.toReinstallManifest()
+        assertEquals("https://www.selfso.com/software/android/octi/octi-latest.apk?sha=abcdef01", reinstall.apkUrl)
+        assertEquals("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789", reinstall.sha256)
+        assertEquals(5200000L, reinstall.sizeBytes)
+        assertEquals("2026-10-28T12:00:00Z", reinstall.publishedAt)
+        assertEquals(20002L, reinstall.versionCode)
+        assertEquals("2.0.2", reinstall.versionName)
+
+        // Without latest block
+        val noLatestJson = """
+            {
+              "applicationId": "com.selfso.octi",
+              "versionCode": 20002,
+              "versionName": "2.0.2",
+              "apkUrl": "https://www.selfso.com/software/android/octi/octi.apk",
+              "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            }
+        """.trimIndent()
+        val plainManifest = UpdateManifest.fromJson(noLatestJson)
+        val sameManifest = plainManifest.toReinstallManifest()
+        assertEquals(plainManifest.apkUrl, sameManifest.apkUrl)
+        assertEquals(plainManifest.sha256, sameManifest.sha256)
+    }
 }

@@ -60,18 +60,19 @@ class SelfUpdateController(
 
     /**
      * Downloads and initiates installation of the release described by [targetManifest]
-     * (or the manifest associated with the current [UpdateState.Available] state).
+     * (or the manifest associated with the current [UpdateState.Available] or [UpdateState.UpToDate] state).
      */
-    fun downloadAndInstall(targetManifest: UpdateManifest? = null) {
+    fun downloadAndInstall(targetManifest: UpdateManifest? = null, forceRedownload: Boolean = false) {
         val manifest = targetManifest
             ?: (_state.value as? UpdateState.Available)?.manifest
+            ?: (_state.value as? UpdateState.UpToDate)?.remoteManifest
             ?: (_state.value as? UpdateState.Error)?.recoverableManifest
             ?: return
 
         scope.launch {
             try {
                 _state.value = UpdateState.Downloading(manifest, 0L, manifest.sizeBytes)
-                val apkFile = downloader.downloadAndVerify(manifest) { bytesRead, totalBytes ->
+                val apkFile = downloader.downloadAndVerify(manifest, forceRedownload = forceRedownload) { bytesRead, totalBytes ->
                     _state.value = UpdateState.Downloading(manifest, bytesRead, totalBytes)
                 }
 
@@ -85,6 +86,41 @@ class SelfUpdateController(
                 _state.value = UpdateState.Error(
                     e.message ?: "Failed to download update package",
                     recoverableManifest = manifest
+                )
+            }
+        }
+    }
+
+    /**
+     * Reinstalls the application, targeting the '-latest' developer build if available.
+     * Forces redownloading the APK from the server and bypasses existing cache.
+     */
+    fun reinstall() {
+        scope.launch {
+            try {
+                val baseManifest = (_state.value as? UpdateState.UpToDate)?.remoteManifest
+                    ?: (_state.value as? UpdateState.Available)?.manifest
+                    ?: (_state.value as? UpdateState.Error)?.recoverableManifest
+                    ?: checker.fetchManifest()
+
+                val manifest = baseManifest.toReinstallManifest()
+
+                _state.value = UpdateState.Downloading(manifest, 0L, manifest.sizeBytes)
+                val apkFile = downloader.downloadAndVerify(manifest, forceRedownload = true) { bytesRead, totalBytes ->
+                    _state.value = UpdateState.Downloading(manifest, bytesRead, totalBytes)
+                }
+
+                if (!installer.canRequestPackageInstalls()) {
+                    _state.value = UpdateState.PermissionRequired(manifest, apkFile)
+                } else {
+                    _state.value = UpdateState.ReadyToInstall(manifest, apkFile)
+                    installApkFile(manifest, apkFile)
+                }
+            } catch (e: Exception) {
+                _state.value = UpdateState.Error(
+                    e.message ?: "Failed to reinstall update package",
+                    recoverableManifest = (_state.value as? UpdateState.Downloading)?.manifest
+                        ?: (_state.value as? UpdateState.UpToDate)?.remoteManifest
                 )
             }
         }

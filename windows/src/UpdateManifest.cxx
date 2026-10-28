@@ -700,7 +700,52 @@ UpdateManifest UpdateManifest::fromJson(const std::string& jsonString,
     m.publishedAt = appNode->getString("publishedAt");
     m.releaseNotes = appNode->getString("releaseNotes");
 
+    const JsonValue* latestNode = appNode->find("latest");
+    if (latestNode && latestNode->isObject()) {
+        std::string rawLatestPkg = latestNode->getString("packageUrl");
+        if (rawLatestPkg.empty()) {
+            rawLatestPkg = latestNode->getString("downloadUrl");
+        }
+        if (rawLatestPkg.empty()) {
+            rawLatestPkg = latestNode->getString("apkUrl");
+        }
+        if (!rawLatestPkg.empty()) {
+            m.latestPackageUrl = resolveRelativeUrl(effectiveBaseUrl, rawLatestPkg);
+        }
+        std::string rawLatestSha = trim(latestNode->getString("sha256"));
+        if (rawLatestSha.size() == 64) {
+            bool hexOk = true;
+            for (char c : rawLatestSha) {
+                if (!std::isxdigit(static_cast<unsigned char>(c))) {
+                    hexOk = false;
+                    break;
+                }
+            }
+            if (hexOk) {
+                m.latestSha256 = toLower(rawLatestSha);
+            }
+        }
+        m.latestSizeBytes = latestNode->getInt("sizeBytes", 0);
+        m.latestPublishedAt = latestNode->getString("publishedAt");
+    }
+
     return m;
+}
+
+UpdateManifest UpdateManifest::reinstallManifest() const
+{
+    UpdateManifest copy = *this;
+    if (!latestPackageUrl.empty() && !latestSha256.empty()) {
+        copy.packageUrl = latestPackageUrl;
+        copy.sha256 = latestSha256;
+        if (latestSizeBytes > 0) {
+            copy.sizeBytes = latestSizeBytes;
+        }
+        if (!latestPublishedAt.empty()) {
+            copy.publishedAt = latestPublishedAt;
+        }
+    }
+    return copy;
 }
 
 } // namespace selfupdate

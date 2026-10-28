@@ -456,6 +456,59 @@ TEST(SelfUpdateControllerTest, DownloadAndInstall_EndToEnd)
     CHECK_EQUAL(pkgPayload, readFile(installOpts.targetExePath));
 }
 
+TEST(SelfUpdateControllerTest, Reinstall_PullsLatestBuild)
+{
+    std::string publicPayload = "public binary payload 2.0.2";
+    std::string publicSha = Sha256::hashString(publicPayload);
+
+    std::string latestPayload = "developer iteration binary payload 2.0.2 latest";
+    std::string latestSha = Sha256::hashString(latestPayload);
+
+    std::string json = "{\n"
+                       "  \"applicationId\": \"com.selfso.octi\",\n"
+                       "  \"versionName\": \"2.0.2\",\n"
+                       "  \"versionCode\": 20002,\n"
+                       "  \"installType\": \"binary\",\n"
+                       "  \"packageUrl\": \"http://mock.local/octi.exe\",\n"
+                       "  \"sha256\": \"" + publicSha + "\",\n"
+                       "  \"sizeBytes\": " + std::to_string(publicPayload.size()) + ",\n"
+                       "  \"latest\": {\n"
+                       "    \"packageFilename\": \"octi-latest.exe\",\n"
+                       "    \"packageUrl\": \"http://mock.local/octi-latest.exe\",\n"
+                       "    \"sha256\": \"" + latestSha + "\",\n"
+                       "    \"sizeBytes\": " + std::to_string(latestPayload.size()) + "\n"
+                       "  }\n"
+                       "}";
+    transport->manifestJson = json;
+    transport->packageBytes = latestPayload;
+
+    SelfUpdateController controller(config, installOpts, stagingDir, transport);
+
+    std::vector<UpdatePhase> phases;
+    bool quitCalled = false;
+
+    controller.setStateCallback([&phases](const UpdateState& st) {
+        phases.push_back(st.phase);
+    });
+
+    controller.setQuitCallback([&quitCalled]() {
+        quitCalled = true;
+    });
+
+    controller.checkForUpdates(true);
+    controller.waitForIdle();
+    CHECK_EQUAL(static_cast<int>(UpdatePhase::UpToDate), static_cast<int>(controller.state().phase));
+
+    controller.reinstall();
+    controller.waitForIdle();
+
+    UpdateState finalSt = controller.state();
+    CHECK_EQUAL_TEXT(static_cast<int>(UpdatePhase::Relaunching), static_cast<int>(finalSt.phase), finalSt.errorMessage.c_str());
+    CHECK_TRUE(quitCalled);
+    CHECK_TRUE(controller.lastInstallResult().success);
+    CHECK_EQUAL(latestPayload, readFile(installOpts.targetExePath));
+}
+
 TEST(SelfUpdateControllerTest, Download_CorruptSha256_TransitionsToError)
 {
     std::string pkgPayload = "valid payload";

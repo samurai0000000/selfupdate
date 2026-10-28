@@ -203,4 +203,39 @@ class ApkDownloaderTest {
             assertFalse(partFile.exists())
         }
     }
+
+    @Test
+    fun testForceRedownloadBypassesCache() = runBlocking {
+        responseBytesToServe = "payload-1".toByteArray(Charsets.UTF_8)
+        responseCodeToServe = 200
+        val sha1 = sha256Hex(responseBytesToServe)
+
+        val manifest1 = UpdateManifest(
+            applicationId = "com.selfso.octi",
+            versionCode = 20002L,
+            versionName = "2.0.2",
+            apkUrl = "http://127.0.0.1:$serverPort/test.apk",
+            sha256 = sha1,
+            sizeBytes = responseBytesToServe.size.toLong()
+        )
+
+        val downloader = ApkDownloader(cacheRootDir = tempDir)
+        val file1 = downloader.downloadAndVerify(manifest1)
+        assertEquals("payload-1", file1.readText(Charsets.UTF_8))
+
+        responseBytesToServe = "payload-2-reinstalled".toByteArray(Charsets.UTF_8)
+        val sha2 = sha256Hex(responseBytesToServe)
+
+        val manifest2 = UpdateManifest(
+            applicationId = "com.selfso.octi",
+            versionCode = 20002L,
+            versionName = "2.0.2",
+            apkUrl = "http://127.0.0.1:$serverPort/test.apk",
+            sha256 = sha2,
+            sizeBytes = responseBytesToServe.size.toLong()
+        )
+
+        val file2 = downloader.downloadAndVerify(manifest2, forceRedownload = true)
+        assertEquals("payload-2-reinstalled", file2.readText(Charsets.UTF_8))
+    }
 }

@@ -284,6 +284,131 @@ class TestPublishWindowsApp(unittest.TestCase):
             self.assertEqual(manifest["packageFilename"], pkg_name)
             self.assertTrue((self.web_root / slug / pkg_name).is_file())
 
+    def test_publish_first_time_creates_latest_and_public(self):
+        src_exe = self._create_mock_exe(
+            "octi/desktop/build/windows/octi-setup-2.0.3.exe",
+            slug="octi",
+            version_str="2.0.3",
+            file_version=(2, 0, 3, 0),
+        )
+
+        manifest = publish_app(
+            slug="octi",
+            package_path=src_exe,
+            web_root=self.web_root,
+            workspace_root=self.ws_root,
+            base_url="https://www.selfso.com/software/windows/",
+        )
+
+        public_pkg = self.web_root / "octi" / "octi-setup.exe"
+        latest_pkg = self.web_root / "octi" / "octi-setup-latest.exe"
+        self.assertTrue(public_pkg.is_file())
+        self.assertTrue(latest_pkg.is_file())
+
+        self.assertIn("latest", manifest)
+        latest = manifest["latest"]
+        self.assertEqual(latest["packageFilename"], "octi-setup-latest.exe")
+        self.assertEqual(latest["sha256"], manifest["sha256"])
+        self.assertEqual(latest["sizeBytes"], manifest["sizeBytes"])
+        sha8 = manifest["sha256"][:8]
+        self.assertEqual(
+            latest["packageUrl"],
+            f"https://www.selfso.com/software/windows/octi/octi-setup-latest.exe?sha={sha8}",
+        )
+
+    def test_publish_same_version_preserves_public_binary_and_updates_latest(self):
+        # 1. Publish original 2.0.3 binary
+        src_exe_1 = self._create_mock_exe(
+            "octi/desktop/build/windows/octi-setup-2.0.3.exe",
+            slug="octi",
+            version_str="2.0.3",
+            file_version=(2, 0, 3, 0),
+        )
+        manifest_1 = publish_app(
+            slug="octi",
+            package_path=src_exe_1,
+            web_root=self.web_root,
+            workspace_root=self.ws_root,
+            base_url="https://www.selfso.com/software/windows/",
+            release_notes="Original release.",
+        )
+
+        public_pkg = self.web_root / "octi" / "octi-setup.exe"
+        latest_pkg = self.web_root / "octi" / "octi-setup-latest.exe"
+        pub_bytes_1 = public_pkg.read_bytes()
+        pub_sha_1 = manifest_1["sha256"]
+
+        # 2. Modify binary content but keep same version strings (2.0.3 / 20003)
+        time.sleep(0.01)
+        with open(src_exe_1, "ab") as f:
+            f.write(b"EXTENDED_PAYLOAD_PADDING_FOR_DEVELOPER_ITERATION")
+
+        manifest_2 = publish_app(
+            slug="octi",
+            package_path=src_exe_1,
+            web_root=self.web_root,
+            workspace_root=self.ws_root,
+            base_url="https://www.selfso.com/software/windows/",
+            release_notes="Developer iteration build.",
+        )
+
+        # Public binary must be completely untouched
+        self.assertEqual(public_pkg.read_bytes(), pub_bytes_1)
+        self.assertEqual(manifest_2["sha256"], pub_sha_1)
+        self.assertEqual(manifest_2["releaseNotes"], "Original release.")
+
+        # Latest binary must be updated to new contents
+        self.assertEqual(latest_pkg.read_bytes(), src_exe_1.read_bytes())
+        self.assertNotEqual(manifest_2["latest"]["sha256"], pub_sha_1)
+        self.assertEqual(manifest_2["latest"]["releaseNotes"], "Developer iteration build.")
+
+        # Verify per-app and master version.json preservation
+        per_app_json = json.loads((self.web_root / "octi" / "version.json").read_text(encoding="utf-8"))
+        self.assertEqual(per_app_json["sha256"], pub_sha_1)
+        self.assertEqual(per_app_json["latest"]["sha256"], manifest_2["latest"]["sha256"])
+
+        master_json = json.loads((self.web_root / "version.json").read_text(encoding="utf-8"))
+        self.assertEqual(master_json["apps"]["com.selfso.octi"]["sha256"], pub_sha_1)
+        self.assertEqual(
+            master_json["apps"]["com.selfso.octi"]["latest"]["sha256"],
+            manifest_2["latest"]["sha256"],
+        )
+
+    def test_publish_force_public_updates_both(self):
+        # 1. Publish original 2.0.3
+        src_exe = self._create_mock_exe(
+            "octi/desktop/build/windows/octi-setup-2.0.3.exe",
+            slug="octi",
+            version_str="2.0.3",
+            file_version=(2, 0, 3, 0),
+        )
+        manifest_1 = publish_app(
+            slug="octi",
+            package_path=src_exe,
+            web_root=self.web_root,
+            workspace_root=self.ws_root,
+        )
+
+        # 2. Append data and publish with force_public=True
+        with open(src_exe, "ab") as f:
+            f.write(b"NEW_PUBLIC_BITS")
+
+        manifest_2 = publish_app(
+            slug="octi",
+            package_path=src_exe,
+            web_root=self.web_root,
+            workspace_root=self.ws_root,
+            force_public=True,
+        )
+
+        public_pkg = self.web_root / "octi" / "octi-setup.exe"
+        latest_pkg = self.web_root / "octi" / "octi-setup-latest.exe"
+
+        self.assertEqual(public_pkg.read_bytes(), src_exe.read_bytes())
+        self.assertEqual(latest_pkg.read_bytes(), src_exe.read_bytes())
+        self.assertEqual(manifest_2["sha256"], manifest_2["latest"]["sha256"])
+        self.assertNotEqual(manifest_2["sha256"], manifest_1["sha256"])
+
 
 if __name__ == "__main__":
     unittest.main()

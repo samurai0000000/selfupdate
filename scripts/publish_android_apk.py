@@ -580,6 +580,8 @@ def publish_app(
     keep_debug_suffix: bool = False,
     aapt2_bin: Optional[str] = None,
     published_at: Optional[str] = None,
+    force_public: bool = False,
+    dry_run: bool = False,
 ) -> Dict[str, Any]:
     """Publish a single Android APK into the static web portal hierarchy."""
     src_apk = Path(apk_path).resolve()
@@ -591,11 +593,7 @@ def publish_app(
 
     target_filename = app_meta.get("apkFilename", f"{slug}.apk")
     app_dir = w_root / slug
-    app_dir.mkdir(parents=True, exist_ok=True)
     staged_apk = app_dir / target_filename
-
-    # Copy APK to target staging location
-    shutil.copy2(src_apk, staged_apk)
 
     # Clean base url
     clean_base = base_url.rstrip("/")
@@ -608,9 +606,9 @@ def publish_app(
     if (src_apk.parent / "output-metadata.json").is_file():
         meta_path = src_apk.parent / "output-metadata.json"
 
-    # Generate single-app manifest
-    manifest = generate_manifest(
-        apk_path=staged_apk,
+    # Generate single-app manifest for the newly provided APK first
+    new_manifest = generate_manifest(
+        apk_path=src_apk,
         slug=slug,
         title=app_meta.get("title"),
         application_id=app_meta.get("applicationId"),
@@ -624,14 +622,74 @@ def publish_app(
         aapt2_bin=aapt2_bin,
     )
     if app_meta.get("category"):
-        manifest["category"] = app_meta["category"]
+        new_manifest["category"] = app_meta["category"]
     if app_meta.get("tagline"):
-        manifest["tagline"] = app_meta["tagline"]
+        new_manifest["tagline"] = app_meta["tagline"]
     if app_meta.get("description"):
-        manifest["description"] = app_meta["description"]
+        new_manifest["description"] = app_meta["description"]
     if app_meta.get("projectUrl"):
-        manifest["projectUrl"] = app_meta["projectUrl"]
-    manifest["apkFilename"] = target_filename
+        new_manifest["projectUrl"] = app_meta["projectUrl"]
+    new_manifest["apkFilename"] = target_filename
+    if "packageUrl" not in new_manifest:
+        new_manifest["packageUrl"] = new_manifest.get("apkUrl", "")
+
+    # Check if per-app version.json and staged_apk already exist on disk
+    per_app_json_path = app_dir / "version.json"
+    existing_app_manifest = None
+    if per_app_json_path.is_file():
+        try:
+            with open(per_app_json_path, "r", encoding="utf-8") as f:
+                existing_app_manifest = json.load(f)
+        except Exception:
+            existing_app_manifest = None
+
+    is_same_version = (
+        (not force_public)
+        and existing_app_manifest is not None
+        and staged_apk.is_file()
+        and int(existing_app_manifest.get("versionCode", -1)) == int(new_manifest.get("versionCode", -2))
+        and str(existing_app_manifest.get("versionName", "")) == str(new_manifest.get("versionName", ""))
+    )
+
+    # Compute latest_filename
+    if target_filename.lower().endswith(".apk"):
+        latest_filename = target_filename[:-4] + "-latest.apk"
+    else:
+        stem = Path(target_filename).stem
+        suffix = Path(target_filename).suffix
+        latest_filename = f"{stem}-latest{suffix}"
+
+    latest_apk = app_dir / latest_filename
+    if not dry_run:
+        app_dir.mkdir(parents=True, exist_ok=True)
+        if src_apk.resolve() != latest_apk.resolve():
+            shutil.copy2(src_apk, latest_apk)
+
+    sha8 = new_manifest["sha256"][:8]
+    latest_entry: Dict[str, Any] = {
+        "apkFilename": latest_filename,
+        "apkUrl": f"{clean_base}/{slug}/{latest_filename}?sha={sha8}",
+        "packageUrl": f"{clean_base}/{slug}/{latest_filename}?sha={sha8}",
+        "sha256": new_manifest["sha256"],
+        "sizeBytes": new_manifest["sizeBytes"],
+        "publishedAt": new_manifest["publishedAt"],
+    }
+    if release_notes:
+        latest_entry["releaseNotes"] = release_notes
+
+    if is_same_version:
+        # Keep public binary untouched. Retain all top-level public fields from existing_app_manifest
+        manifest = dict(existing_app_manifest)
+        manifest["latest"] = latest_entry
+    else:
+        if not dry_run:
+            if src_apk.resolve() != staged_apk.resolve():
+                shutil.copy2(src_apk, staged_apk)
+        manifest = new_manifest
+        manifest["latest"] = latest_entry
+
+    if dry_run:
+        return manifest
 
     # Write per-app version.json
     per_app_json_path = app_dir / "version.json"
@@ -698,6 +756,8 @@ def publish_all(
     keep_debug_suffix: bool = False,
     aapt2_bin: Optional[str] = None,
     published_at: Optional[str] = None,
+    force_public: bool = False,
+    dry_run: bool = False,
 ) -> Dict[str, Dict[str, Any]]:
     """Discover and publish all available built APKs from KNOWN_APPS."""
     ws = Path(workspace_root) if workspace_root else (Path.home() / "work")
@@ -718,6 +778,8 @@ def publish_all(
                 keep_debug_suffix=keep_debug_suffix,
                 aapt2_bin=aapt2_bin,
                 published_at=published_at,
+                force_public=force_public,
+                dry_run=dry_run,
             )
             published[slug] = manifest
         else:
@@ -768,6 +830,11 @@ def main(argv: Optional[list] = None) -> int:
     )
     parser.add_argument("--aapt2", help="Path to aapt2 binary")
     parser.add_argument("--published-at", help="Publication timestamp in ISO-8601 UTC format")
+    parser.add_argument(
+        "--force-public",
+        action="store_true",
+        help="Force overwriting the public release binary even if the version is unchanged.",
+    )
 
     args = parser.parse_args(argv)
 
@@ -781,6 +848,7 @@ def main(argv: Optional[list] = None) -> int:
             keep_debug_suffix=args.keep_debug_suffix,
             aapt2_bin=args.aapt2,
             published_at=args.published_at,
+            force_public=args.force_public,
         )
         print(f"Successfully published {len(published)} application(s).")
         return 0
@@ -813,6 +881,7 @@ def main(argv: Optional[list] = None) -> int:
             keep_debug_suffix=args.keep_debug_suffix,
             aapt2_bin=args.aapt2,
             published_at=args.published_at,
+            force_public=args.force_public,
         )
         print(
             f"Successfully published {manifest['slug']} v{manifest['versionName']} (Build {manifest['versionCode']})."

@@ -351,6 +351,59 @@ TEST(UpdateManifestTests, FaultHandlingInvalidInputs)
     } catch (const std::invalid_argument&) {}
 }
 
+TEST(UpdateManifestTests, LatestBlockAndReinstallManifest)
+{
+    std::string json = R"({
+      "applicationId": "com.selfso.octi",
+      "versionCode": 20003,
+      "versionName": "2.0.3",
+      "packageUrl": "octi/octi-setup.exe",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "sizeBytes": 1000000,
+      "publishedAt": "2026-10-22T09:00:00Z",
+      "latest": {
+        "packageFilename": "octi-setup-latest.exe",
+        "packageUrl": "octi/octi-setup-latest.exe?sha=22222222",
+        "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "sizeBytes": 1050000,
+        "publishedAt": "2026-10-28T10:00:00Z"
+      }
+    })";
+
+    UpdateManifest m = UpdateManifest::fromJson(json, "https://www.selfso.com/software/windows/");
+    CHECK_EQUAL("https://www.selfso.com/software/windows/octi/octi-setup.exe", m.packageUrl);
+    CHECK_EQUAL("1111111111111111111111111111111111111111111111111111111111111111", m.sha256);
+    CHECK_EQUAL(1000000, m.sizeBytes);
+    CHECK_EQUAL("2026-10-22T09:00:00Z", m.publishedAt);
+
+    CHECK_EQUAL("https://www.selfso.com/software/windows/octi/octi-setup-latest.exe?sha=22222222", m.latestPackageUrl);
+    CHECK_EQUAL("2222222222222222222222222222222222222222222222222222222222222222", m.latestSha256);
+    CHECK_EQUAL(1050000, m.latestSizeBytes);
+    CHECK_EQUAL("2026-10-28T10:00:00Z", m.latestPublishedAt);
+
+    UpdateManifest reinstall = m.reinstallManifest();
+    CHECK_EQUAL("https://www.selfso.com/software/windows/octi/octi-setup-latest.exe?sha=22222222", reinstall.packageUrl);
+    CHECK_EQUAL("2222222222222222222222222222222222222222222222222222222222222222", reinstall.sha256);
+    CHECK_EQUAL(1050000, reinstall.sizeBytes);
+    CHECK_EQUAL("2026-10-28T10:00:00Z", reinstall.publishedAt);
+    CHECK_EQUAL(20003, reinstall.versionCode);
+    CHECK_EQUAL("2.0.3", reinstall.versionName);
+
+    // If latest block is empty/missing:
+    std::string noLatestJson = R"({
+      "applicationId": "com.selfso.octi",
+      "versionCode": 20003,
+      "versionName": "2.0.3",
+      "packageUrl": "octi/octi-setup.exe",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    })";
+    UpdateManifest mNoLatest = UpdateManifest::fromJson(noLatestJson);
+    CHECK(mNoLatest.latestPackageUrl.empty());
+    UpdateManifest fallback = mNoLatest.reinstallManifest();
+    CHECK_EQUAL(mNoLatest.packageUrl, fallback.packageUrl);
+    CHECK_EQUAL(mNoLatest.sha256, fallback.sha256);
+}
+
 TEST(UpdateManifestTests, RapidCheckProperties)
 {
     // Property 1: Version comparison reflexivity and antisymmetry on arbitrary numeric tuples

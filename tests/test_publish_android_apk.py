@@ -269,6 +269,154 @@ class TestPublishAndroidApk(unittest.TestCase):
         self.assertTrue((self.web_root / "octi/octi.apk").is_file())
         self.assertTrue((self.web_root / "version.json").is_file())
 
+    def test_publish_first_time_creates_latest_and_public(self):
+        dummy_apk = self.workspace_root / "test_octi.apk"
+        dummy_apk.write_bytes(b"octi package binary bytes")
+        meta_file = dummy_apk.parent / "output-metadata.json"
+        meta_file.write_text(
+            json.dumps(
+                {
+                    "version": 3,
+                    "applicationId": "com.selfso.octi",
+                    "elements": [{"versionCode": 20002, "versionName": "2.0.2"}],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        manifest = publish_app(
+            slug="octi",
+            apk_path=dummy_apk,
+            web_root=self.web_root,
+            workspace_root=self.workspace_root,
+            no_extra_copy=True,
+            aapt2_bin="",
+        )
+
+        public_apk = self.web_root / "octi" / "octi.apk"
+        latest_apk = self.web_root / "octi" / "octi-latest.apk"
+        self.assertTrue(public_apk.is_file())
+        self.assertTrue(latest_apk.is_file())
+
+        self.assertIn("latest", manifest)
+        latest = manifest["latest"]
+        self.assertEqual(latest["apkFilename"], "octi-latest.apk")
+        self.assertEqual(latest["sha256"], manifest["sha256"])
+        sha8 = manifest["sha256"][:8]
+        self.assertEqual(
+            latest["apkUrl"],
+            f"https://www.selfso.com/software/android/octi/octi-latest.apk?sha={sha8}",
+        )
+
+    def test_publish_same_version_preserves_public_apk_and_updates_latest(self):
+        dummy_apk = self.workspace_root / "test_octi.apk"
+        dummy_apk.write_bytes(b"initial public apk bytes")
+        meta_file = dummy_apk.parent / "output-metadata.json"
+        meta_file.write_text(
+            json.dumps(
+                {
+                    "version": 3,
+                    "applicationId": "com.selfso.octi",
+                    "elements": [{"versionCode": 20002, "versionName": "2.0.2"}],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        manifest_1 = publish_app(
+            slug="octi",
+            apk_path=dummy_apk,
+            web_root=self.web_root,
+            workspace_root=self.workspace_root,
+            release_notes="Original release.",
+            no_extra_copy=True,
+            aapt2_bin="",
+        )
+
+        public_apk = self.web_root / "octi" / "octi.apk"
+        latest_apk = self.web_root / "octi" / "octi-latest.apk"
+        pub_bytes_1 = public_apk.read_bytes()
+        pub_sha_1 = manifest_1["sha256"]
+
+        # Modify contents of dummy_apk while keeping version 2.0.2
+        dummy_apk.write_bytes(b"developer iteration newer apk bytes")
+
+        manifest_2 = publish_app(
+            slug="octi",
+            apk_path=dummy_apk,
+            web_root=self.web_root,
+            workspace_root=self.workspace_root,
+            release_notes="Developer iteration build.",
+            no_extra_copy=True,
+            aapt2_bin="",
+        )
+
+        # Public binary must remain untouched
+        self.assertEqual(public_apk.read_bytes(), pub_bytes_1)
+        self.assertEqual(manifest_2["sha256"], pub_sha_1)
+        self.assertEqual(manifest_2["releaseNotes"], "Original release.")
+
+        # Latest binary must be updated to new contents
+        self.assertEqual(latest_apk.read_bytes(), dummy_apk.read_bytes())
+        self.assertNotEqual(manifest_2["latest"]["sha256"], pub_sha_1)
+        self.assertEqual(manifest_2["latest"]["releaseNotes"], "Developer iteration build.")
+
+        # Verify per-app and master version.json
+        per_app_json = json.loads((self.web_root / "octi" / "version.json").read_text(encoding="utf-8"))
+        self.assertEqual(per_app_json["sha256"], pub_sha_1)
+        self.assertEqual(per_app_json["latest"]["sha256"], manifest_2["latest"]["sha256"])
+
+        master_json = json.loads((self.web_root / "version.json").read_text(encoding="utf-8"))
+        self.assertEqual(master_json["apps"]["com.selfso.octi"]["sha256"], pub_sha_1)
+        self.assertEqual(
+            master_json["apps"]["com.selfso.octi"]["latest"]["sha256"],
+            manifest_2["latest"]["sha256"],
+        )
+
+    def test_publish_force_public_updates_both(self):
+        dummy_apk = self.workspace_root / "test_octi.apk"
+        dummy_apk.write_bytes(b"initial bytes")
+        meta_file = dummy_apk.parent / "output-metadata.json"
+        meta_file.write_text(
+            json.dumps(
+                {
+                    "version": 3,
+                    "applicationId": "com.selfso.octi",
+                    "elements": [{"versionCode": 20002, "versionName": "2.0.2"}],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        manifest_1 = publish_app(
+            slug="octi",
+            apk_path=dummy_apk,
+            web_root=self.web_root,
+            workspace_root=self.workspace_root,
+            no_extra_copy=True,
+            aapt2_bin="",
+        )
+
+        dummy_apk.write_bytes(b"forced public update bytes")
+
+        manifest_2 = publish_app(
+            slug="octi",
+            apk_path=dummy_apk,
+            web_root=self.web_root,
+            workspace_root=self.workspace_root,
+            force_public=True,
+            no_extra_copy=True,
+            aapt2_bin="",
+        )
+
+        public_apk = self.web_root / "octi" / "octi.apk"
+        latest_apk = self.web_root / "octi" / "octi-latest.apk"
+
+        self.assertEqual(public_apk.read_bytes(), dummy_apk.read_bytes())
+        self.assertEqual(latest_apk.read_bytes(), dummy_apk.read_bytes())
+        self.assertEqual(manifest_2["sha256"], manifest_2["latest"]["sha256"])
+        self.assertNotEqual(manifest_2["sha256"], manifest_1["sha256"])
+
 
 if __name__ == "__main__":
     unittest.main()

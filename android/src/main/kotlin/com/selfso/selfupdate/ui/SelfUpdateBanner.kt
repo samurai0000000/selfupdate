@@ -326,8 +326,17 @@ fun SelfUpdateBanner(
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
-                        TextButton(onClick = { controller.checkForUpdates() }) {
-                            Text("Check Again")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = {
+                                showDialog = true
+                                controller.reinstall()
+                            }) {
+                                Text("Reinstall")
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            TextButton(onClick = { controller.checkForUpdates() }) {
+                                Text("Check Again")
+                            }
                         }
                     }
                 }

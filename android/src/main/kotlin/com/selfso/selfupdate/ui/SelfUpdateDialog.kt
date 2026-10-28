@@ -69,6 +69,7 @@ fun SelfUpdateDialog(
         onDownloadAndInstall = { manifest -> controller.downloadAndInstall(manifest) },
         onInstallReadyApk = { file, manifest -> controller.installReadyApk(file, manifest) },
         onOpenPermissionSettings = { controller.openUnknownSourcesSettings() },
+        onReinstall = { controller.reinstall() },
         onDismiss = onDismiss
     )
 }
@@ -82,6 +83,7 @@ fun SelfUpdateDialog(
     onDownloadAndInstall: (UpdateManifest) -> Unit,
     onInstallReadyApk: (File, UpdateManifest) -> Unit = { _, _ -> },
     onOpenPermissionSettings: () -> Unit,
+    onReinstall: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     when (state) {

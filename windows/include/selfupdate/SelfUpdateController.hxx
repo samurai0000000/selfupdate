@@ -48,6 +48,7 @@ public:
     void downloadPackage(const UpdateManifest* manifestOverride = nullptr);
     void installStagedPackage();
     void downloadAndInstall(const UpdateManifest* manifestOverride = nullptr);
+    void reinstall();
     void cancel();
     void dismiss();
     void waitForIdle();

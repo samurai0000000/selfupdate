@@ -34,12 +34,18 @@ struct UpdateManifest {
     std::string pageUrl;
     std::string publishedAt;
     std::string releaseNotes;
+    std::string latestPackageUrl;
+    std::string latestSha256;
+    int64_t latestSizeBytes = 0;
+    std::string latestPublishedAt;
 
     static constexpr const char* DEFAULT_MANIFEST_URL =
         "https://www.selfso.com/software/windows/";
 
     bool isNewerThan(const std::string& installedVersionName,
                      int64_t installedVersionCode = 0) const;
+
+    UpdateManifest reinstallManifest() const;
 
     static int compareVersions(const std::string& lhs, const std::string& rhs);
     static int64_t parseVersionCode(const std::string& versionName);
