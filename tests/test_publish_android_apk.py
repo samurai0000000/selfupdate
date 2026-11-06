@@ -134,6 +134,12 @@ class TestPublishAndroidApk(unittest.TestCase):
         self.assertIn("site-header", html_content)
         self.assertIn("site-footer", html_content)
         self.assertIn("terminal-box", html_content)
+        self.assertIn("android-install-guide", html_content)
+        self.assertIn("Install unknown apps", html_content)
+        self.assertIn("Allow from this source", html_content)
+        self.assertIn("Google Play Protect", html_content)
+        self.assertIn("Install anyway", html_content)
+        self.assertIn("Continue with Google", html_content)
 
         # 5. Master portal index.html exists
         portal_html = self.web_root / "index.html"
@@ -142,6 +148,9 @@ class TestPublishAndroidApk(unittest.TestCase):
         self.assertIn("OCTI Strategy Game", portal_content)
         self.assertIn("OTA Self-Update Architecture", portal_content)
         self.assertIn("curl -s https://www.selfso.com/software/android/version.json", portal_content)
+        self.assertIn("android-install-guide", portal_content)
+        self.assertIn("Google Play Protect", portal_content)
+        self.assertIn("Continue with Google", portal_content)
 
     def test_multi_app_merging_and_catalog_update(self):
         # Publish octi

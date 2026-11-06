@@ -115,12 +115,21 @@ class TestPublishWindowsApp(unittest.TestCase):
         self.assertIn("OCTI Desktop Player", html_content)
         self.assertIn("octi-setup.exe", html_content)
         self.assertIn(manifest["sha256"], html_content)
+        self.assertIn("windows-install-guide", html_content)
+        self.assertIn("Windows protected your PC", html_content)
+        self.assertIn("More info", html_content)
+        self.assertIn("Run anyway", html_content)
+        self.assertIn("Continue with Google", html_content)
+        self.assertIn("Choose Your Player Name", html_content)
 
         portal_html = self.web_root / "index.html"
         self.assertTrue(portal_html.is_file())
         portal_content = portal_html.read_text(encoding="utf-8")
         self.assertIn("OCTI Desktop Player", portal_content)
         self.assertIn("/software/android/", portal_content)
+        self.assertIn("windows-install-guide", portal_content)
+        self.assertIn("Windows protected your PC", portal_content)
+        self.assertIn("Continue with Google", portal_content)
 
     def test_non_destructive_master_catalog_update(self):
         # 1. Publish octi

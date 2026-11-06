@@ -163,6 +163,589 @@ def detect_slug_from_cwd(cwd: Optional[Path] = None) -> Optional[str]:
     return None
 
 
+def render_android_install_guide_html(
+    apk_filename: str = "octi.apk",
+    app_title: str = "OCTI Strategy Game",
+    app_id: str = "com.selfso.octi",
+    sha256_hint: str = "088b054e74bac4ca96bcd2417865d9066f85e6456d125b3cd4c9449ff1203c24",
+) -> str:
+    """Render the comprehensive Android sideloading, Settings permissions, Play Protect, and Google SSO onboarding guide."""
+    sha_short = (sha256_hint[:16] + "...") if len(sha256_hint) > 16 else (sha256_hint or "<sha256>")
+    return f"""
+      <!-- Comprehensive Android Sideloading, Settings Permissions & Google Onboarding Guide -->
+      <section id="android-install-guide" style="margin-top: 3rem; border-top: 1px solid var(--border-subtle); padding-top: 2.75rem;">
+        <style>
+          .guide-alert-box {{
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-left: 5px solid #d97706;
+            border-radius: var(--radius-md);
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-card);
+          }}
+          .guide-nav-pills {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2.25rem;
+            padding: 0.85rem 1rem;
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-card);
+          }}
+          .guide-nav-pill {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: #f4f4f5;
+            border: 1px solid var(--border-subtle);
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none !important;
+          }}
+          .guide-nav-pill:hover {{
+            background: #18181b;
+            color: #ffffff;
+            border-color: #18181b;
+          }}
+          .guide-step-card {{
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            margin-bottom: 2.25rem;
+            box-shadow: var(--shadow-card);
+          }}
+          .guide-step-header {{
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+          }}
+          .guide-step-num {{
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #18181b;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          }}
+          .guide-callout-badge {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #dc2626;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 0.35rem;
+            vertical-align: middle;
+          }}
+          .guide-screenshot-frame {{
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1.25rem;
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+          }}
+          .guide-screenshot-bar {{
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 0.55rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }}
+          .guide-checklist {{
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.25rem 0;
+          }}
+          .guide-checklist li {{
+            position: relative;
+            padding: 0.6rem 0.85rem;
+            margin-bottom: 0.55rem;
+            background: #fafafa;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+          }}
+          .guide-checklist li strong {{
+            color: var(--text-primary);
+          }}
+        </style>
+
+        <span class="badge badge-vermilion" style="margin-bottom: 0.75rem;">Step-by-Step Visual Installation &amp; Onboarding Guide</span>
+        <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">How to Install on Android (Direct APK) &amp; Onboard with Google</h2>
+        <p style="color: var(--text-secondary); max-width: 820px; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+          Because Selfso Android applications are distributed directly from <code>selfso.com</code> via our independent Over-The-Air (OTA) portal rather than hosted on the commercial <strong>Google Play Store</strong>, Android requires you to grant <strong>Install unknown apps</strong> permission and confirm <strong>Google Play Protect</strong> on your first install. Follow this step-by-step visual guide with screenshots to install the app and sign in with your <strong>Google Account</strong>.
+        </p>
+
+        <!-- Why Android Warns You (The Facts) -->
+        <div class="guide-alert-box" id="android-why-warnings">
+          <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <h3 style="font-size: 1.2rem; color: #92400e; margin: 0;">Why Does Android Warn You About Installing <code>{apk_filename}</code>?</h3>
+          </div>
+          <p style="color: #78350f; font-size: 0.96rem; line-height: 1.65; margin-bottom: 0.85rem;">
+            <strong>1. Direct Independent OTA Distribution (Not on Google Play Store):</strong> Selfso distributes Android applications directly from <code>www.selfso.com/software/android/</code> so releases and updates reach your device immediately without app-store gatekeeping or telemetry trackers. By default, Android blocks web browsers (such as Chrome) from installing <code>.apk</code> packages outside the Play Store until you toggle <strong>Allow from this source</strong> in Android Settings.
+          </p>
+          <p style="color: #78350f; font-size: 0.96rem; line-height: 1.65; margin-bottom: 0;">
+            <strong>2. Cryptographic Signing &amp; One-Time Setup:</strong> Every Selfso APK (<code>{app_id}</code>) is cryptographically signed with the official Selfso release key and published alongside its <strong>SHA-256 digest</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once you complete this initial install, all future updates are verified and installed directly inside the app via <code>com.selfso.selfupdate</code>!
+          </p>
+        </div>
+
+        <!-- Quick Jump Navigation -->
+        <div class="guide-nav-pills" aria-label="Android Installation Guide Steps">
+          <a href="#and-step-1" class="guide-nav-pill"><span>1</span> Chrome APK Download</a>
+          <a href="#and-step-2" class="guide-nav-pill"><span>2</span> Settings: Install Unknown Apps</a>
+          <a href="#and-step-3" class="guide-nav-pill"><span>3</span> Google Play Protect</a>
+          <a href="#and-step-4" class="guide-nav-pill"><span>4</span> Samsung Auto Blocker &amp; Permissions</a>
+          <a href="#and-step-5" class="guide-nav-pill"><span>5</span> Google Account Onboarding</a>
+        </div>
+
+        <!-- STEP 1: Download the APK in Chrome / Browser -->
+        <div class="guide-step-card" id="and-step-1">
+          <div class="guide-step-header">
+            <span class="guide-step-num">1</span>
+            <div>
+              <span class="badge" style="margin-bottom: 0.35rem;">Chrome for Android &bull; Mobile Browser</span>
+              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 1: Download <code>{apk_filename}</code> &amp; Tap &ldquo;Open&rdquo;</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+                When you tap the <strong>Download APK</strong> button on your phone, Google Chrome displays a standard warning dialog because <code>.apk</code> files are installable application packages.
+              </p>
+            </div>
+          </div>
+
+          <ul class="guide-checklist">
+            <li><span class="guide-callout-badge">1</span> <strong>Tap &ldquo;Download anyway&rdquo;:</strong> When Chrome shows <em>&ldquo;File might be harmful &mdash; Do you want to download {apk_filename} anyway?&rdquo;</em> at the bottom of your screen, tap <strong>Download anyway</strong>.</li>
+            <li><span class="guide-callout-badge">2</span> <strong>Tap &ldquo;Open&rdquo; When Completed:</strong> Once the download finishes, tap <strong>Open</strong> on the Chrome notification bar (or open Chrome&rsquo;s <code>&#8942; &rarr; Downloads</code> menu / your phone&rsquo;s <strong>Files</strong> app and tap <code>{apk_filename}</code>).</li>
+          </ul>
+
+          <div class="guide-screenshot-frame">
+            <div class="guide-screenshot-bar">
+              <span>SCREENSHOT 1 &bull; Android Chrome APK Download Prompt &amp; Open Notification</span>
+              <span>Package: {apk_filename}</span>
+            </div>
+            <svg viewBox="0 0 920 350" width="100%" style="display: block; background: #0f172a; font-family: Roboto, 'Segoe UI', Inter, sans-serif;" role="img" aria-label="Phone screenshots showing Chrome File might be harmful Download anyway prompt and File downloaded Open toast">
+              <!-- Phone 1A: File might be harmful -->
+              <rect x="65" y="18" width="350" height="314" rx="22" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+              <rect x="195" y="28" width="90" height="6" rx="3" fill="#475569"/>
+              <text x="90" y="54" fill="#94a3b8" font-size="11" font-weight="600">SCREEN 1A &bull; Chrome Download Warning</text>
+
+              <!-- Browser address bar -->
+              <rect x="85" y="66" width="310" height="28" rx="14" fill="#0f172a"/>
+              <text x="104" y="84" fill="#cbd5e1" font-size="11" font-family="monospace">https://www.selfso.com/software/android/</text>
+
+              <!-- Bottom sheet modal -->
+              <rect x="77" y="138" width="326" height="182" rx="16" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
+              <circle cx="110" cy="172" r="14" fill="#ef4444" fill-opacity="0.2" stroke="#ef4444" stroke-width="2"/>
+              <text x="106" y="177" fill="#f87171" font-size="15" font-weight="800">!</text>
+              <text x="134" y="170" fill="#f8fafc" font-size="14" font-weight="700">File might be harmful</text>
+              <text x="96" y="198" fill="#cbd5e1" font-size="12">Do you want to download <tspan fill="#93c5fd" font-family="monospace" font-weight="600">{apk_filename}</tspan></text>
+              <text x="96" y="216" fill="#cbd5e1" font-size="12">anyway?</text>
+
+              <rect x="96" y="262" width="110" height="38" rx="19" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+              <text x="130" y="286" fill="#93c5fd" font-size="12.5" font-weight="600">Cancel</text>
+
+              <!-- Download anyway button highlighted -->
+              <rect x="218" y="260" width="166" height="42" rx="21" fill="#2563eb" stroke="#fde047" stroke-width="3"/>
+              <text x="242" y="286" fill="#ffffff" font-size="13" font-weight="700">Download anyway</text>
+              <circle cx="384" cy="258" r="13" fill="#dc2626"/>
+              <text x="380" y="263" fill="#ffffff" font-size="12.5" font-weight="700">1</text>
+
+              <!-- Arrow between phones -->
+              <path d="M 435 175 L 485 175" stroke="#fde047" stroke-width="3" stroke-linecap="round"/>
+              <polygon points="483,169 493,175 483,181" fill="#fde047"/>
+
+              <!-- Phone 1B: Download complete -> Open -->
+              <rect x="505" y="18" width="350" height="314" rx="22" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+              <rect x="635" y="28" width="90" height="6" rx="3" fill="#475569"/>
+              <text x="530" y="54" fill="#86efac" font-size="11" font-weight="600">SCREEN 1B &bull; Tap &ldquo;Open&rdquo; After Download</text>
+
+              <!-- Top toast notification -->
+              <rect x="522" y="74" width="316" height="72" rx="14" fill="#0f172a" stroke="#22c55e" stroke-width="2"/>
+              <circle cx="550" cy="110" r="14" fill="#16a34a" fill-opacity="0.25"/>
+              <text x="544" y="115" fill="#4ade80" font-size="15" font-weight="800">&#10003;</text>
+              <text x="574" y="104" fill="#f8fafc" font-size="13" font-weight="700">File downloaded</text>
+              <text x="574" y="124" fill="#94a3b8" font-size="11.5" font-family="monospace">{apk_filename}</text>
+
+              <!-- Open button highlighted -->
+              <rect x="752" y="90" width="72" height="38" rx="19" fill="#16a34a" stroke="#fde047" stroke-width="2.5"/>
+              <text x="771" y="114" fill="#ffffff" font-size="13" font-weight="700">Open</text>
+              <circle cx="826" cy="88" r="13" fill="#dc2626"/>
+              <text x="822" y="93" fill="#ffffff" font-size="12.5" font-weight="700">2</text>
+
+              <!-- Alternative Files/Downloads tip box -->
+              <rect x="525" y="176" width="310" height="128" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+              <text x="542" y="202" fill="#f8fafc" font-size="12.5" font-weight="700">Missed the &ldquo;Open&rdquo; popup?</text>
+              <text x="542" y="226" fill="#cbd5e1" font-size="11.5">1. Tap the <tspan fill="#fde047" font-weight="700">&#8942;</tspan> menu at top-right of Chrome</text>
+              <text x="542" y="248" fill="#cbd5e1" font-size="11.5">2. Tap <tspan fill="#93c5fd" font-weight="700">Downloads</tspan> (or open the <tspan fill="#93c5fd" font-weight="700">Files</tspan> app)</text>
+              <text x="542" y="270" fill="#cbd5e1" font-size="11.5">3. Tap <tspan fill="#86efac" font-family="monospace" font-weight="700">{apk_filename}</tspan> to launch installer</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- STEP 2: Enable "Install Unknown Apps" in Android Settings -->
+        <div class="guide-step-card" id="and-step-2">
+          <div class="guide-step-header">
+            <span class="guide-step-num">2</span>
+            <div>
+              <span class="badge badge-vermilion" style="margin-bottom: 0.35rem;">Required First-Time Android Permission</span>
+              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 2: Enable &ldquo;Install Unknown Apps&rdquo; in Android Settings</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+                When you open <code>{apk_filename}</code> for the first time, Android stops to ask permission for your browser (or Files app) to install apps outside the Google Play Store.
+              </p>
+            </div>
+          </div>
+
+          <ul class="guide-checklist">
+            <li><span class="guide-callout-badge">1</span> <strong>Tap &ldquo;Settings&rdquo; in the Security Prompt:</strong> When Android displays <em>&ldquo;For your security, your phone currently isn&rsquo;t allowed to install unknown apps from this source&rdquo;</em>, tap <strong>Settings</strong>.</li>
+            <li><span class="guide-callout-badge">2</span> <strong>Toggle &ldquo;Allow from this source&rdquo; ON:</strong> In the <strong>Install unknown apps</strong> screen (also reachable via <em>Settings &rarr; Apps &rarr; Special app access &rarr; Install unknown apps &rarr; Chrome</em>), tap the switch next to <strong>Allow from this source</strong> so it turns <strong>ON</strong>.</li>
+            <li><span class="guide-callout-badge">3</span> <strong>Tap Back (<code>&larr;</code>) &amp; Tap &ldquo;Install&rdquo;:</strong> Press the Android Back button once to return to the installer dialog and tap <strong>Install</strong>.</li>
+          </ul>
+
+          <div class="guide-screenshot-frame">
+            <div class="guide-screenshot-bar">
+              <span>SCREENSHOT 2 &bull; Android Settings &rarr; Install Unknown Apps &rarr; Allow From This Source</span>
+              <span>Android 10 / 11 / 12 / 13 / 14 / 15</span>
+            </div>
+            <svg viewBox="0 0 920 360" width="100%" style="display: block; background: #0f172a; font-family: Roboto, 'Segoe UI', Inter, sans-serif;" role="img" aria-label="Three Android phone screens showing Settings prompt, Allow from this source toggle in Install unknown apps, and Do you want to install this app Install button">
+              <!-- Phone 2A: Prompt -> Tap Settings -->
+              <rect x="18" y="20" width="276" height="320" rx="20" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+              <text x="36" y="48" fill="#94a3b8" font-size="11" font-weight="700">2A &bull; Unknown Apps Prompt</text>
+
+              <rect x="32" y="88" width="248" height="190" rx="14" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
+              <text x="48" y="116" fill="#f8fafc" font-size="13.5" font-weight="700">Chrome</text>
+              <text x="48" y="140" fill="#cbd5e1" font-size="11.5">For your security, your phone</text>
+              <text x="48" y="158" fill="#cbd5e1" font-size="11.5">currently isn&apos;t allowed to install</text>
+              <text x="48" y="176" fill="#cbd5e1" font-size="11.5">unknown apps from this source.</text>
+              <text x="48" y="194" fill="#cbd5e1" font-size="11.5">You can change this in Settings.</text>
+
+              <text x="122" y="250" fill="#94a3b8" font-size="12.5" font-weight="600">Cancel</text>
+              <!-- Settings button highlighted -->
+              <rect x="182" y="228" width="84" height="34" rx="17" fill="#2563eb" stroke="#fde047" stroke-width="2.5"/>
+              <text x="199" y="250" fill="#ffffff" font-size="12.5" font-weight="700">Settings</text>
+              <circle cx="266" cy="226" r="12" fill="#dc2626"/>
+              <text x="262" y="231" fill="#ffffff" font-size="12" font-weight="700">1</text>
+
+              <!-- Phone 2B: Settings -> Allow from this source -->
+              <rect x="322" y="20" width="276" height="320" rx="20" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+              <text x="340" y="48" fill="#fde047" font-size="11" font-weight="700">2B &bull; Toggle Permission ON</text>
+
+              <!-- Back arrow & header -->
+              <rect x="336" y="62" width="248" height="36" rx="8" fill="#0f172a"/>
+              <text x="350" y="85" fill="#93c5fd" font-size="15" font-weight="800">&larr;</text>
+              <text x="376" y="85" fill="#f8fafc" font-size="13" font-weight="700">Install unknown apps</text>
+
+              <!-- App icon & name -->
+              <circle cx="460" cy="128" r="20" fill="#2563eb"/>
+              <text x="453" y="134" fill="#ffffff" font-size="15" font-weight="700">C</text>
+              <text x="434" y="164" fill="#f8fafc" font-size="13" font-weight="700">Chrome</text>
+
+              <!-- Allow from this source toggle card -->
+              <rect x="336" y="182" width="248" height="58" rx="10" fill="#0f172a" stroke="#22c55e" stroke-width="2.5"/>
+              <text x="350" y="216" fill="#f8fafc" font-size="12.5" font-weight="700">Allow from this source</text>
+              <rect x="520" y="199" width="48" height="24" rx="12" fill="#16a34a"/>
+              <circle cx="556" cy="211" r="9" fill="#ffffff"/>
+              <circle cx="574" cy="184" r="12" fill="#dc2626"/>
+              <text x="570" y="189" fill="#ffffff" font-size="12" font-weight="700">2</text>
+
+              <text x="344" y="268" fill="#94a3b8" font-size="11">After toggling ON, tap Back (&larr;)</text>
+              <text x="344" y="286" fill="#94a3b8" font-size="11">to return to the installer dialog.</text>
+
+              <!-- Phone 2C: Do you want to install this app? -> Install -->
+              <rect x="626" y="20" width="276" height="320" rx="20" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+              <text x="644" y="48" fill="#86efac" font-size="11" font-weight="700">2C &bull; Tap &ldquo;Install&rdquo;</text>
+
+              <rect x="640" y="88" width="248" height="190" rx="14" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
+              <text x="658" y="118" fill="#f8fafc" font-size="14" font-weight="700">{app_title}</text>
+              <text x="658" y="144" fill="#cbd5e1" font-size="12">Do you want to install this</text>
+              <text x="658" y="162" fill="#cbd5e1" font-size="12">application?</text>
+              <text x="658" y="190" fill="#94a3b8" font-size="11" font-family="monospace">{app_id}</text>
+
+              <text x="730" y="250" fill="#94a3b8" font-size="12.5" font-weight="600">Cancel</text>
+              <rect x="792" y="228" width="82" height="34" rx="17" fill="#16a34a" stroke="#fde047" stroke-width="2.5"/>
+              <text x="813" y="250" fill="#ffffff" font-size="12.5" font-weight="700">Install</text>
+              <circle cx="876" cy="226" r="12" fill="#dc2626"/>
+              <text x="872" y="231" fill="#ffffff" font-size="12" font-weight="700">3</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- STEP 3: Pass Google Play Protect ("More details" -> "Install anyway") -->
+        <div class="guide-step-card" id="and-step-3">
+          <div class="guide-step-header">
+            <span class="guide-step-num">3</span>
+            <div>
+              <span class="badge badge-vermilion" style="margin-bottom: 0.35rem;">Most Important Step &bull; Google Play Protect</span>
+              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 3: Pass Google Play Protect (&ldquo;More details&rdquo; &rarr; &ldquo;Install anyway&rdquo;)</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+                During installation, <strong>Google Play Protect</strong> may display an <em>&ldquo;Unrecognized app&rdquo;</em> or <em>&ldquo;Blocked by Play Protect&rdquo;</em> dialog because the app is distributed directly from <code>selfso.com</code> rather than the Play Store. <strong>Do NOT tap &ldquo;Don&rsquo;t install&rdquo; or &ldquo;OK&rdquo;</strong> &mdash; follow the two taps below:
+              </p>
+            </div>
+          </div>
+
+          <ul class="guide-checklist">
+            <li><span class="guide-callout-badge">1</span> <strong>Tap &ldquo;More details &#8964;&rdquo;:</strong> Directly beneath the Play Protect warning paragraph, tap the <strong>More details &#8964;</strong> link to expand the hidden options.</li>
+            <li><span class="guide-callout-badge">2</span> <strong>Tap &ldquo;Install anyway&rdquo;:</strong> At the bottom of the expanded text, tap the underlined <strong>Install anyway</strong> link (if Play Protect asks to scan the app first, you may tap <em>Scan app</em> or <em>Install without scanning</em>).</li>
+            <li><span class="guide-callout-badge">3</span> <strong>Tap &ldquo;Open&rdquo;:</strong> Once Android confirms <em>&ldquo;App installed&rdquo;</em>, tap <strong>Open</strong> to launch {app_title}!</li>
+          </ul>
+
+          <div class="guide-screenshot-frame">
+            <div class="guide-screenshot-bar">
+              <span>SCREENSHOT 3 &bull; Google Play Protect Modal (&ldquo;More details&rdquo; &rarr; &ldquo;Install anyway&rdquo;)</span>
+              <span>Google Play Protect</span>
+            </div>
+            <svg viewBox="0 0 920 360" width="100%" style="display: block; background: #0f172a; font-family: Roboto, 'Segoe UI', Inter, sans-serif;" role="img" aria-label="Before and after phone screenshots of Google Play Protect showing More details and Install anyway">
+              <!-- Phone 3A: Initial Play Protect Dialog -->
+              <rect x="65" y="18" width="350" height="324" rx="22" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+              <text x="90" y="48" fill="#fde047" font-size="11" font-weight="700">STATE A &bull; Initial Play Protect Prompt</text>
+
+              <rect x="85" y="62" width="310" height="260" rx="16" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+              <text x="108" y="92" fill="#fbbf24" font-size="12" font-weight="700">&#9888; Google Play Protect</text>
+              <text x="108" y="118" fill="#f8fafc" font-size="14.5" font-weight="700">Play Protect doesn&apos;t recognize</text>
+              <text x="108" y="138" fill="#f8fafc" font-size="14.5" font-weight="700">this app&apos;s developer</text>
+              <text x="108" y="164" fill="#cbd5e1" font-size="11.5">Apps from unknown developers can sometimes</text>
+              <text x="108" y="182" fill="#cbd5e1" font-size="11.5">be unsafe. Only install if you trust the source.</text>
+
+              <!-- More details highlighted -->
+              <rect x="104" y="198" width="126" height="32" rx="6" fill="#dc2626" fill-opacity="0.28" stroke="#fca5a5" stroke-width="2.5"/>
+              <text x="114" y="219" fill="#93c5fd" font-size="12.5" font-weight="700">More details &#8964;</text>
+              <circle cx="242" cy="214" r="13" fill="#dc2626"/>
+              <text x="238" y="219" fill="#ffffff" font-size="12.5" font-weight="700">1</text>
+              <text x="262" y="219" fill="#fde047" font-size="11.5" font-weight="700">&larr; Tap here!</text>
+
+              <!-- Prominent Don't install button (do not tap) -->
+              <rect x="108" y="264" width="264" height="38" rx="19" fill="#334155"/>
+              <text x="182" y="288" fill="#cbd5e1" font-size="12.5">Don&apos;t install (Skip)</text>
+
+              <!-- Arrow -->
+              <path d="M 435 180 L 485 180" stroke="#fde047" stroke-width="3" stroke-linecap="round"/>
+              <polygon points="483,174 493,180 483,186" fill="#fde047"/>
+
+              <!-- Phone 3B: Expanded Play Protect Dialog -> Install anyway -->
+              <rect x="505" y="18" width="350" height="324" rx="22" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+              <text x="530" y="48" fill="#86efac" font-size="11" font-weight="700">STATE B &bull; Tap &ldquo;Install anyway&rdquo;</text>
+
+              <rect x="525" y="62" width="310" height="260" rx="16" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+              <text x="548" y="90" fill="#fbbf24" font-size="12" font-weight="700">&#9888; Google Play Protect (Expanded)</text>
+              <text x="548" y="114" fill="#cbd5e1" font-size="11.5">Play Protect hasn&apos;t seen this app before</text>
+              <text x="548" y="132" fill="#cbd5e1" font-size="11.5">because it was downloaded directly from</text>
+              <text x="548" y="150" fill="#93c5fd" font-size="11.5" font-family="monospace">www.selfso.com</text>
+
+              <!-- Install anyway highlighted -->
+              <rect x="544" y="170" width="154" height="38" rx="8" fill="#16a34a" fill-opacity="0.28" stroke="#22c55e" stroke-width="2.5"/>
+              <text x="560" y="194" fill="#86efac" font-size="13.5" font-weight="700" text-decoration="underline">Install anyway</text>
+              <circle cx="712" cy="189" r="13" fill="#dc2626"/>
+              <text x="708" y="194" fill="#ffffff" font-size="12.5" font-weight="700">2</text>
+
+              <!-- Installed -> Open banner -->
+              <rect x="544" y="232" width="272" height="68" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+              <text x="560" y="258" fill="#86efac" font-size="12.5" font-weight="700">&#10003; App installed</text>
+              <text x="560" y="278" fill="#cbd5e1" font-size="11">{app_title}</text>
+              <rect x="726" y="246" width="76" height="36" rx="18" fill="#2563eb" stroke="#fde047" stroke-width="2"/>
+              <text x="747" y="269" fill="#ffffff" font-size="12.5" font-weight="700">Open</text>
+              <circle cx="804" cy="244" r="12" fill="#dc2626"/>
+              <text x="800" y="249" fill="#ffffff" font-size="12" font-weight="700">3</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- STEP 4: Samsung One UI Auto Blocker, Android 14+ Restricted Settings & App Permissions -->
+        <div class="guide-step-card" id="and-step-4">
+          <div class="guide-step-header">
+            <span class="guide-step-num">4</span>
+            <div>
+              <span class="badge" style="margin-bottom: 0.35rem;">Samsung Galaxy One UI 6+ &bull; Android 14/15 Permissions</span>
+              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 4: Samsung &ldquo;Auto Blocker&rdquo; Settings &amp; Microphone Permissions</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+                Using a newer Samsung Galaxy phone or joining a live P2P voice chat table? Check these two Android Settings screens:
+              </p>
+            </div>
+          </div>
+
+          <ul class="guide-checklist">
+            <li><span class="guide-callout-badge">1</span> <strong>Samsung Galaxy Users (One UI 6.0 / 6.1+ &ldquo;Auto Blocker&rdquo;):</strong> Newer Samsung phones turn on <em>Auto Blocker</em> by default, which blocks all non-Play-Store APKs with <em>&ldquo;Blocked by Auto Blocker&rdquo;</em>. Open <strong>Settings &rarr; Security and privacy &rarr; Auto Blocker</strong> and toggle <strong>Auto Blocker OFF</strong> while installing.</li>
+            <li><span class="guide-callout-badge">2</span> <strong>Android 13 / 14 / 15 &ldquo;Restricted Settings&rdquo; Unlock:</strong> If a special permission is grayed out with <em>&ldquo;Restricted setting&rdquo;</em>, open <strong>Settings &rarr; Apps &rarr; {app_title}</strong>, tap the top-right <strong><code>&#8942;</code> (3-dot menu)</strong>, and tap <strong>Allow restricted settings</strong>.</li>
+            <li><span class="guide-callout-badge">3</span> <strong>Microphone Permission for Live P2P Voice Chat:</strong> When you unmute or join a voice-enabled match, Android asks <em>&ldquo;Allow {app_title} to record audio?&rdquo;</em> &mdash; tap <strong>While using the app</strong> (or enable it anytime in <em>Settings &rarr; Apps &rarr; {app_title} &rarr; Permissions &rarr; Microphone</em>).</li>
+          </ul>
+
+          <div class="guide-screenshot-frame">
+            <div class="guide-screenshot-bar">
+              <span>SCREENSHOT 4 &bull; Samsung Auto Blocker Setting &amp; Android Microphone Runtime Permission</span>
+              <span>Settings &rarr; Security &amp; Privacy / Permissions</span>
+            </div>
+            <svg viewBox="0 0 920 330" width="100%" style="display: block; background: #0f172a; font-family: Roboto, 'Segoe UI', Inter, sans-serif;" role="img" aria-label="Phone screenshots showing Samsung Settings Security and privacy Auto Blocker toggle Off and Android Microphone permission While using the app">
+              <!-- Phone 4A: Samsung Auto Blocker & Restricted Settings -->
+              <rect x="65" y="18" width="350" height="294" rx="22" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+              <text x="90" y="46" fill="#93c5fd" font-size="11" font-weight="700">4A &bull; Samsung Settings &rsaquo; Auto Blocker</text>
+
+              <rect x="85" y="60" width="310" height="106" rx="12" fill="#0f172a" stroke="#ef4444" stroke-width="2"/>
+              <text x="102" y="86" fill="#f8fafc" font-size="13" font-weight="700">Security and privacy &rsaquo; Auto Blocker</text>
+              <text x="102" y="108" fill="#cbd5e1" font-size="11">Toggle OFF temporarily to allow installing</text>
+              <text x="102" y="124" fill="#cbd5e1" font-size="11">direct APK packages outside Play Store.</text>
+              <rect x="102" y="134" width="140" height="24" rx="12" fill="#334155"/>
+              <text x="116" y="150" fill="#fde047" font-size="11.5" font-weight="700">Off (Allowed)</text>
+              <circle cx="380" cy="64" r="12" fill="#dc2626"/>
+              <text x="376" y="69" fill="#ffffff" font-size="12" font-weight="700">1</text>
+
+              <!-- Android 14 Restricted Settings -->
+              <rect x="85" y="180" width="310" height="112" rx="12" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+              <text x="102" y="206" fill="#f8fafc" font-size="12.5" font-weight="700">Settings &rsaquo; Apps &rsaquo; App info (Top-Right &#8942;)</text>
+              <text x="102" y="228" fill="#cbd5e1" font-size="11">On Android 14/15, tap <tspan fill="#fde047" font-weight="700">&#8942;</tspan> at top-right of App Info</text>
+              <rect x="102" y="242" width="210" height="34" rx="8" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5"/>
+              <text x="116" y="264" fill="#93c5fd" font-size="12" font-weight="700">&#10003; Allow restricted settings</text>
+              <circle cx="380" cy="184" r="12" fill="#dc2626"/>
+              <text x="376" y="189" fill="#ffffff" font-size="12" font-weight="700">2</text>
+
+              <!-- Phone 4B: Microphone Runtime Permission -->
+              <rect x="505" y="18" width="350" height="294" rx="22" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+              <text x="530" y="46" fill="#86efac" font-size="11" font-weight="700">4B &bull; Microphone Permission (Voice Chat)</text>
+
+              <rect x="530" y="68" width="300" height="224" rx="16" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
+              <circle cx="680" cy="100" r="16" fill="#2563eb" fill-opacity="0.25"/>
+              <text x="673" y="106" fill="#60a5fa" font-size="16" font-weight="700">&#127908;</text>
+              <text x="562" y="134" fill="#f8fafc" font-size="13" font-weight="700">Allow {app_title}</text>
+              <text x="615" y="152" fill="#f8fafc" font-size="13" font-weight="700">to record audio?</text>
+
+              <!-- While using the app highlighted -->
+              <rect x="550" y="170" width="260" height="38" rx="19" fill="#16a34a" stroke="#fde047" stroke-width="2.5"/>
+              <text x="612" y="194" fill="#ffffff" font-size="12.5" font-weight="700">While using the app</text>
+              <circle cx="814" cy="170" r="12" fill="#dc2626"/>
+              <text x="810" y="175" fill="#ffffff" font-size="12" font-weight="700">3</text>
+
+              <rect x="550" y="216" width="260" height="32" rx="16" fill="#1e293b"/>
+              <text x="634" y="237" fill="#cbd5e1" font-size="12">Only this time</text>
+              <text x="646" y="274" fill="#94a3b8" font-size="12">Don&apos;t allow</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- STEP 5: Onboarding with Google Account on Android (SSO) -->
+        <div class="guide-step-card" id="and-step-5">
+          <div class="guide-step-header">
+            <span class="guide-step-num">5</span>
+            <div>
+              <span class="badge badge-indigo" style="margin-bottom: 0.35rem;">Google OAuth 2.0 SSO &bull; Instant Deep-Link Return</span>
+              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 5: Sign In &amp; Onboard with Your Google Account</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+                Sign in with your Google Account inside the Android app to play rated online matches, join live voice/text chat rooms, and synchronize your Elo ratings and game archives across Android, Windows Desktop, and Web (<code>https://octi.selfso.com</code>).
+              </p>
+            </div>
+          </div>
+
+          <ul class="guide-checklist">
+            <li><span class="guide-callout-badge">1</span> <strong>Tap &ldquo;Sign In&rdquo; &rarr; &ldquo;Continue with Google&rdquo;:</strong> Launch the app and tap <strong>Sign In</strong> (or the <strong>Account</strong> button in the top bar / Online Lobby). In the <strong>&ldquo;Sign In to OCTI&rdquo;</strong> dialog, tap the gold/brass <strong>Continue with Google</strong> button.</li>
+            <li><span class="guide-callout-badge">2</span> <strong>Tap Your Google Account:</strong> The app opens Google&rsquo;s official sign-in screen (<code>accounts.google.com</code>) in a secure Custom Tab / browser. Tap your Google account to continue.</li>
+            <li><span class="guide-callout-badge">3</span> <strong>Automatic Deep-Link Return &amp; Enter Player Name:</strong> Android automatically returns to the app via <code>octi://auth/callback</code>. On your first sign-in, the <strong>&ldquo;Welcome to OCTI!&rdquo;</strong> onboarding dialog prompts <em>&ldquo;Choose the player name others will see:&rdquo;</em> &mdash; enter your desired <strong>Player Name</strong> (<code>3&ndash;24</code> characters).</li>
+            <li><span class="guide-callout-badge">4</span> <strong>Tap &ldquo;Continue&rdquo; &amp; Play Online:</strong> Tap <strong>Continue</strong>. Your Google avatar, player name, and Elo ratings (<code>Rating &mdash; 2P: 1500 &bull; 4P: 1500 &bull; OFK: 1500</code>) are now active across all your devices!</li>
+          </ul>
+
+          <div class="guide-screenshot-frame">
+            <div class="guide-screenshot-bar">
+              <span>SCREENSHOT 5 &bull; Android In-App Google Sign-In, Deep-Link Return &amp; Player Name Onboarding</span>
+              <span>octi://auth/callback &bull; Google SSO</span>
+            </div>
+            <svg viewBox="0 0 920 360" width="100%" style="display: block; background: #0f172a; font-family: Roboto, 'Segoe UI', Inter, sans-serif;" role="img" aria-label="Three Android phone screens showing Sign In to OCTI Continue with Google button, Google account selector, and Welcome to OCTI Player Name onboarding">
+              <!-- Phone 5A: Sign In to OCTI Dialog -->
+              <rect x="18" y="20" width="276" height="320" rx="20" fill="#1c1917" stroke="#b45309" stroke-width="2"/>
+              <text x="36" y="48" fill="#fbbf24" font-size="11" font-weight="700">5A &bull; Tap &ldquo;Continue with Google&rdquo;</text>
+
+              <rect x="32" y="68" width="248" height="248" rx="14" fill="#292524" stroke="#78350f" stroke-width="1.5"/>
+              <text x="48" y="98" fill="#f59e0b" font-size="16" font-weight="700">Sign In to OCTI</text>
+              <text x="48" y="122" fill="#d6d3d1" font-size="11.5">Sign in to play online, chat with</text>
+              <text x="48" y="140" fill="#d6d3d1" font-size="11.5">players, and track your rating.</text>
+
+              <!-- Brass Continue with Google button -->
+              <rect x="46" y="164" width="220" height="46" rx="23" fill="#d97706" stroke="#fde047" stroke-width="3"/>
+              <circle cx="72" cy="187" r="11" fill="#ffffff"/>
+              <text x="67" y="192" fill="#2563eb" font-size="13" font-weight="800">G</text>
+              <text x="92" y="192" fill="#1c1917" font-size="13" font-weight="800">Continue with Google</text>
+              <circle cx="264" cy="162" r="12" fill="#dc2626"/>
+              <text x="260" y="167" fill="#ffffff" font-size="12" font-weight="700">1</text>
+
+              <rect x="192" y="266" width="72" height="32" rx="16" fill="#1c1917" stroke="#57534e" stroke-width="1"/>
+              <text x="212" y="287" fill="#d6d3d1" font-size="12">Close</text>
+
+              <!-- Phone 5B: Google Account Chooser -->
+              <rect x="322" y="20" width="276" height="320" rx="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+              <text x="340" y="48" fill="#1e293b" font-size="11" font-weight="700">5B &bull; Select Google Account</text>
+
+              <text x="344" y="80" fill="#202124" font-size="15.5" font-weight="700">Choose an account</text>
+              <text x="344" y="100" fill="#5f6368" font-size="11.5">to continue to <tspan fill="#1a73e8" font-weight="700">octi.selfso.com</tspan></text>
+
+              <!-- Account row highlighted -->
+              <rect x="338" y="118" width="244" height="64" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+              <circle cx="366" cy="150" r="18" fill="#2563eb"/>
+              <text x="360" y="156" fill="#ffffff" font-size="15" font-weight="700">A</text>
+              <text x="394" y="145" fill="#1e293b" font-size="13" font-weight="700">Alex Player</text>
+              <text x="394" y="164" fill="#64748b" font-size="11.5">alex.player@gmail.com</text>
+              <circle cx="578" cy="120" r="12" fill="#dc2626"/>
+              <text x="574" y="125" fill="#ffffff" font-size="12" font-weight="700">2</text>
+
+              <rect x="338" y="204" width="244" height="92" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+              <text x="352" y="228" fill="#166534" font-size="12" font-weight="700">&#10003; Instant Deep-Link Return</text>
+              <text x="352" y="248" fill="#15803d" font-size="11">Redirects automatically back into</text>
+              <text x="352" y="266" fill="#15803d" font-size="11" font-family="monospace">octi://auth/callback</text>
+
+              <!-- Phone 5C: Welcome to OCTI Onboarding -->
+              <rect x="626" y="20" width="276" height="320" rx="20" fill="#1c1917" stroke="#b45309" stroke-width="2"/>
+              <text x="644" y="48" fill="#86efac" font-size="11" font-weight="700">5C &bull; Choose Player Name &amp; Play</text>
+
+              <rect x="640" y="64" width="248" height="256" rx="14" fill="#292524" stroke="#78350f" stroke-width="1.5"/>
+              <text x="656" y="90" fill="#f59e0b" font-size="15" font-weight="700">Welcome to OCTI!</text>
+              <text x="656" y="110" fill="#d6d3d1" font-size="11">Choose the player name others will see:</text>
+
+              <!-- OutlinedTextField Player Name -->
+              <rect x="654" y="122" width="220" height="42" rx="6" fill="#1c1917" stroke="#f59e0b" stroke-width="2"/>
+              <text x="664" y="136" fill="#fbbf24" font-size="9.5">Player Name</text>
+              <text x="664" y="154" fill="#fef3c7" font-size="13" font-family="monospace" font-weight="700">GrandmasterA</text>
+              <circle cx="872" cy="122" r="12" fill="#dc2626"/>
+              <text x="868" y="127" fill="#ffffff" font-size="12" font-weight="700">3</text>
+
+              <!-- Continue button -->
+              <rect x="768" y="176" width="106" height="36" rx="18" fill="#d97706" stroke="#fde047" stroke-width="2.5"/>
+              <text x="792" y="199" fill="#1c1917" font-size="12.5" font-weight="800">Continue</text>
+              <circle cx="874" cy="176" r="12" fill="#dc2626"/>
+              <text x="870" y="181" fill="#ffffff" font-size="12" font-weight="700">4</text>
+
+              <!-- Connected Profile Summary -->
+              <rect x="654" y="224" width="220" height="82" rx="8" fill="#1c1917" stroke="#44403c" stroke-width="1"/>
+              <text x="666" y="244" fill="#86efac" font-size="11" font-weight="700">&#10003; Google &bull; Connected</text>
+              <text x="666" y="264" fill="#fbbf24" font-size="10.5" font-family="monospace">Rating &mdash; 2P: 1500 &bull; 4P: 1500</text>
+              <text x="666" y="282" fill="#a8a29e" font-size="10">OTA Self-Update Active (selfupdate)</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+"""
+
+
 def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
     """Render the master portal index.html with cards for all available apps."""
     apps_dict = catalog_data.get("apps", {})
@@ -219,13 +802,15 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
               </svg>
               Download APK
             </a>
-            <a href="{page_url}" class="btn btn-outline">Release Details &rarr;</a>
+            <a href="{page_url}" class="btn btn-outline">Release Details &amp; Install Guide &rarr;</a>
+            <a href="#android-install-guide" class="btn btn-outline">Step-by-Step Setup</a>
             <a href="{slug}/version.json" class="btn btn-outline">version.json</a>
           </div>
         </div>"""
         cards_html.append(card)
 
     cards_joined = "\n\n".join(cards_html) if cards_html else "        <p>No applications published yet.</p>"
+    portal_install_guide_html = render_android_install_guide_html()
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -278,17 +863,24 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
           Independent, open-source Android applications and mobile companion tools engineered for robotics, artificial intelligence, abstract gaming, and systems telemetry. Distributed directly via cryptographic OTA updates.
         </p>
 
-        <!-- Cross-link banner to Windows desktop portal -->
-        <div style="margin-top: 1.25rem; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.88rem;">
-          <span style="color: var(--accent); font-weight: 600;">Windows Portal:</span>
-          <span>Looking for native 64-bit Windows desktop apps?</span>
-          <a href="/software/windows/" style="color: var(--accent); text-decoration: underline; margin-left: 0.25rem;">Visit the Windows Software Portal &rarr;</a>
+        <!-- Cross-link banner to Windows desktop portal & Install Guide -->
+        <div style="margin-top: 1.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+          <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.88rem;">
+            <span style="color: var(--accent); font-weight: 600;">Windows Portal:</span>
+            <span>Looking for native 64-bit Windows desktop apps?</span>
+            <a href="/software/windows/" style="color: var(--accent); text-decoration: underline; margin-left: 0.25rem;">Visit the Windows Software Portal &rarr;</a>
+          </div>
+          <a href="#android-install-guide" class="btn btn-outline" style="padding: 0.48rem 0.95rem; font-size: 0.86rem; border-color: #d97706; color: #b45309; background: #fffbeb;">
+            &#9888; Android Unknown Apps, Play Protect &amp; Google Sign-In Guide &darr;
+          </a>
         </div>
       </div>
 
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));">
 {cards_joined}
       </div>
+
+{portal_install_guide_html}
 
       <!-- OTA Architecture & Verification Section -->
       <div style="margin-top: 3.5rem; border-top: 1px solid var(--border-subtle); padding-top: 2.5rem;">
@@ -469,6 +1061,9 @@ def render_app_html(
           </svg>
           Download APK ({size_str})
         </a>
+        <a href="#android-install-guide" class="btn btn-outline" style="border-color: #d97706; color: #b45309; background: #fffbeb;">
+          &#9888; Android Unknown Apps, Play Protect &amp; Google Sign-In Guide &darr;
+        </a>
         <a href="version.json" class="btn btn-outline">View version.json</a>
         {project_btn_html}
       </div>
@@ -491,6 +1086,8 @@ def render_app_html(
           <div><strong>File Size:</strong> {size_str} ({app_manifest.get('sizeBytes', 0)} bytes)</div>
         </div>
       </div>
+
+{render_android_install_guide_html(apk_filename=apk_filename, app_title=title, app_id=app_id, sha256_hint=sha256)}
 
       <!-- Verification Terminal Box -->
       <div class="terminal-box">
@@ -788,6 +1385,39 @@ def publish_all(
     return published
 
 
+def re_render_existing_portal(web_root: Path, base_url: str) -> int:
+    """Re-render master portal index.html and all per-app index.html files from existing version.json manifests."""
+    master_json_path = web_root / "version.json"
+    if not master_json_path.is_file():
+        sys.stderr.write(f"Error: Master catalog not found at {master_json_path}\n")
+        return 1
+    with open(master_json_path, "r", encoding="utf-8") as f:
+        catalog = json.load(f)
+
+    rendered_apps = 0
+    for key, app_manifest in catalog.get("apps", {}).items():
+        if not isinstance(app_manifest, dict):
+            continue
+        slug = app_manifest.get("slug") or key
+        app_dir = web_root / slug
+        per_app_json = app_dir / "version.json"
+        if per_app_json.is_file():
+            with open(per_app_json, "r", encoding="utf-8") as f:
+                app_manifest = json.load(f)
+        app_meta = KNOWN_APPS.get(slug, {})
+        app_dir.mkdir(parents=True, exist_ok=True)
+        app_html = render_app_html(app_manifest, app_meta, base_url)
+        with open(app_dir / "index.html", "w", encoding="utf-8") as f:
+            f.write(app_html)
+        rendered_apps += 1
+
+    portal_html = render_portal_html(catalog, base_url)
+    with open(web_root / "index.html", "w", encoding="utf-8") as f:
+        f.write(portal_html)
+    print(f"Re-rendered Android portal index.html and {rendered_apps} per-app HTML page(s) in {web_root}")
+    return 0
+
+
 def main(argv: Optional[list] = None) -> int:
     default_web_root = Path.home() / "work/www/selfso/html/software/android"
     default_ws_root = Path.home() / "work"
@@ -835,8 +1465,16 @@ def main(argv: Optional[list] = None) -> int:
         action="store_true",
         help="Force overwriting the public release binary even if the version is unchanged.",
     )
+    parser.add_argument(
+        "--render-only",
+        action="store_true",
+        help="Re-render portal and per-app HTML pages from existing version.json manifests without modifying APKs.",
+    )
 
     args = parser.parse_args(argv)
+
+    if args.render_only:
+        return re_render_existing_portal(Path(args.web_root).resolve(), args.base_url)
 
     if args.publish_all:
         published = publish_all(
