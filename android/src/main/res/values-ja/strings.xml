@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <string name="selfupdate_title_available">アップデート利用可能</string>
+    <string name="selfupdate_title_downloading">アップデートをダウンロード中…</string>
+    <string name="selfupdate_title_permission_required">権限が必要です</string>
+    <string name="selfupdate_title_ready_to_install">インストール準備完了</string>
+    <string name="selfupdate_title_update_ready">アップデート準備完了</string>
+    <string name="selfupdate_title_installing">アップデートをインストール中…</string>
+    <string name="selfupdate_title_error">アップデートエラー</string>
+    <string name="selfupdate_title_up_to_date">アプリは最新です</string>
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">サイズ: %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256: %1$s…</string>
+    <string name="selfupdate_release_notes_heading">リリースノート</string>
+    <string name="selfupdate_downloading_version">バージョン %1$s をダウンロード中…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">%1$s ダウンロード済み</string>
+    <string name="selfupdate_permission_dialog_body">selfso.com からのアップデートをインストールするには、Android でこのアプリの「不明なアプリのインストール」権限を許可する必要があります。</string>
+    <string name="selfupdate_permission_dialog_hint">「設定を開く」をタップしてこのアプリのインストール権限を有効にし、戻って続行してください。</string>
+    <string name="selfupdate_ready_dialog_body">v%1$s (%2$d) をインストールする準備ができました。</string>
+    <string name="selfupdate_launching_installer_dialog">Android パッケージインストーラーを起動中…</string>
+    <string name="selfupdate_banner_available_body">バージョン %1$s が利用可能です（インストール済み: %2$s）。</string>
+    <string name="selfupdate_banner_downloading_title">アップデート v%1$s をダウンロード中…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">アップデートを適用するには Android で不明なアプリのインストール権限を許可する必要があります。</string>
+    <string name="selfupdate_banner_ready_body">v%1$s のダウンロードと検証が完了しました。</string>
+    <string name="selfupdate_banner_launching_installer">Android パッケージインストーラーを起動中…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">アップデートを確認中…</string>
+    <string name="selfupdate_banner_idle_prompt">アップデートを確認</string>
+    <string name="selfupdate_action_download_and_install">ダウンロードしてインストール</string>
+    <string name="selfupdate_action_update">アップデート</string>
+    <string name="selfupdate_action_later">後で</string>
+    <string name="selfupdate_action_cancel">キャンセル</string>
+    <string name="selfupdate_action_details">詳細</string>
+    <string name="selfupdate_action_open_settings">設定を開く</string>
+    <string name="selfupdate_action_settings">設定</string>
+    <string name="selfupdate_action_retry_install">インストールを再試行</string>
+    <string name="selfupdate_action_install_now">今すぐインストール</string>
+    <string name="selfupdate_action_retry">再試行</string>
+    <string name="selfupdate_action_dismiss">閉じる</string>
+    <string name="selfupdate_action_reinstall">再インストール</string>
+    <string name="selfupdate_action_check_again">再確認</string>
+    <string name="selfupdate_action_check_now">今すぐ確認</string>
+    <string name="selfupdate_error_install_status">インストールに失敗しました（ステータス %1$d）</string>
+    <string name="selfupdate_error_download_failed">アップデートパッケージのダウンロードに失敗しました</string>
+    <string name="selfupdate_error_reinstall_failed">アップデートパッケージの再インストールに失敗しました</string>
+    <string name="selfupdate_error_launch_installer">パッケージインストーラーの起動に失敗しました</string>
+</resources>

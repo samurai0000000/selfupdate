@@ -5,12 +5,14 @@
 package com.selfso.selfupdate
 
 import android.content.Context
+import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.Locale
 
 /**
  * Controller orchestrating the end-to-end self-update workflow: checking, downloading,
@@ -28,6 +30,34 @@ class SelfUpdateController(
     private val _state = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val state: StateFlow<UpdateState> = _state.asStateFlow()
 
+    private fun resolveString(
+        @StringRes resId: Int,
+        fallback: String,
+        vararg args: Any
+    ): String {
+        val resolved = try {
+            if (args.isEmpty()) {
+                context.getString(resId)
+            } else {
+                context.getString(resId, *args)
+            }
+        } catch (_: Throwable) {
+            null
+        }
+        if (!resolved.isNullOrEmpty()) {
+            return resolved
+        }
+        return if (args.isEmpty()) {
+            fallback
+        } else {
+            try {
+                String.format(Locale.US, fallback, *args)
+            } catch (_: Throwable) {
+                fallback
+            }
+        }
+    }
+
     init {
         scope.launch {
             InstallResultReceiver.installEvents.collect { event ->
@@ -36,7 +66,11 @@ class SelfUpdateController(
                         _state.value = UpdateState.Idle
                     }
                     is InstallEvent.Failure -> {
-                        val message = event.message ?: "Installation failed with status ${event.statusCode}"
+                        val message = event.message ?: resolveString(
+                            R.string.selfupdate_error_install_status,
+                            "Installation failed with status %1\$d",
+                            event.statusCode
+                        )
                         val recoverable = (_state.value as? UpdateState.Installing)?.manifest
                         _state.value = UpdateState.Error(message, recoverableManifest = recoverable)
                     }
@@ -84,7 +118,10 @@ class SelfUpdateController(
                 }
             } catch (e: Exception) {
                 _state.value = UpdateState.Error(
-                    e.message ?: "Failed to download update package",
+                    e.message ?: resolveString(
+                        R.string.selfupdate_error_download_failed,
+                        "Failed to download update package"
+                    ),
                     recoverableManifest = manifest
                 )
             }
@@ -118,7 +155,10 @@ class SelfUpdateController(
                 }
             } catch (e: Exception) {
                 _state.value = UpdateState.Error(
-                    e.message ?: "Failed to reinstall update package",
+                    e.message ?: resolveString(
+                        R.string.selfupdate_error_reinstall_failed,
+                        "Failed to reinstall update package"
+                    ),
                     recoverableManifest = (_state.value as? UpdateState.Downloading)?.manifest
                         ?: (_state.value as? UpdateState.UpToDate)?.remoteManifest
                 )
@@ -167,7 +207,10 @@ class SelfUpdateController(
             installer.installApk(apkFile, manifest)
         } catch (e: Exception) {
             _state.value = UpdateState.Error(
-                e.message ?: "Failed to launch package installer",
+                e.message ?: resolveString(
+                    R.string.selfupdate_error_launch_installer,
+                    "Failed to launch package installer"
+                ),
                 recoverableManifest = manifest
             )
         }

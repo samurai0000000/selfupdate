@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <!-- Dialog & Banner Titles -->
+    <string name="selfupdate_title_available">Mise à jour disponible</string>
+    <string name="selfupdate_title_downloading">Téléchargement de la mise à jour…</string>
+    <string name="selfupdate_title_permission_required">Autorisation requise</string>
+    <string name="selfupdate_title_ready_to_install">Prêt à installer</string>
+    <string name="selfupdate_title_update_ready">Mise à jour prête</string>
+    <string name="selfupdate_title_installing">Installation de la mise à jour…</string>
+    <string name="selfupdate_title_error">Erreur de mise à jour</string>
+    <string name="selfupdate_title_up_to_date">L\'application est à jour</string>
+
+    <!-- Dialog Body & Metadata -->
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">Taille : %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256 : %1$s…</string>
+    <string name="selfupdate_release_notes_heading">Notes de version</string>
+    <string name="selfupdate_downloading_version">Téléchargement de la version %1$s…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">%1$s téléchargés</string>
+    <string name="selfupdate_permission_dialog_body">Android requiert l\'autorisation « Installer des applications inconnues » pour cette application avant de pouvoir installer les mises à jour depuis selfso.com.</string>
+    <string name="selfupdate_permission_dialog_hint">Appuyez sur « Ouvrir les paramètres », activez l\'autorisation d\'installation pour cette application, puis revenez pour continuer.</string>
+    <string name="selfupdate_ready_dialog_body">Prêt à installer la v%1$s (%2$d).</string>
+    <string name="selfupdate_launching_installer_dialog">Lancement de l\'installateur de paquets Android…</string>
+
+    <!-- Banner Body & Metadata -->
+    <string name="selfupdate_banner_available_body">La version %1$s est disponible (installée : %2$s).</string>
+    <string name="selfupdate_banner_downloading_title">Téléchargement de la mise à jour v%1$s…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Android requiert l\'autorisation d\'installer des applications inconnues pour appliquer la mise à jour.</string>
+    <string name="selfupdate_banner_ready_body">La v%1$s a été téléchargée et vérifiée.</string>
+    <string name="selfupdate_banner_launching_installer">Lancement de l\'installateur de paquets Android…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">Recherche de mises à jour…</string>
+    <string name="selfupdate_banner_idle_prompt">Rechercher des mises à jour</string>
+
+    <!-- Action Buttons -->
+    <string name="selfupdate_action_download_and_install">Télécharger et installer</string>
+    <string name="selfupdate_action_update">Mettre à jour</string>
+    <string name="selfupdate_action_later">Plus tard</string>
+    <string name="selfupdate_action_cancel">Annuler</string>
+    <string name="selfupdate_action_details">Détails</string>
+    <string name="selfupdate_action_open_settings">Ouvrir les paramètres</string>
+    <string name="selfupdate_action_settings">Paramètres</string>
+    <string name="selfupdate_action_retry_install">Réessayer l\'installation</string>
+    <string name="selfupdate_action_install_now">Installer maintenant</string>
+    <string name="selfupdate_action_retry">Réessayer</string>
+    <string name="selfupdate_action_dismiss">Ignorer</string>
+    <string name="selfupdate_action_reinstall">Réinstaller</string>
+    <string name="selfupdate_action_check_again">Vérifier à nouveau</string>
+    <string name="selfupdate_action_check_now">Vérifier maintenant</string>
+
+    <!-- Controller Fallback Errors -->
+    <string name="selfupdate_error_install_status">Échec de l\'installation (statut %1$d)</string>
+    <string name="selfupdate_error_download_failed">Échec du téléchargement du paquet de mise à jour</string>
+    <string name="selfupdate_error_reinstall_failed">Échec de la réinstallation du paquet de mise à jour</string>
+    <string name="selfupdate_error_launch_installer">Impossible de lancer l\'installateur de paquets</string>
+</resources>

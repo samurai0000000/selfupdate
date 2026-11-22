@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <!-- Dialog & Banner Titles -->
+    <string name="selfupdate_title_available">Güncelleme Mevcut</string>
+    <string name="selfupdate_title_downloading">Güncelleme İndiriliyor…</string>
+    <string name="selfupdate_title_permission_required">İzin Gerekli</string>
+    <string name="selfupdate_title_ready_to_install">Yüklemeye Hazır</string>
+    <string name="selfupdate_title_update_ready">Güncelleme Hazır</string>
+    <string name="selfupdate_title_installing">Güncelleme Yükleniyor…</string>
+    <string name="selfupdate_title_error">Güncelleme Hatası</string>
+    <string name="selfupdate_title_up_to_date">Uygulama güncel</string>
+
+    <!-- Dialog Body & Metadata -->
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">Boyut: %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256: %1$s…</string>
+    <string name="selfupdate_release_notes_heading">Sürüm Notları</string>
+    <string name="selfupdate_downloading_version">%1$s sürümü indiriliyor…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%%%3$d)</string>
+    <string name="selfupdate_progress_indeterminate">%1$s indirildi</string>
+    <string name="selfupdate_permission_dialog_body">Android, selfso.com üzerinden güncellemelerin yüklenebilmesi için bu uygulamaya \"Bilinmeyen uygulamaları yükle\" izninin verilmesini gerektirir.</string>
+    <string name="selfupdate_permission_dialog_hint">Lütfen \"Ayarları Aç\" düğmesine dokunun, bu uygulama için yükleme iznini etkinleştirin ve devam etmek için geri dönün.</string>
+    <string name="selfupdate_ready_dialog_body">v%1$s (%2$d) yüklemeye hazır.</string>
+    <string name="selfupdate_launching_installer_dialog">Android Paket Yükleyicisi başlatılıyor…</string>
+
+    <!-- Banner Body & Metadata -->
+    <string name="selfupdate_banner_available_body">Sürüm %1$s mevcut (yüklü: %2$s).</string>
+    <string name="selfupdate_banner_downloading_title">v%1$s güncellemesi indiriliyor…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Android, güncellemeyi uygulamak için bilinmeyen uygulamaları yükleme izni gerektirir.</string>
+    <string name="selfupdate_banner_ready_body">v%1$s indirildi ve doğrulandı.</string>
+    <string name="selfupdate_banner_launching_installer">Android paket yükleyicisi başlatılıyor…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">Güncellemeler denetleniyor…</string>
+    <string name="selfupdate_banner_idle_prompt">Güncellemeleri denetle</string>
+
+    <!-- Action Buttons -->
+    <string name="selfupdate_action_download_and_install">İndir ve Yükle</string>
+    <string name="selfupdate_action_update">Güncelle</string>
+    <string name="selfupdate_action_later">Daha Sonra</string>
+    <string name="selfupdate_action_cancel">İptal</string>
+    <string name="selfupdate_action_details">Ayrıntılar</string>
+    <string name="selfupdate_action_open_settings">Ayarları Aç</string>
+    <string name="selfupdate_action_settings">Ayarlar</string>
+    <string name="selfupdate_action_retry_install">Yüklemeyi Yeniden Dene</string>
+    <string name="selfupdate_action_install_now">Şimdi Yükle</string>
+    <string name="selfupdate_action_retry">Yeniden Dene</string>
+    <string name="selfupdate_action_dismiss">Kapat</string>
+    <string name="selfupdate_action_reinstall">Yeniden Yükle</string>
+    <string name="selfupdate_action_check_again">Tekrar Denetle</string>
+    <string name="selfupdate_action_check_now">Şimdi Denetle</string>
+
+    <!-- Controller Fallback Errors -->
+    <string name="selfupdate_error_install_status">Yükleme %1$d durum koduyla başarısız oldu</string>
+    <string name="selfupdate_error_download_failed">Güncelleme paketi indirilemedi</string>
+    <string name="selfupdate_error_reinstall_failed">Güncelleme paketi yeniden yüklenemedi</string>
+    <string name="selfupdate_error_launch_installer">Paket yükleyicisi başlatılamadı</string>
+</resources>

@@ -6,6 +6,7 @@
 
 #include "selfupdate/PackageDownloader.hxx"
 #include "selfupdate/Sha256.hxx"
+#include "selfupdate/UpdateState.hxx"
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
@@ -121,7 +122,7 @@ std::string PackageDownloader::downloadAndVerify(const UpdateManifest& manifest,
                                                  const std::atomic<bool>* cancelFlag) const
 {
     if (cancelFlag && cancelFlag->load()) {
-        throw std::runtime_error("Download cancelled before start");
+        throw UpdateException(UpdateErrorCode::Cancelled, "Download cancelled before start");
     }
 
     std::string slug = manifest.slug.empty() ? manifest.applicationId : manifest.slug;
@@ -130,7 +131,8 @@ std::string PackageDownloader::downloadAndVerify(const UpdateManifest& manifest,
     std::error_code ec;
     std::filesystem::create_directories(stagingDir, ec);
     if (ec) {
-        throw std::runtime_error("Failed to create staging directory '" + stagingDir + "': " + ec.message());
+        throw UpdateException(UpdateErrorCode::StagingFailed,
+                              "Failed to create staging directory '" + stagingDir + "': " + ec.message());
     }
 
     std::string filename = sanitizeFilename(manifest.packageUrl, slug);
@@ -141,7 +143,8 @@ std::string PackageDownloader::downloadAndVerify(const UpdateManifest& manifest,
 
     std::ofstream out(partPath, std::ios::binary | std::ios::trunc);
     if (!out.is_open()) {
-        throw std::runtime_error("Failed to open staging file for writing: " + partPath.string());
+        throw UpdateException(UpdateErrorCode::StagingFailed,
+                              "Failed to open staging file for writing: " + partPath.string());
     }
 
     Sha256 hasher;
@@ -175,32 +178,36 @@ std::string PackageDownloader::downloadAndVerify(const UpdateManifest& manifest,
 
     if (cancelFlag && cancelFlag->load()) {
         std::filesystem::remove(partPath, ec);
-        throw std::runtime_error("Download cancelled");
+        throw UpdateException(UpdateErrorCode::Cancelled, "Download cancelled");
     }
 
     if (!ok) {
         std::filesystem::remove(partPath, ec);
-        throw std::runtime_error("Download failed: " + (downloadError.empty() ? "network transfer error" : downloadError));
+        throw UpdateException(UpdateErrorCode::DownloadFailed,
+                              "Download failed: " + (downloadError.empty() ? "network transfer error" : downloadError));
     }
 
     if (manifest.sizeBytes > 0 && bytesWritten != manifest.sizeBytes) {
         std::filesystem::remove(partPath, ec);
-        throw std::runtime_error("Package size mismatch: expected " + std::to_string(manifest.sizeBytes) +
-                                 " bytes, received " + std::to_string(bytesWritten) + " bytes");
+        throw UpdateException(UpdateErrorCode::SizeMismatch,
+                              "Package size mismatch: expected " + std::to_string(manifest.sizeBytes) +
+                              " bytes, received " + std::to_string(bytesWritten) + " bytes");
     }
 
     std::string computedSha = hasher.finalHex();
     if (toLower(computedSha) != toLower(manifest.sha256)) {
         std::filesystem::remove(partPath, ec);
-        throw std::runtime_error("SHA-256 digest mismatch: expected " + manifest.sha256 +
-                                 ", computed " + computedSha);
+        throw UpdateException(UpdateErrorCode::Sha256Mismatch,
+                              "SHA-256 digest mismatch: expected " + manifest.sha256 +
+                              ", computed " + computedSha);
     }
 
     std::filesystem::remove(finalPath, ec);
     std::filesystem::rename(partPath, finalPath, ec);
     if (ec) {
         std::filesystem::remove(partPath, ec);
-        throw std::runtime_error("Failed to rename temporary part file to target executable: " + ec.message());
+        throw UpdateException(UpdateErrorCode::StagingFailed,
+                              "Failed to rename temporary part file to target executable: " + ec.message());
     }
 
     return finalPath.string();

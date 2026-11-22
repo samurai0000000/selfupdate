@@ -28,7 +28,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.selfso.selfupdate.R
 import com.selfso.selfupdate.SelfUpdateController
 import com.selfso.selfupdate.UpdateManifest
 import com.selfso.selfupdate.UpdateState
@@ -92,7 +94,7 @@ fun SelfUpdateDialog(
                 onDismissRequest = onDismiss,
                 title = {
                     Text(
-                        text = "Update Available",
+                        text = stringResource(R.string.selfupdate_title_available),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
@@ -111,20 +113,32 @@ fun SelfUpdateDialog(
                             Spacer(modifier = Modifier.height(4.dp))
                         }
                         Text(
-                            text = "${state.installedVersionName} (${state.installedVersionCode}) → ${state.manifest.versionName} (${state.manifest.versionCode})",
+                            text = stringResource(
+                                R.string.selfupdate_version_transition,
+                                state.installedVersionName,
+                                state.installedVersionCode,
+                                state.manifest.versionName,
+                                state.manifest.versionCode
+                            ),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         if (state.manifest.sizeBytes > 0L) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Size: ${formatBytes(state.manifest.sizeBytes)}",
+                                text = stringResource(
+                                    R.string.selfupdate_size_label,
+                                    formatBytes(state.manifest.sizeBytes)
+                                ),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
                         if (state.manifest.sha256.isNotBlank()) {
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "SHA-256: ${state.manifest.sha256.take(16)}…",
+                                text = stringResource(
+                                    R.string.selfupdate_sha256_prefix,
+                                    state.manifest.sha256.take(16)
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -132,7 +146,7 @@ fun SelfUpdateDialog(
                         if (state.manifest.releaseNotes.isNotBlank()) {
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Release Notes",
+                                text = stringResource(R.string.selfupdate_release_notes_heading),
                                 style = MaterialTheme.typography.labelLarge
                             )
                             Spacer(modifier = Modifier.height(4.dp))
@@ -145,12 +159,12 @@ fun SelfUpdateDialog(
                 },
                 confirmButton = {
                     Button(onClick = { onDownloadAndInstall(state.manifest) }) {
-                        Text("Download & Install")
+                        Text(stringResource(R.string.selfupdate_action_download_and_install))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = onDismiss) {
-                        Text("Later")
+                        Text(stringResource(R.string.selfupdate_action_later))
                     }
                 }
             )
@@ -161,14 +175,17 @@ fun SelfUpdateDialog(
                 onDismissRequest = onDismiss,
                 title = {
                     Text(
-                        text = "Downloading Update…",
+                        text = stringResource(R.string.selfupdate_title_downloading),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 text = {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "Downloading version ${state.manifest.versionName}…",
+                            text = stringResource(
+                                R.string.selfupdate_downloading_version,
+                                state.manifest.versionName
+                            ),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -180,14 +197,22 @@ fun SelfUpdateDialog(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "${formatBytes(state.bytesRead)} / ${formatBytes(state.totalBytes)} (${(fraction * 100).toInt()}%)",
+                                text = stringResource(
+                                    R.string.selfupdate_progress_determinate,
+                                    formatBytes(state.bytesRead),
+                                    formatBytes(state.totalBytes),
+                                    (fraction * 100).toInt()
+                                ),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else {
                             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "${formatBytes(state.bytesRead)} downloaded",
+                                text = stringResource(
+                                    R.string.selfupdate_progress_indeterminate,
+                                    formatBytes(state.bytesRead)
+                                ),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -196,7 +221,7 @@ fun SelfUpdateDialog(
                 confirmButton = {},
                 dismissButton = {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.selfupdate_action_cancel))
                     }
                 }
             )
@@ -207,19 +232,19 @@ fun SelfUpdateDialog(
                 onDismissRequest = onDismiss,
                 title = {
                     Text(
-                        text = "Permission Required",
+                        text = stringResource(R.string.selfupdate_title_permission_required),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 text = {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "Android requires granting the \"Install unknown apps\" permission for this app before it can install updates from selfso.com.",
+                            text = stringResource(R.string.selfupdate_permission_dialog_body),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Please tap \"Open Settings\", enable installation permissions for this app, and return to proceed.",
+                            text = stringResource(R.string.selfupdate_permission_dialog_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -227,17 +252,17 @@ fun SelfUpdateDialog(
                 },
                 confirmButton = {
                     Button(onClick = onOpenPermissionSettings) {
-                        Text("Open Settings")
+                        Text(stringResource(R.string.selfupdate_action_open_settings))
                     }
                 },
                 dismissButton = {
                     Row {
                         OutlinedButton(onClick = { onInstallReadyApk(state.apkFile, state.manifest) }) {
-                            Text("Retry Install")
+                            Text(stringResource(R.string.selfupdate_action_retry_install))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         TextButton(onClick = onDismiss) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.selfupdate_action_cancel))
                         }
                     }
                 }
@@ -249,14 +274,18 @@ fun SelfUpdateDialog(
                 onDismissRequest = onDismiss,
                 title = {
                     Text(
-                        text = "Ready to Install",
+                        text = stringResource(R.string.selfupdate_title_ready_to_install),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 text = {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "Ready to install v${state.manifest.versionName} (${state.manifest.versionCode}).",
+                            text = stringResource(
+                                R.string.selfupdate_ready_dialog_body,
+                                state.manifest.versionName,
+                                state.manifest.versionCode
+                            ),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         if (state.manifest.releaseNotes.isNotBlank()) {
@@ -270,12 +299,12 @@ fun SelfUpdateDialog(
                 },
                 confirmButton = {
                     Button(onClick = { onInstallReadyApk(state.apkFile, state.manifest) }) {
-                        Text("Install Now")
+                        Text(stringResource(R.string.selfupdate_action_install_now))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.selfupdate_action_cancel))
                     }
                 }
             )
@@ -286,7 +315,7 @@ fun SelfUpdateDialog(
                 onDismissRequest = {},
                 title = {
                     Text(
-                        text = "Installing Update…",
+                        text = stringResource(R.string.selfupdate_title_installing),
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
@@ -298,7 +327,7 @@ fun SelfUpdateDialog(
                     ) {
                         CircularProgressIndicator(modifier = Modifier.size(28.dp))
                         Text(
-                            text = "Launching Android Package Installer…",
+                            text = stringResource(R.string.selfupdate_launching_installer_dialog),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -312,7 +341,7 @@ fun SelfUpdateDialog(
                 onDismissRequest = onDismiss,
                 title = {
                     Text(
-                        text = "Update Error",
+                        text = stringResource(R.string.selfupdate_title_error),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -326,13 +355,13 @@ fun SelfUpdateDialog(
                 confirmButton = {
                     if (state.recoverableManifest != null) {
                         Button(onClick = { onDownloadAndInstall(state.recoverableManifest) }) {
-                            Text("Retry")
+                            Text(stringResource(R.string.selfupdate_action_retry))
                         }
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = onDismiss) {
-                        Text("Dismiss")
+                        Text(stringResource(R.string.selfupdate_action_dismiss))
                     }
                 }
             )

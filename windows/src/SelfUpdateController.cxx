@@ -72,6 +72,7 @@ void SelfUpdateController::checkForUpdates(bool isManualCheck)
         checkingState = _state;
         checkingState.phase = UpdatePhase::Checking;
         checkingState.isManualCheck = isManualCheck;
+        checkingState.errorCode = UpdateErrorCode::None;
         checkingState.errorMessage.clear();
         _state = checkingState;
     }
@@ -105,12 +106,14 @@ void SelfUpdateController::downloadPackage(const UpdateManifest* manifestOverrid
         downloadingState.manifest = manifest;
         downloadingState.bytesRead = 0;
         downloadingState.totalBytes = manifest.sizeBytes;
+        downloadingState.errorCode = UpdateErrorCode::None;
         downloadingState.errorMessage.clear();
         _state = downloadingState;
     }
 
     if (manifest.packageUrl.empty()) {
         downloadingState.phase = UpdatePhase::Error;
+        downloadingState.errorCode = UpdateErrorCode::NoPackageUrl;
         downloadingState.errorMessage = "No package URL to download";
         dispatchState(downloadingState);
         return;
@@ -148,9 +151,23 @@ void SelfUpdateController::downloadPackage(const UpdateManifest* manifestOverrid
                 readyState.manifest = manifest;
                 readyState.stagedPackagePath = staged;
                 readyState.bytesRead = readyState.totalBytes > 0 ? readyState.totalBytes : manifest.sizeBytes;
+                readyState.errorCode = UpdateErrorCode::None;
                 readyState.errorMessage.clear();
             }
             dispatchState(readyState);
+        } catch (const UpdateException& e) {
+            if (_cancelFlag.load()) {
+                return;
+            }
+            UpdateState errState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                errState = _state;
+                errState.phase = UpdatePhase::Error;
+                errState.errorCode = e.code();
+                errState.errorMessage = e.what();
+            }
+            dispatchState(errState);
         } catch (const std::exception& e) {
             if (_cancelFlag.load()) {
                 return;
@@ -160,6 +177,7 @@ void SelfUpdateController::downloadPackage(const UpdateManifest* manifestOverrid
                 std::lock_guard<std::mutex> lock(_mutex);
                 errState = _state;
                 errState.phase = UpdatePhase::Error;
+                errState.errorCode = UpdateErrorCode::DownloadFailed;
                 errState.errorMessage = e.what();
             }
             dispatchState(errState);
@@ -181,12 +199,14 @@ void SelfUpdateController::installStagedPackage()
         manifest = _state.manifest;
         installingState = _state;
         installingState.phase = UpdatePhase::Installing;
+        installingState.errorCode = UpdateErrorCode::None;
         installingState.errorMessage.clear();
         _state = installingState;
     }
 
     if (staged.empty()) {
         installingState.phase = UpdatePhase::Error;
+        installingState.errorCode = UpdateErrorCode::NoStagedPackage;
         installingState.errorMessage = "No staged package ready to install";
         dispatchState(installingState);
         return;
@@ -207,6 +227,7 @@ void SelfUpdateController::installStagedPackage()
                 std::lock_guard<std::mutex> lock(_mutex);
                 relaunchState = _state;
                 relaunchState.phase = UpdatePhase::Relaunching;
+                relaunchState.errorCode = UpdateErrorCode::None;
                 relaunchState.errorMessage.clear();
             }
             dispatchState(relaunchState);
@@ -220,6 +241,8 @@ void SelfUpdateController::installStagedPackage()
                 std::lock_guard<std::mutex> lock(_mutex);
                 errState = _state;
                 errState.phase = UpdatePhase::Error;
+                errState.errorCode = (res.errorCode != UpdateErrorCode::None)
+                    ? res.errorCode : UpdateErrorCode::Unknown;
                 errState.errorMessage = res.errorMessage.empty() ? "Installation failed" : res.errorMessage;
             }
             dispatchState(errState);
@@ -246,12 +269,14 @@ void SelfUpdateController::downloadAndInstall(const UpdateManifest* manifestOver
         downloadingState.manifest = manifest;
         downloadingState.bytesRead = 0;
         downloadingState.totalBytes = manifest.sizeBytes;
+        downloadingState.errorCode = UpdateErrorCode::None;
         downloadingState.errorMessage.clear();
         _state = downloadingState;
     }
 
     if (manifest.packageUrl.empty()) {
         downloadingState.phase = UpdatePhase::Error;
+        downloadingState.errorCode = UpdateErrorCode::NoPackageUrl;
         downloadingState.errorMessage = "No package URL to download";
         dispatchState(downloadingState);
         return;
@@ -290,9 +315,24 @@ void SelfUpdateController::downloadAndInstall(const UpdateManifest* manifestOver
                 readyState.manifest = manifest;
                 readyState.stagedPackagePath = staged;
                 readyState.bytesRead = readyState.totalBytes > 0 ? readyState.totalBytes : manifest.sizeBytes;
+                readyState.errorCode = UpdateErrorCode::None;
                 readyState.errorMessage.clear();
             }
             dispatchState(readyState);
+        } catch (const UpdateException& e) {
+            if (_cancelFlag.load()) {
+                return;
+            }
+            UpdateState errState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                errState = _state;
+                errState.phase = UpdatePhase::Error;
+                errState.errorCode = e.code();
+                errState.errorMessage = e.what();
+            }
+            dispatchState(errState);
+            return;
         } catch (const std::exception& e) {
             if (_cancelFlag.load()) {
                 return;
@@ -302,6 +342,7 @@ void SelfUpdateController::downloadAndInstall(const UpdateManifest* manifestOver
                 std::lock_guard<std::mutex> lock(_mutex);
                 errState = _state;
                 errState.phase = UpdatePhase::Error;
+                errState.errorCode = UpdateErrorCode::DownloadFailed;
                 errState.errorMessage = e.what();
             }
             dispatchState(errState);
@@ -313,6 +354,7 @@ void SelfUpdateController::downloadAndInstall(const UpdateManifest* manifestOver
             std::lock_guard<std::mutex> lock(_mutex);
             installingState = _state;
             installingState.phase = UpdatePhase::Installing;
+            installingState.errorCode = UpdateErrorCode::None;
             installingState.errorMessage.clear();
             _state = installingState;
         }
@@ -330,6 +372,7 @@ void SelfUpdateController::downloadAndInstall(const UpdateManifest* manifestOver
                 std::lock_guard<std::mutex> lock(_mutex);
                 relaunchState = _state;
                 relaunchState.phase = UpdatePhase::Relaunching;
+                relaunchState.errorCode = UpdateErrorCode::None;
                 relaunchState.errorMessage.clear();
             }
             dispatchState(relaunchState);
@@ -343,6 +386,8 @@ void SelfUpdateController::downloadAndInstall(const UpdateManifest* manifestOver
                 std::lock_guard<std::mutex> lock(_mutex);
                 errState = _state;
                 errState.phase = UpdatePhase::Error;
+                errState.errorCode = (res.errorCode != UpdateErrorCode::None)
+                    ? res.errorCode : UpdateErrorCode::Unknown;
                 errState.errorMessage = res.errorMessage.empty() ? "Installation failed" : res.errorMessage;
             }
             dispatchState(errState);
@@ -372,6 +417,7 @@ void SelfUpdateController::reinstall()
             startState.bytesRead = 0;
             startState.totalBytes = target.sizeBytes;
         }
+        startState.errorCode = UpdateErrorCode::None;
         startState.errorMessage.clear();
         _state = startState;
     }
@@ -386,6 +432,34 @@ void SelfUpdateController::reinstall()
                 if (_cancelFlag.load()) {
                     return;
                 }
+            } catch (const UpdateException& e) {
+                if (_cancelFlag.load()) {
+                    return;
+                }
+                UpdateState errState;
+                {
+                    std::lock_guard<std::mutex> lock(_mutex);
+                    errState = _state;
+                    errState.phase = UpdatePhase::Error;
+                    errState.errorCode = e.code();
+                    errState.errorMessage = e.what();
+                }
+                dispatchState(errState);
+                return;
+            } catch (const std::invalid_argument& e) {
+                if (_cancelFlag.load()) {
+                    return;
+                }
+                UpdateState errState;
+                {
+                    std::lock_guard<std::mutex> lock(_mutex);
+                    errState = _state;
+                    errState.phase = UpdatePhase::Error;
+                    errState.errorCode = UpdateErrorCode::ManifestParseFailed;
+                    errState.errorMessage = e.what();
+                }
+                dispatchState(errState);
+                return;
             } catch (const std::exception& e) {
                 if (_cancelFlag.load()) {
                     return;
@@ -395,6 +469,7 @@ void SelfUpdateController::reinstall()
                     std::lock_guard<std::mutex> lock(_mutex);
                     errState = _state;
                     errState.phase = UpdatePhase::Error;
+                    errState.errorCode = UpdateErrorCode::ManifestFetchFailed;
                     errState.errorMessage = e.what();
                 }
                 dispatchState(errState);
@@ -409,6 +484,7 @@ void SelfUpdateController::reinstall()
                 std::lock_guard<std::mutex> lock(_mutex);
                 errState = _state;
                 errState.phase = UpdatePhase::Error;
+                errState.errorCode = UpdateErrorCode::NoPackageUrl;
                 errState.errorMessage = "No package URL to download";
             }
             dispatchState(errState);
@@ -459,9 +535,24 @@ void SelfUpdateController::reinstall()
                 readyState.manifest = target;
                 readyState.stagedPackagePath = staged;
                 readyState.bytesRead = readyState.totalBytes > 0 ? readyState.totalBytes : target.sizeBytes;
+                readyState.errorCode = UpdateErrorCode::None;
                 readyState.errorMessage.clear();
             }
             dispatchState(readyState);
+        } catch (const UpdateException& e) {
+            if (_cancelFlag.load()) {
+                return;
+            }
+            UpdateState errState;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                errState = _state;
+                errState.phase = UpdatePhase::Error;
+                errState.errorCode = e.code();
+                errState.errorMessage = e.what();
+            }
+            dispatchState(errState);
+            return;
         } catch (const std::exception& e) {
             if (_cancelFlag.load()) {
                 return;
@@ -471,6 +562,7 @@ void SelfUpdateController::reinstall()
                 std::lock_guard<std::mutex> lock(_mutex);
                 errState = _state;
                 errState.phase = UpdatePhase::Error;
+                errState.errorCode = UpdateErrorCode::DownloadFailed;
                 errState.errorMessage = e.what();
             }
             dispatchState(errState);
@@ -482,6 +574,7 @@ void SelfUpdateController::reinstall()
             std::lock_guard<std::mutex> lock(_mutex);
             installingState = _state;
             installingState.phase = UpdatePhase::Installing;
+            installingState.errorCode = UpdateErrorCode::None;
             installingState.errorMessage.clear();
             _state = installingState;
         }
@@ -499,6 +592,7 @@ void SelfUpdateController::reinstall()
                 std::lock_guard<std::mutex> lock(_mutex);
                 relaunchState = _state;
                 relaunchState.phase = UpdatePhase::Relaunching;
+                relaunchState.errorCode = UpdateErrorCode::None;
                 relaunchState.errorMessage.clear();
             }
             dispatchState(relaunchState);
@@ -512,6 +606,8 @@ void SelfUpdateController::reinstall()
                 std::lock_guard<std::mutex> lock(_mutex);
                 errState = _state;
                 errState.phase = UpdatePhase::Error;
+                errState.errorCode = (res.errorCode != UpdateErrorCode::None)
+                    ? res.errorCode : UpdateErrorCode::Unknown;
                 errState.errorMessage = res.errorMessage.empty() ? "Installation failed" : res.errorMessage;
             }
             dispatchState(errState);

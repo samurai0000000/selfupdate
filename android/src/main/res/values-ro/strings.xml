@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <!-- Dialog & Banner Titles -->
+    <string name="selfupdate_title_available">Actualizare disponibilă</string>
+    <string name="selfupdate_title_downloading">Se descarcă actualizarea…</string>
+    <string name="selfupdate_title_permission_required">Permisiune necesară</string>
+    <string name="selfupdate_title_ready_to_install">Gata de instalare</string>
+    <string name="selfupdate_title_update_ready">Actualizare pregătită</string>
+    <string name="selfupdate_title_installing">Se instalează actualizarea…</string>
+    <string name="selfupdate_title_error">Eroare de actualizare</string>
+    <string name="selfupdate_title_up_to_date">Aplicația este la zi</string>
+
+    <!-- Dialog Body & Metadata -->
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">Dimensiune: %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256: %1$s…</string>
+    <string name="selfupdate_release_notes_heading">Note de lansare</string>
+    <string name="selfupdate_downloading_version">Se descarcă versiunea %1$s…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">%1$s descărcat</string>
+    <string name="selfupdate_permission_dialog_body">Android necesită acordarea permisiunii „Instalare aplicații necunoscute” pentru această aplicație înainte de a putea instala actualizări de pe selfso.com.</string>
+    <string name="selfupdate_permission_dialog_hint">Atingeți „Deschide setările”, activați permisiunea de instalare pentru această aplicație și reveniți pentru a continua.</string>
+    <string name="selfupdate_ready_dialog_body">Gata pentru instalarea v%1$s (%2$d).</string>
+    <string name="selfupdate_launching_installer_dialog">Se lansează programul de instalare Android…</string>
+
+    <!-- Banner Body & Metadata -->
+    <string name="selfupdate_banner_available_body">Versiunea %1$s este disponibilă (instalată: %2$s).</string>
+    <string name="selfupdate_banner_downloading_title">Se descarcă actualizarea v%1$s…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Android necesită acordarea permisiunii de instalare a aplicațiilor necunoscute pentru a aplica actualizarea.</string>
+    <string name="selfupdate_banner_ready_body">v%1$s a fost descărcată și verificată.</string>
+    <string name="selfupdate_banner_launching_installer">Se lansează programul de instalare a pachetelor Android…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">Se caută actualizări…</string>
+    <string name="selfupdate_banner_idle_prompt">Verifică actualizări</string>
+
+    <!-- Action Buttons -->
+    <string name="selfupdate_action_download_and_install">Descarcă și instalează</string>
+    <string name="selfupdate_action_update">Actualizează</string>
+    <string name="selfupdate_action_later">Mai târziu</string>
+    <string name="selfupdate_action_cancel">Anulează</string>
+    <string name="selfupdate_action_details">Detalii</string>
+    <string name="selfupdate_action_open_settings">Deschide setările</string>
+    <string name="selfupdate_action_settings">Setări</string>
+    <string name="selfupdate_action_retry_install">Reîncearcă instalarea</string>
+    <string name="selfupdate_action_install_now">Instalează acum</string>
+    <string name="selfupdate_action_retry">Reîncearcă</string>
+    <string name="selfupdate_action_dismiss">Închide</string>
+    <string name="selfupdate_action_reinstall">Reinstalează</string>
+    <string name="selfupdate_action_check_again">Verifică din nou</string>
+    <string name="selfupdate_action_check_now">Verifică acum</string>
+
+    <!-- Controller Fallback Errors -->
+    <string name="selfupdate_error_install_status">Instalarea a eșuat cu starea %1$d</string>
+    <string name="selfupdate_error_download_failed">Descărcarea pachetului de actualizare a eșuat</string>
+    <string name="selfupdate_error_reinstall_failed">Reinstalarea pachetului de actualizare a eșuat</string>
+    <string name="selfupdate_error_launch_installer">Lansarea programului de instalare a eșuat</string>
+</resources>

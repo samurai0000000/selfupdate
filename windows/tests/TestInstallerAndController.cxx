@@ -532,7 +532,33 @@ TEST(SelfUpdateControllerTest, Download_CorruptSha256_TransitionsToError)
 
     UpdateState st = controller.state();
     CHECK_EQUAL(static_cast<int>(UpdatePhase::Error), static_cast<int>(st.phase));
+    CHECK_EQUAL(static_cast<int>(UpdateErrorCode::Sha256Mismatch), static_cast<int>(st.errorCode));
     CHECK_FALSE(st.errorMessage.empty());
+}
+
+TEST(SelfUpdateControllerTest, ErrorCodes_ClassifiedAcrossInstallAndDownloadPaths)
+{
+    InstallOptions opts;
+    opts.dryRun = true;
+    opts.targetExePath = installedDir + "/octi.exe";
+    UpdateInstaller installer(opts);
+
+    UpdateInstallResult missingRes = installer.executeBinaryCopy(stagingDir + "/missing.exe");
+    CHECK_FALSE(missingRes.success);
+    CHECK_EQUAL(static_cast<int>(UpdateErrorCode::NoStagedPackage),
+                static_cast<int>(missingRes.errorCode));
+    CHECK_FALSE(missingRes.errorMessage.empty());
+
+    SelfUpdateController controller(config, installOpts, stagingDir, transport);
+    controller.downloadPackage();
+    CHECK_EQUAL(static_cast<int>(UpdatePhase::Error), static_cast<int>(controller.state().phase));
+    CHECK_EQUAL(static_cast<int>(UpdateErrorCode::NoPackageUrl),
+                static_cast<int>(controller.state().errorCode));
+
+    controller.installStagedPackage();
+    CHECK_EQUAL(static_cast<int>(UpdatePhase::Error), static_cast<int>(controller.state().phase));
+    CHECK_EQUAL(static_cast<int>(UpdateErrorCode::NoStagedPackage),
+                static_cast<int>(controller.state().errorCode));
 }
 
 TEST(SelfUpdateControllerTest, RapidDestruction_NoDeadlock)

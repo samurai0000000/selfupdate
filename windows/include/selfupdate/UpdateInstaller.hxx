@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include "UpdateManifest.hxx"
+#include "UpdateState.hxx"
 
 namespace selfupdate {
 
@@ -29,8 +30,11 @@ struct InstallResult {
     std::string backupExePath;
     std::string trampolineScriptPath;
     std::string launchedCommand;
+    UpdateErrorCode errorCode = UpdateErrorCode::None;
     std::string errorMessage;
 };
+
+using UpdateInstallResult = InstallResult;
 
 class UpdateInstaller {
 public:

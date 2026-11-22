@@ -126,7 +126,7 @@ UpdateManifest SelfUpdateChecker::fetchManifest(const std::atomic<bool>* cancelF
     HttpResponse res = _transport->get(targetUrl, _config.connectTimeoutMs, _config.readTimeoutMs, cancelFlag);
 
     if (cancelFlag && cancelFlag->load()) {
-        throw std::runtime_error("Manifest fetch cancelled");
+        throw UpdateException(UpdateErrorCode::Cancelled, "Manifest fetch cancelled");
     }
     if (!res.isSuccess()) {
         std::string err = "Failed to fetch update manifest from " + targetUrl;
@@ -136,7 +136,7 @@ UpdateManifest SelfUpdateChecker::fetchManifest(const std::atomic<bool>* cancelF
         if (!res.errorMessage.empty()) {
             err += " (" + res.errorMessage + ")";
         }
-        throw std::runtime_error(err);
+        throw UpdateException(UpdateErrorCode::ManifestFetchFailed, err);
     }
 
     return UpdateManifest::fromJson(res.body, targetUrl, _config.applicationId);
@@ -156,13 +156,23 @@ UpdateState SelfUpdateChecker::checkForUpdate(bool isManualCheck,
     try {
         UpdateManifest manifest = fetchManifest(cancelFlag);
         state.manifest = manifest;
+        state.errorCode = UpdateErrorCode::None;
         if (manifest.isNewerThan(state.installedVersionName, state.installedVersionCode)) {
             state.phase = UpdatePhase::Available;
         } else {
             state.phase = UpdatePhase::UpToDate;
         }
+    } catch (const UpdateException& e) {
+        state.phase = UpdatePhase::Error;
+        state.errorCode = e.code();
+        state.errorMessage = e.what();
+    } catch (const std::invalid_argument& e) {
+        state.phase = UpdatePhase::Error;
+        state.errorCode = UpdateErrorCode::ManifestParseFailed;
+        state.errorMessage = e.what();
     } catch (const std::exception& e) {
         state.phase = UpdatePhase::Error;
+        state.errorCode = UpdateErrorCode::Unknown;
         state.errorMessage = e.what();
     }
 

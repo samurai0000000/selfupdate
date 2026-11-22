@@ -270,7 +270,25 @@ TEST(DownloaderAndCheckerTests, CheckerRedirectAndErrorHandling)
     SelfUpdateChecker checkerErr(configErr);
     UpdateState stateErr = checkerErr.checkForUpdate();
     CHECK(stateErr.phase == UpdatePhase::Error);
+    CHECK_EQUAL(static_cast<int>(UpdateErrorCode::ManifestFetchFailed),
+                static_cast<int>(stateErr.errorCode));
     CHECK_FALSE(stateErr.errorMessage.empty());
+
+    // Test malformed JSON -> ManifestParseFailed
+    server->setPayload("/corrupt_version.json", "{ not valid json", "application/json");
+    CheckerConfig configParseErr;
+    configParseErr.applicationId = "com.selfso.octi";
+    configParseErr.manifestUrl = server->baseUrl() + "/corrupt_version.json";
+    SelfUpdateChecker checkerParseErr(configParseErr);
+    UpdateState stateParseErr = checkerParseErr.checkForUpdate();
+    CHECK(stateParseErr.phase == UpdatePhase::Error);
+    CHECK_EQUAL(static_cast<int>(UpdateErrorCode::ManifestParseFailed),
+                static_cast<int>(stateParseErr.errorCode));
+    CHECK_FALSE(stateParseErr.errorMessage.empty());
+
+    // Shared DEFAULT_MANIFEST_URL invariant
+    STRCMP_EQUAL("https://www.selfso.com/software/windows/",
+                 UpdateManifest::DEFAULT_MANIFEST_URL);
 }
 
 TEST(DownloaderAndCheckerTests, DownloaderNominalAndProgress)

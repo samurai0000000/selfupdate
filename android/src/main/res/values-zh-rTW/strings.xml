@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <string name="selfupdate_title_available">有可用更新</string>
+    <string name="selfupdate_title_downloading">正在下載更新…</string>
+    <string name="selfupdate_title_permission_required">需要權限</string>
+    <string name="selfupdate_title_ready_to_install">準備安裝</string>
+    <string name="selfupdate_title_update_ready">更新已就緒</string>
+    <string name="selfupdate_title_installing">正在安裝更新…</string>
+    <string name="selfupdate_title_error">更新錯誤</string>
+    <string name="selfupdate_title_up_to_date">應用程式已是最新版本</string>
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">大小：%1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256：%1$s…</string>
+    <string name="selfupdate_release_notes_heading">版本更新說明</string>
+    <string name="selfupdate_downloading_version">正在下載版本 %1$s…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">已下載 %1$s</string>
+    <string name="selfupdate_permission_dialog_body">Android 需要先授予此應用程式「安裝未知應用程式」權限，才能安裝來自 selfso.com 的更新。</string>
+    <string name="selfupdate_permission_dialog_hint">請輕觸「開啟設定」，啟用此應用程式的安裝權限後返回以繼續。</string>
+    <string name="selfupdate_ready_dialog_body">已準備好安裝 v%1$s (%2$d)。</string>
+    <string name="selfupdate_launching_installer_dialog">正在啟動 Android 套件安裝程式…</string>
+    <string name="selfupdate_banner_available_body">版本 %1$s 現已推出（已安裝：%2$s）。</string>
+    <string name="selfupdate_banner_downloading_title">正在下載更新 v%1$s…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Android 需要授予安裝未知應用程式權限才能套用更新。</string>
+    <string name="selfupdate_banner_ready_body">v%1$s 已下載並完成驗證。</string>
+    <string name="selfupdate_banner_launching_installer">正在啟動 Android 套件安裝程式…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">正在檢查更新…</string>
+    <string name="selfupdate_banner_idle_prompt">檢查更新</string>
+    <string name="selfupdate_action_download_and_install">下載並安裝</string>
+    <string name="selfupdate_action_update">更新</string>
+    <string name="selfupdate_action_later">稍後</string>
+    <string name="selfupdate_action_cancel">取消</string>
+    <string name="selfupdate_action_details">詳細資訊</string>
+    <string name="selfupdate_action_open_settings">開啟設定</string>
+    <string name="selfupdate_action_settings">設定</string>
+    <string name="selfupdate_action_retry_install">重試安裝</string>
+    <string name="selfupdate_action_install_now">立即安裝</string>
+    <string name="selfupdate_action_retry">重試</string>
+    <string name="selfupdate_action_dismiss">關閉</string>
+    <string name="selfupdate_action_reinstall">重新安裝</string>
+    <string name="selfupdate_action_check_again">再次檢查</string>
+    <string name="selfupdate_action_check_now">立即檢查</string>
+    <string name="selfupdate_error_install_status">安裝失敗（狀態碼 %1$d）</string>
+    <string name="selfupdate_error_download_failed">無法下載更新套件</string>
+    <string name="selfupdate_error_reinstall_failed">無法重新安裝更新套件</string>
+    <string name="selfupdate_error_launch_installer">無法啟動套件安裝程式</string>
+</resources>

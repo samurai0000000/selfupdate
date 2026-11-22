@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <!-- Dialog & Banner Titles -->
+    <string name="selfupdate_title_available">Pembaruan Tersedia</string>
+    <string name="selfupdate_title_downloading">Mengunduh Pembaruan…</string>
+    <string name="selfupdate_title_permission_required">Izin Diperlukan</string>
+    <string name="selfupdate_title_ready_to_install">Siap Dipasang</string>
+    <string name="selfupdate_title_update_ready">Pembaruan Siap</string>
+    <string name="selfupdate_title_installing">Memasang Pembaruan…</string>
+    <string name="selfupdate_title_error">Kesalahan Pembaruan</string>
+    <string name="selfupdate_title_up_to_date">Aplikasi sudah versi terbaru</string>
+
+    <!-- Dialog Body & Metadata -->
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">Ukuran: %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256: %1$s…</string>
+    <string name="selfupdate_release_notes_heading">Catatan Rilis</string>
+    <string name="selfupdate_downloading_version">Mengunduh versi %1$s…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">%1$s terunduh</string>
+    <string name="selfupdate_permission_dialog_body">Android mewajibkan pemberian izin \"Pasang aplikasi yang tidak dikenal\" bagi aplikasi ini sebelum dapat memasang pembaruan dari selfso.com.</string>
+    <string name="selfupdate_permission_dialog_hint">Silakan ketuk \"Buka Pengaturan\", aktifkan izin pemasangan untuk aplikasi ini, lalu kembali untuk melanjutkan.</string>
+    <string name="selfupdate_ready_dialog_body">Siap memasang v%1$s (%2$d).</string>
+    <string name="selfupdate_launching_installer_dialog">Membuka Pemasang Paket Android…</string>
+
+    <!-- Banner Body & Metadata -->
+    <string name="selfupdate_banner_available_body">Versi %1$s tersedia (terpasang: %2$s).</string>
+    <string name="selfupdate_banner_downloading_title">Mengunduh pembaruan v%1$s…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Android memerlukan izin pemasangan aplikasi tak dikenal untuk menerapkan pembaruan.</string>
+    <string name="selfupdate_banner_ready_body">v%1$s telah diunduh dan diverifikasi.</string>
+    <string name="selfupdate_banner_launching_installer">Membuka pemasang paket Android…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">Memeriksa pembaruan…</string>
+    <string name="selfupdate_banner_idle_prompt">Periksa pembaruan</string>
+
+    <!-- Action Buttons -->
+    <string name="selfupdate_action_download_and_install">Unduh &amp; Pasang</string>
+    <string name="selfupdate_action_update">Perbarui</string>
+    <string name="selfupdate_action_later">Nanti</string>
+    <string name="selfupdate_action_cancel">Batal</string>
+    <string name="selfupdate_action_details">Rincian</string>
+    <string name="selfupdate_action_open_settings">Buka Pengaturan</string>
+    <string name="selfupdate_action_settings">Pengaturan</string>
+    <string name="selfupdate_action_retry_install">Coba Pasang Lagi</string>
+    <string name="selfupdate_action_install_now">Pasang Sekarang</string>
+    <string name="selfupdate_action_retry">Coba Lagi</string>
+    <string name="selfupdate_action_dismiss">Tutup</string>
+    <string name="selfupdate_action_reinstall">Pasang Ulang</string>
+    <string name="selfupdate_action_check_again">Periksa Lagi</string>
+    <string name="selfupdate_action_check_now">Periksa Sekarang</string>
+
+    <!-- Controller Fallback Errors -->
+    <string name="selfupdate_error_install_status">Pemasangan gagal dengan status %1$d</string>
+    <string name="selfupdate_error_download_failed">Gagal mengunduh paket pembaruan</string>
+    <string name="selfupdate_error_reinstall_failed">Gagal memasang ulang paket pembaruan</string>
+    <string name="selfupdate_error_launch_installer">Gagal membuka pemasang paket</string>
+</resources>

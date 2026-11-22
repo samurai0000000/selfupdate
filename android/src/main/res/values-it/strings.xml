@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <!-- Dialog & Banner Titles -->
+    <string name="selfupdate_title_available">Aggiornamento disponibile</string>
+    <string name="selfupdate_title_downloading">Download dell\'aggiornamento…</string>
+    <string name="selfupdate_title_permission_required">Autorizzazione richiesta</string>
+    <string name="selfupdate_title_ready_to_install">Pronto per l\'installazione</string>
+    <string name="selfupdate_title_update_ready">Aggiornamento pronto</string>
+    <string name="selfupdate_title_installing">Installazione dell\'aggiornamento…</string>
+    <string name="selfupdate_title_error">Errore di aggiornamento</string>
+    <string name="selfupdate_title_up_to_date">L\'app è aggiornata</string>
+
+    <!-- Dialog Body & Metadata -->
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">Dimensione: %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256: %1$s…</string>
+    <string name="selfupdate_release_notes_heading">Note di rilascio</string>
+    <string name="selfupdate_downloading_version">Download della versione %1$s…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">%1$s scaricati</string>
+    <string name="selfupdate_permission_dialog_body">Android richiede di concedere l\'autorizzazione \"Installa app sconosciute\" a questa app prima di poter installare gli aggiornamenti da selfso.com.</string>
+    <string name="selfupdate_permission_dialog_hint">Tocca \"Apri impostazioni\", abilita i permessi di installazione per questa app e torna indietro per continuare.</string>
+    <string name="selfupdate_ready_dialog_body">Pronto per installare v%1$s (%2$d).</string>
+    <string name="selfupdate_launching_installer_dialog">Avvio dell\'installazione pacchetti di Android…</string>
+
+    <!-- Banner Body & Metadata -->
+    <string name="selfupdate_banner_available_body">La versione %1$s è disponibile (installata: %2$s).</string>
+    <string name="selfupdate_banner_downloading_title">Download aggiornamento v%1$s…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Android richiede l\'autorizzazione per installare app sconosciute per applicare l\'aggiornamento.</string>
+    <string name="selfupdate_banner_ready_body">La versione v%1$s è stata scaricata e verificata.</string>
+    <string name="selfupdate_banner_launching_installer">Avvio dell\'installazione pacchetti di Android…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">Ricerca aggiornamenti in corso…</string>
+    <string name="selfupdate_banner_idle_prompt">Controlla aggiornamenti</string>
+
+    <!-- Action Buttons -->
+    <string name="selfupdate_action_download_and_install">Scarica e installa</string>
+    <string name="selfupdate_action_update">Aggiorna</string>
+    <string name="selfupdate_action_later">Più tardi</string>
+    <string name="selfupdate_action_cancel">Annulla</string>
+    <string name="selfupdate_action_details">Dettagli</string>
+    <string name="selfupdate_action_open_settings">Apri impostazioni</string>
+    <string name="selfupdate_action_settings">Impostazioni</string>
+    <string name="selfupdate_action_retry_install">Riprova installazione</string>
+    <string name="selfupdate_action_install_now">Installa ora</string>
+    <string name="selfupdate_action_retry">Riprova</string>
+    <string name="selfupdate_action_dismiss">Chiudi</string>
+    <string name="selfupdate_action_reinstall">Reinstalla</string>
+    <string name="selfupdate_action_check_again">Controlla di nuovo</string>
+    <string name="selfupdate_action_check_now">Controlla ora</string>
+
+    <!-- Controller Fallback Errors -->
+    <string name="selfupdate_error_install_status">Installazione non riuscita con stato %1$d</string>
+    <string name="selfupdate_error_download_failed">Impossibile scaricare il pacchetto di aggiornamento</string>
+    <string name="selfupdate_error_reinstall_failed">Impossibile reinstallare il pacchetto di aggiornamento</string>
+    <string name="selfupdate_error_launch_installer">Impossibile avviare il programma di installazione pacchetti</string>
+</resources>

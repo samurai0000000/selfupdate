@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <!-- Dialog & Banner Titles -->
+    <string name="selfupdate_title_available">Update Available</string>
+    <string name="selfupdate_title_downloading">Downloading Update…</string>
+    <string name="selfupdate_title_permission_required">Permission Required</string>
+    <string name="selfupdate_title_ready_to_install">Ready to Install</string>
+    <string name="selfupdate_title_update_ready">Update Ready</string>
+    <string name="selfupdate_title_installing">Installing Update…</string>
+    <string name="selfupdate_title_error">Update Error</string>
+    <string name="selfupdate_title_up_to_date">App is up to date</string>
+
+    <!-- Dialog Body & Metadata -->
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">Size: %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256: %1$s…</string>
+    <string name="selfupdate_release_notes_heading">Release Notes</string>
+    <string name="selfupdate_downloading_version">Downloading version %1$s…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">%1$s downloaded</string>
+    <string name="selfupdate_permission_dialog_body">Android requires granting the \"Install unknown apps\" permission for this app before it can install updates from selfso.com.</string>
+    <string name="selfupdate_permission_dialog_hint">Please tap \"Open Settings\", enable installation permissions for this app, and return to proceed.</string>
+    <string name="selfupdate_ready_dialog_body">Ready to install v%1$s (%2$d).</string>
+    <string name="selfupdate_launching_installer_dialog">Launching Android Package Installer…</string>
+
+    <!-- Banner Body & Metadata -->
+    <string name="selfupdate_banner_available_body">Version %1$s is available (installed: %2$s).</string>
+    <string name="selfupdate_banner_downloading_title">Downloading update v%1$s…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Android requires granting unknown apps installation permission to apply update.</string>
+    <string name="selfupdate_banner_ready_body">v%1$s has been downloaded and verified.</string>
+    <string name="selfupdate_banner_launching_installer">Launching Android package installer…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">Checking for updates…</string>
+    <string name="selfupdate_banner_idle_prompt">Check for updates</string>
+
+    <!-- Action Buttons -->
+    <string name="selfupdate_action_download_and_install">Download &amp; Install</string>
+    <string name="selfupdate_action_update">Update</string>
+    <string name="selfupdate_action_later">Later</string>
+    <string name="selfupdate_action_cancel">Cancel</string>
+    <string name="selfupdate_action_details">Details</string>
+    <string name="selfupdate_action_open_settings">Open Settings</string>
+    <string name="selfupdate_action_settings">Settings</string>
+    <string name="selfupdate_action_retry_install">Retry Install</string>
+    <string name="selfupdate_action_install_now">Install Now</string>
+    <string name="selfupdate_action_retry">Retry</string>
+    <string name="selfupdate_action_dismiss">Dismiss</string>
+    <string name="selfupdate_action_reinstall">Reinstall</string>
+    <string name="selfupdate_action_check_again">Check Again</string>
+    <string name="selfupdate_action_check_now">Check Now</string>
+
+    <!-- Controller Fallback Errors -->
+    <string name="selfupdate_error_install_status">Installation failed with status %1$d</string>
+    <string name="selfupdate_error_download_failed">Failed to download update package</string>
+    <string name="selfupdate_error_reinstall_failed">Failed to reinstall update package</string>
+    <string name="selfupdate_error_launch_installer">Failed to launch package installer</string>
+</resources>

@@ -2,6 +2,7 @@
 # Copyright (C) 2026, Charles Chiou
 
 import argparse
+import copy
 import datetime
 import html
 import json
@@ -9,7 +10,8 @@ import os
 from pathlib import Path
 import shutil
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+import urllib.parse
 
 # Enable importing gen_windows_version_json from current or scripts directory
 _SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -187,18 +189,274 @@ def detect_slug_from_cwd(workspace_root: Optional[Union[str, Path]] = None) -> O
     return None
 
 
+def parse_portal_context(base_url: str) -> Dict[str, Any]:
+    """Derive host, origin, path, and portal-mode flags from base_url."""
+    clean_base = (base_url or "https://www.selfso.com/software/windows/").strip().rstrip("/")
+    parsed = urllib.parse.urlparse(clean_base)
+    scheme = parsed.scheme or "https"
+    host = parsed.netloc or "www.selfso.com"
+    origin = f"{scheme}://{host}"
+    path_slash = (parsed.path.rstrip("/") + "/") if parsed.path else "/software/windows/"
+    is_selfso_portal = host.lower() in ("www.selfso.com", "selfso.com")
+    arena_host = "octi.selfso.com" if is_selfso_portal else host
+    arena_origin = f"https://{arena_host}" if is_selfso_portal else origin
+    return {
+        "clean_base": clean_base,
+        "base_url_slash": f"{clean_base}/",
+        "scheme": scheme,
+        "site_host": host,
+        "site_origin": origin,
+        "host_path": f"{host}{path_slash}",
+        "is_selfso_portal": is_selfso_portal,
+        "arena_host": arena_host,
+        "arena_origin": arena_origin,
+    }
+
+
+def is_external_catalog_entry(app_manifest: Dict[str, Any], portal_base_url: str) -> bool:
+    """Return True if an entry in version.json points to a different host than portal_base_url."""
+    portal_host = (urllib.parse.urlparse(portal_base_url or "").netloc or "").lower()
+    entry_url = str(
+        app_manifest.get("packageUrl")
+        or app_manifest.get("apkUrl")
+        or app_manifest.get("pageUrl")
+        or ""
+    )
+    entry_host = (urllib.parse.urlparse(entry_url).netloc or "").lower()
+    return bool(entry_host and portal_host and entry_host != portal_host)
+
+
+def resolve_cli_target_defaults(
+    slug: Optional[str],
+    web_root_arg: Optional[str],
+    base_url_arg: Optional[str],
+    workspace_root: Union[str, Path],
+) -> Tuple[Path, str]:
+    """Resolve CLI default web_root and base_url (--slug octi defaults to octi standalone portal)."""
+    ws = Path(workspace_root).resolve()
+    if slug == "octi":
+        w_root = (
+            Path(web_root_arg).resolve()
+            if web_root_arg
+            else (ws / "octi/web/html/software/windows")
+        )
+        if base_url_arg:
+            b_url = base_url_arg
+        elif web_root_arg and "www/selfso" in Path(web_root_arg).as_posix():
+            b_url = "https://www.selfso.com/software/windows/"
+        else:
+            b_url = "https://octi.selfso.com/software/windows/"
+    else:
+        w_root = (
+            Path(web_root_arg).resolve()
+            if web_root_arg
+            else (ws / "www/selfso/html/software/windows")
+        )
+        b_url = base_url_arg or "https://www.selfso.com/software/windows/"
+    return w_root, b_url
+
+
+def _render_site_chrome(ctx: Dict[str, Any], page_title: str, meta_description: str) -> Tuple[str, str]:
+    """Render matching header/head and footer/script HTML for Selfso vs standalone OCTI/custom portals."""
+    desc_esc = html.escape(meta_description)
+    if ctx["is_selfso_portal"]:
+        head_and_header = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{desc_esc}">
+  <title>{page_title} &bull; SELFSO.COM</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <span class="brand-badge">SELFSO</span>
+        <div class="brand-text">
+          <span class="brand-name">SELFSO.COM</span>
+          <span class="brand-tagline">Systems &bull; Code &bull; Philosophy</span>
+        </div>
+      </a>
+
+      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <nav>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/news.html" class="nav-link">News</a></li>
+          <li><a href="/projects/" class="nav-link active">Projects</a></li>
+          <li><a href="/info.html" class="nav-link">Info</a></li>
+          <li><a href="/links.html" class="nav-link">Links</a></li>
+          <li><a href="/contact.html" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>"""
+        footer_and_script = """  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="brand-badge">SELFSO</span>
+          <p>Private computing infrastructure and creative portal. Operating continuously since 2001.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Navigation</h5>
+          <ul class="footer-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/news.html">News &amp; Timeline</a></li>
+            <li><a href="/projects/">Projects</a></li>
+            <li><a href="/software/android/">Android Software</a></li>
+            <li><a href="/software/windows/">Windows Software</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Information</h5>
+          <ul class="footer-links">
+            <li><a href="/info.html">About &amp; Philosophy</a></li>
+            <li><a href="/links.html">Resources</a></li>
+            <li><a href="/poweredby.html">Powered By</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2001&ndash;2026 SELFSO.COM. All Rights Reserved.</span>
+        <span>Built with Pure Static HTML</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('mobileNavBtn');
+      var menu = document.getElementById('navMenu');
+      if (btn && menu) {
+        btn.addEventListener('click', function() {
+          menu.classList.toggle('open');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
+"""
+        return head_and_header, footer_and_script
+
+    host_esc = html.escape(ctx["site_host"])
+    head_and_header = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{desc_esc}">
+  <title>{page_title} &bull; {host_esc}</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <span class="brand-badge">OCTI</span>
+        <div class="brand-text">
+          <span class="brand-name" data-dynamic-host>{host_esc}</span>
+          <span class="brand-tagline">Online Arena &bull; Clients &bull; Archive</span>
+        </div>
+      </a>
+
+      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <nav>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="/" class="nav-link">Arena</a></li>
+          <li><a href="/#play" class="nav-link">Browser Play</a></li>
+          <li><a href="/archives/" class="nav-link">Archives</a></li>
+          <li><a href="/robots/" class="nav-link">Bots</a></li>
+          <li><a href="/journal/" class="nav-link">Journal</a></li>
+          <li><a href="/software/android/" class="nav-link">Android</a></li>
+          <li><a href="/software/windows/" class="nav-link active">Windows</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>"""
+    footer_and_script = f"""  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="brand-badge">OCTI</span>
+          <p>Online multiplayer OCTI arena, game archive, and native client distribution.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Arena &amp; Downloads</h5>
+          <ul class="footer-links">
+            <li><a href="/">OCTI Online Arena</a></li>
+            <li><a href="/software/windows/">Windows Software</a></li>
+            <li><a href="/software/android/">Android Software</a></li>
+            <li><a href="/archives/">Game Archives</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Resources</h5>
+          <ul class="footer-links">
+            <li><a href="/robots/">Bring Your &rsquo;Bot!</a></li>
+            <li><a href="/journal/">The OCTI Journal</a></li>
+            <li><a href="/privacy/">Privacy Policy</a></li>
+            <li><a href="/data-deletion/">Data Deletion</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2001&ndash;2026 Charles Chiou &bull; <span data-dynamic-host>{host_esc}</span></span>
+        <span>Built with Pure Static HTML</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {{
+      var btn = document.getElementById('mobileNavBtn');
+      var menu = document.getElementById('navMenu');
+      if (btn && menu) {{
+        btn.addEventListener('click', function() {{
+          menu.classList.toggle('open');
+        }});
+      }}
+      if (window.location && window.location.host) {{
+        var els = document.querySelectorAll('[data-dynamic-host]');
+        for (var i = 0; i < els.length; i++) {{
+          els[i].textContent = window.location.host;
+        }}
+      }}
+    }})();
+  </script>
+</body>
+</html>
+"""
+    return head_and_header, footer_and_script
+
+
 def render_app_card(
     app_manifest: Dict[str, Any], app_meta: Dict[str, Any], base_url: str
 ) -> str:
     """Render a single application card for the master portal grid."""
-    slug = html.escape(app_manifest.get("slug", ""))
-    title = html.escape(app_manifest.get("title") or app_meta.get("title") or slug.capitalize())
+    raw_slug = app_manifest.get("slug", "")
+    slug = html.escape(raw_slug)
+    title = html.escape(app_manifest.get("title") or app_meta.get("title") or raw_slug.capitalize())
     category = html.escape(app_manifest.get("category") or app_meta.get("category") or "Windows Desktop")
     tagline = html.escape(app_manifest.get("tagline") or app_meta.get("tagline") or app_manifest.get("releaseNotes", ""))
     version_name = html.escape(str(app_manifest.get("versionName", "1.0.0")))
     version_code = int(app_manifest.get("versionCode", 1))
     app_id = html.escape(app_manifest.get("applicationId", ""))
-    executable_name = html.escape(app_manifest.get("executableName", f"{slug}.exe"))
+    executable_name = html.escape(app_manifest.get("executableName", f"{raw_slug}.exe"))
     arch = html.escape(app_manifest.get("arch", "x86_64"))
     min_os = html.escape(app_manifest.get("minOs", "Windows 10 (64-bit)+"))
     size_str = html.escape(format_size_bytes(app_manifest.get("sizeBytes", 0)))
@@ -208,6 +466,19 @@ def render_app_card(
     install_type = app_manifest.get("installType", "installer")
     install_badge = "Setup Installer" if install_type == "installer" else "Standalone Binary"
     download_btn_text = "Download Installer" if install_type == "installer" else "Download Binary"
+
+    if is_external_catalog_entry(app_manifest, base_url):
+        raw_page_url = str(app_manifest.get("pageUrl") or f"{raw_slug}/")
+        details_href = html.escape(raw_page_url)
+        manifest_href = html.escape(raw_page_url.rstrip("/") + "/version.json")
+        ext_host = html.escape(
+            urllib.parse.urlparse(str(app_manifest.get("packageUrl") or raw_page_url)).netloc
+        )
+        ext_badge_html = f'\n            <span class="badge">Hosted on {ext_host}</span>'
+    else:
+        details_href = f"{slug}/"
+        manifest_href = f"{slug}/version.json"
+        ext_badge_html = ""
 
     return f"""        <!-- App Card: {title} -->
         <div class="card" id="{slug}">
@@ -221,7 +492,7 @@ def render_app_card(
             <span class="badge">{arch}</span>
             <span class="badge">{install_badge}</span>
             <span class="badge">{size_str}</span>
-            <span class="badge">{pub_date}</span>
+            <span class="badge">{pub_date}</span>{ext_badge_html}
           </div>
 
           <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
@@ -239,9 +510,9 @@ def render_app_card(
               </svg>
               {download_btn_text}
             </a>
-            <a href="{slug}/" class="btn btn-outline">Release Details &amp; Install Guide &rarr;</a>
+            <a href="{details_href}" class="btn btn-outline">Release Details &amp; Install Guide &rarr;</a>
             <a href="#windows-install-guide" class="btn btn-outline">Step-by-Step Setup</a>
-            <a href="{slug}/version.json" class="btn btn-outline">version.json</a>
+            <a href="{manifest_href}" class="btn btn-outline">version.json</a>
           </div>
         </div>"""
 
@@ -252,8 +523,14 @@ def render_windows_install_guide_html(
     executable_name: str = "octi.exe",
     app_id: str = "com.selfso.octi",
     sha256_hint: str = "206987c831e12a685c225913c82e5d0b8796feb6e61b744fce97b91100e04041",
+    base_url: str = "https://www.selfso.com/software/windows/",
 ) -> str:
     """Render the comprehensive Windows 11/10 visual installation, permissions, and Google SSO onboarding guide."""
+    ctx = parse_portal_context(base_url)
+    site_host_esc = html.escape(ctx["site_host"])
+    base_url_slash_esc = html.escape(ctx["base_url_slash"])
+    arena_host_esc = html.escape(ctx["arena_host"])
+    arena_origin_esc = html.escape(ctx["arena_origin"])
     sha_short = (sha256_hint[:16] + "...") if len(sha256_hint) > 16 else (sha256_hint or "<sha256>")
     return f"""
       <!-- Comprehensive Windows 11 / 10 Installation & Google Onboarding Guide -->
@@ -384,7 +661,7 @@ def render_windows_install_guide_html(
         <span class="badge badge-vermilion" style="margin-bottom: 0.75rem;">Step-by-Step Visual Installation &amp; Onboarding Guide</span>
         <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">How to Install on Windows 11 / 10 &amp; Onboard with Google</h2>
         <p style="color: var(--text-secondary); max-width: 820px; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
-          Because Selfso desktop applications are distributed directly from <code>selfso.com</code> as independent first-party builds rather than through the commercial Microsoft Store, <strong>Microsoft Windows 11</strong> and your web browser will show unrecognized-app security prompts on first install. Follow this visual guide to understand why these warnings appear, safely complete installation, configure Windows permissions, and sign in with your <strong>Google Account</strong>.
+          Because desktop applications on this portal are distributed directly from <code>{site_host_esc}</code> as independent first-party builds rather than through the commercial Microsoft Store, <strong>Microsoft Windows 11</strong> and your web browser will show unrecognized-app security prompts on first install. Follow this visual guide to understand why these warnings appear, safely complete installation, configure Windows permissions, and sign in with your <strong>Google Account</strong>.
         </p>
 
         <!-- Why Windows 11 Warns You (The Facts) -->
@@ -396,10 +673,10 @@ def render_windows_install_guide_html(
             <h3 style="font-size: 1.2rem; color: #92400e; margin: 0;">Why Does Windows 11 Flag <code>{pkg_filename}</code> as an &ldquo;Unrecognized App&rdquo;?</h3>
           </div>
           <p style="color: #78350f; font-size: 0.96rem; line-height: 1.65; margin-bottom: 0.85rem;">
-            <strong>1. Direct Independent Distribution (No Commercial EV Certificate):</strong> Microsoft Windows 11 <strong>Defender SmartScreen</strong> requires software publishers either to distribute through the Microsoft Store or to purchase expensive commercial Extended Validation (EV) Authenticode hardware tokens from third-party Certificate Authorities and accumulate tens of thousands of telemetry downloads before suppressing warnings. Because Selfso publishes independent, ad-free engineering and strategy software directly without commercial middlemen, Windows labels the installer as <code>Publisher: Unknown publisher</code>.
+            <strong>1. Direct Independent Distribution (No Commercial EV Certificate):</strong> Microsoft Windows 11 <strong>Defender SmartScreen</strong> requires software publishers either to distribute through the Microsoft Store or to purchase expensive commercial Extended Validation (EV) Authenticode hardware tokens from third-party Certificate Authorities and accumulate tens of thousands of telemetry downloads before suppressing warnings. Because independent, ad-free engineering and strategy software is published here directly without commercial middlemen, Windows labels the installer as <code>Publisher: Unknown publisher</code>.
           </p>
           <p style="color: #78350f; font-size: 0.96rem; line-height: 1.65; margin-bottom: 0;">
-            <strong>2. Cryptographic Integrity Without Third-Party Lock-In:</strong> Instead of commercial store gatekeeping, every Selfso installer is served over TLS from <code>www.selfso.com</code> with a published <strong>RFC 6234 SHA-256 checksum</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once installed, the built-in C++17 <code>selfupdate</code> engine verifies future updates cryptographically in memory before applying them.
+            <strong>2. Cryptographic Integrity Without Third-Party Lock-In:</strong> Instead of commercial store gatekeeping, every installer is served over TLS from <code>{site_host_esc}</code> with a published <strong>RFC 6234 SHA-256 checksum</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once installed, the built-in C++17 <code>selfupdate</code> engine verifies future updates cryptographically in memory before applying them.
           </p>
         </div>
 
@@ -449,7 +726,7 @@ def render_windows_install_guide_html(
               <text x="54" y="124" fill="#0f172a" font-size="11" font-weight="800">!</text>
               <text x="80" y="108" fill="#f8fafc" font-size="13" font-weight="600">{pkg_filename} isn&apos;t commonly</text>
               <text x="80" y="126" fill="#f8fafc" font-size="13" font-weight="600">downloaded. Make sure you trust it.</text>
-              <text x="80" y="148" fill="#94a3b8" font-size="11">https://www.selfso.com/software/windows/...</text>
+              <text x="80" y="148" fill="#94a3b8" font-size="11">{base_url_slash_esc}...</text>
 
               <!-- 3-dot button highlighted -->
               <rect x="372" y="92" width="40" height="28" rx="6" fill="#334155" stroke="#ef4444" stroke-width="2.5"/>
@@ -738,7 +1015,7 @@ def render_windows_install_guide_html(
               <span class="badge badge-indigo" style="margin-bottom: 0.35rem;">Google OAuth 2.0 SSO &bull; Cross-Device Profile &amp; Elo Sync</span>
               <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 5: Sign In &amp; Onboard with Your Google Account</h3>
               <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
-                Sign in with your Google Account to play rated online matches, join live voice/chat tables, and synchronize your player handle, avatar, Elo ratings, and game archives across Windows Desktop, Android, and Web (<code>https://octi.selfso.com</code>).
+                Sign in with your Google Account to play rated online matches, join live voice/chat tables, and synchronize your player handle, avatar, Elo ratings, and game archives across Windows Desktop, Android, and Web (<code>{arena_origin_esc}</code>).
               </p>
             </div>
           </div>
@@ -753,7 +1030,7 @@ def render_windows_install_guide_html(
           <div class="guide-screenshot-frame">
             <div class="guide-screenshot-bar">
               <span>SCREENSHOT 5 &bull; Google Account SSO Sign-In &amp; First-Time Player Name Onboarding</span>
-              <span>OAuth 2.0 Loopback Handoff &rarr; octi.selfso.com</span>
+              <span>OAuth 2.0 Loopback Handoff &rarr; {arena_host_esc}</span>
             </div>
             <svg viewBox="0 0 920 350" width="100%" style="display: block; background: #0f172a; font-family: 'Segoe UI', Inter, sans-serif;" role="img" aria-label="Three-step screenshot of OCTI Desktop Sign In with Google dialog, Google OAuth account chooser, and Welcome to OCTI Choose Your Player Name onboarding">
               <!-- Panel 1: Sign In to OCTI Dialog -->
@@ -785,7 +1062,7 @@ def render_windows_install_guide_html(
               <text x="334" y="41" fill="#334155" font-size="11.5" font-weight="700">2. Browser &bull; accounts.google.com</text>
 
               <text x="340" y="78" fill="#202124" font-size="16" font-weight="700">Choose an account</text>
-              <text x="340" y="98" fill="#5f6368" font-size="12">to continue to <tspan fill="#1a73e8" font-weight="700">octi.selfso.com</tspan></text>
+              <text x="340" y="98" fill="#5f6368" font-size="12">to continue to <tspan fill="#1a73e8" font-weight="700">{arena_host_esc}</tspan></text>
 
               <!-- Selected Google account card -->
               <rect x="332" y="118" width="256" height="64" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
@@ -837,6 +1114,8 @@ def render_windows_install_guide_html(
 
 def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
     """Render the master portal index.html for all Windows desktop applications."""
+    ctx = parse_portal_context(base_url)
+    base_url_slash_esc = html.escape(ctx["base_url_slash"])
     cards_list = []
     apps = catalog.get("apps", {})
 
@@ -864,54 +1143,32 @@ def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
                 seen.add(s)
 
     cards_joined = "\n\n".join(cards_list)
-    portal_install_guide_html = render_windows_install_guide_html()
+    portal_install_guide_html = render_windows_install_guide_html(base_url=base_url)
 
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SELFSO.COM Windows Desktop Software Distribution Portal — Independent 64-bit Windows Qt6 desktop applications and local hardware bridges with zero-dependency C++17 self-update.">
-  <title>Windows Software &amp; Self-Update Distribution &bull; SELFSO.COM</title>
-  <link rel="stylesheet" href="/css/main.css">
-</head>
-<body>
-  <header class="site-header">
-    <div class="nav-container">
-      <a href="/" class="brand">
-        <span class="brand-badge">SELFSO</span>
-        <div class="brand-text">
-          <span class="brand-name">SELFSO.COM</span>
-          <span class="brand-tagline">Systems &bull; Code &bull; Philosophy</span>
-        </div>
-      </a>
+    if ctx["is_selfso_portal"]:
+        meta_desc = "SELFSO.COM Windows Desktop Software Distribution Portal — Independent 64-bit Windows Qt6 desktop applications and local hardware bridges with zero-dependency C++17 self-update."
+        portal_heading = "Selfso Windows Desktop Applications"
+        back_href = "/projects/"
+        back_label = "&larr; Back to Projects"
+    else:
+        meta_desc = f"{ctx['site_host']} Windows Desktop Software Distribution Portal — Native 64-bit Windows Qt6 installers with zero-dependency C++17 self-update."
+        portal_heading = "OCTI Windows Desktop Portal"
+        back_href = "/"
+        back_label = "&larr; Back to OCTI Arena"
 
-      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+    head_and_header, footer_and_script = _render_site_chrome(
+        ctx, "Windows Software &amp; Self-Update Distribution", meta_desc
+    )
 
-      <nav>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="/" class="nav-link">Home</a></li>
-          <li><a href="/news.html" class="nav-link">News</a></li>
-          <li><a href="/projects/" class="nav-link active">Projects</a></li>
-          <li><a href="/info.html" class="nav-link">Info</a></li>
-          <li><a href="/links.html" class="nav-link">Links</a></li>
-          <li><a href="/contact.html" class="nav-link">Contact</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+    return f"""{head_and_header}
 
   <main class="site-wrapper">
     <div class="container" style="padding-top: 3.5rem; padding-bottom: 4rem;">
       <div style="margin-bottom: 2.5rem;">
-        <a href="/projects/" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none;">&larr; Back to Projects</a>
+        <a href="{back_href}" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none;">{back_label}</a>
         <div style="margin-top: 0.75rem;">
           <span class="badge" style="margin-bottom: 0.75rem;">Native Windows Desktop Portal</span>
-          <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">Selfso Windows Desktop Applications</h1>
+          <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">{portal_heading}</h1>
         </div>
         <p style="color: var(--text-secondary); max-width: 760px; font-size: 1.05rem; line-height: 1.6;">
           Independent, native 64-bit Windows Qt6 desktop applications, robotics control studios, and local EDA/CAD hardware automation bridges. Distributed directly with zero-dependency C++17 cryptographic self-update support.
@@ -941,7 +1198,7 @@ def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
         <span class="badge" style="margin-bottom: 0.75rem;">Distribution &amp; Security Architecture</span>
         <h2 style="font-size: 1.75rem; margin-bottom: 0.75rem;">Zero-Dependency C++17 Self-Update Architecture (<code>namespace selfupdate</code>)</h2>
         <p style="color: var(--text-secondary); max-width: 760px; margin-bottom: 1.5rem; line-height: 1.6;">
-          All Selfso Windows applications embed the reusable, zero-dependency C++17 <code>selfupdate</code> engine. On launch or manual user trigger, applications poll <code>https://www.selfso.com/software/windows/version.json</code>, verify cryptographic RFC 6234 SHA-256 digests against streaming downloads, and execute either detached setup installers with PID-wait trampoline handoff or atomic <code>.old</code> in-place binary replacements with automatic rollback.
+          Windows applications on this portal embed the reusable, zero-dependency C++17 <code>selfupdate</code> engine. On launch or manual user trigger, applications poll <code>{base_url_slash_esc}version.json</code>, verify cryptographic RFC 6234 SHA-256 digests against streaming downloads, and execute either detached setup installers with PID-wait trampoline handoff or atomic <code>.old</code> in-place binary replacements with automatic rollback.
         </p>
 
         <div class="terminal-box">
@@ -956,10 +1213,10 @@ def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
           <div class="terminal-body">
             <div class="terminal-line">
               <span class="terminal-prompt">$</span>
-              <span>curl -s https://www.selfso.com/software/windows/version.json</span>
+              <span>curl -s {base_url_slash_esc}version.json</span>
             </div>
             <div style="color: #a1a1aa; margin-bottom: 0.85rem; font-size: 0.8rem;">
-              &#123; "schemaVersion": 1, "baseUrl": "https://www.selfso.com/software/windows/", "apps": &#123; ... &#125; &#125;
+              &#123; "schemaVersion": 1, "baseUrl": "{base_url_slash_esc}", "apps": &#123; ... &#125; &#125;
             </div>
             <div class="terminal-line">
               <span class="terminal-prompt">$</span>
@@ -974,65 +1231,21 @@ def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <span class="brand-badge">SELFSO</span>
-          <p>Private computing infrastructure and creative portal. Operating continuously since 2001.</p>
-        </div>
-        <div class="footer-col">
-          <h5>Navigation</h5>
-          <ul class="footer-links">
-            <li><a href="/">Home</a></li>
-            <li><a href="/news.html">News &amp; Timeline</a></li>
-            <li><a href="/projects/">Projects</a></li>
-            <li><a href="/software/android/">Android Software</a></li>
-            <li><a href="/software/windows/">Windows Software</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>Information</h5>
-          <ul class="footer-links">
-            <li><a href="/info.html">About &amp; Philosophy</a></li>
-            <li><a href="/links.html">Resources</a></li>
-            <li><a href="/poweredby.html">Powered By</a></li>
-            <li><a href="/contact.html">Contact</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>&copy; 2001&ndash;2026 SELFSO.COM. All Rights Reserved.</span>
-        <span>Built with Pure Static HTML</span>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    (function() {{
-      var btn = document.getElementById('mobileNavBtn');
-      var menu = document.getElementById('navMenu');
-      if (btn && menu) {{
-        btn.addEventListener('click', function() {{
-          menu.classList.toggle('open');
-        }});
-      }}
-    }})();
-  </script>
-</body>
-</html>
-"""
+{footer_and_script}"""
 
 
 def render_app_html(
     app_manifest: Dict[str, Any], app_meta: Dict[str, Any], base_url: str
 ) -> str:
     """Render a dedicated detail page index.html for a single Windows application."""
+    ctx = parse_portal_context(base_url)
+    clean_base_esc = html.escape(ctx["clean_base"])
     slug = html.escape(app_manifest.get("slug", ""))
     title = html.escape(app_manifest.get("title") or app_meta.get("title") or slug.capitalize())
     category = html.escape(app_manifest.get("category") or app_meta.get("category") or "Windows Desktop")
-    tagline = html.escape(app_manifest.get("tagline") or app_meta.get("tagline") or app_manifest.get("releaseNotes", ""))
-    description = html.escape(app_manifest.get("description") or app_meta.get("description") or tagline)
+    raw_tagline = app_manifest.get("tagline") or app_meta.get("tagline") or app_manifest.get("releaseNotes", "")
+    tagline = html.escape(raw_tagline)
+    description = html.escape(app_manifest.get("description") or app_meta.get("description") or raw_tagline)
     version_name = html.escape(str(app_manifest.get("versionName", "1.0.0")))
     version_code = int(app_manifest.get("versionCode", 1))
     app_id = html.escape(app_manifest.get("applicationId", ""))
@@ -1048,49 +1261,19 @@ def render_app_html(
     install_badge = "Setup Installer" if install_type == "installer" else "Standalone Binary"
     installer_args = html.escape(app_manifest.get("installerArgs", ""))
     project_url = app_manifest.get("projectUrl") or app_meta.get("projectUrl")
+    if not ctx["is_selfso_portal"] and project_url == "/projects/octi/":
+        project_url = "/"
 
     project_btn_html = ""
     if project_url:
-        project_btn_html = f'<a href="{html.escape(project_url)}" class="btn btn-outline">Project Documentation</a>'
+        btn_label = "OCTI Online Arena" if (not ctx["is_selfso_portal"] and project_url == "/") else "Project Documentation"
+        project_btn_html = f'<a href="{html.escape(project_url)}" class="btn btn-outline">{btn_label}</a>'
 
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="{tagline}">
-  <title>{title} &bull; Windows Distribution &bull; SELFSO.COM</title>
-  <link rel="stylesheet" href="/css/main.css">
-</head>
-<body>
-  <header class="site-header">
-    <div class="nav-container">
-      <a href="/" class="brand">
-        <span class="brand-badge">SELFSO</span>
-        <div class="brand-text">
-          <span class="brand-name">SELFSO.COM</span>
-          <span class="brand-tagline">Systems &bull; Code &bull; Philosophy</span>
-        </div>
-      </a>
+    head_and_header, footer_and_script = _render_site_chrome(
+        ctx, f"{title} &bull; Windows Distribution", raw_tagline
+    )
 
-      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
-      <nav>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="/" class="nav-link">Home</a></li>
-          <li><a href="/news.html" class="nav-link">News</a></li>
-          <li><a href="/projects/" class="nav-link active">Projects</a></li>
-          <li><a href="/info.html" class="nav-link">Info</a></li>
-          <li><a href="/links.html" class="nav-link">Links</a></li>
-          <li><a href="/contact.html" class="nav-link">Contact</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+    return f"""{head_and_header}
 
   <main class="site-wrapper">
     <div class="container" style="padding-top: 3.5rem; padding-bottom: 4rem;">
@@ -1173,7 +1356,7 @@ def render_app_html(
         </p>
       </div>
 
-{render_windows_install_guide_html(pkg_filename=pkg_filename, app_title=title, executable_name=executable_name, app_id=app_id, sha256_hint=sha256)}
+{render_windows_install_guide_html(pkg_filename=pkg_filename, app_title=title, executable_name=executable_name, app_id=app_id, sha256_hint=sha256, base_url=base_url)}
 
       <!-- Integrity Verification -->
       <div class="terminal-box">
@@ -1190,62 +1373,19 @@ def render_app_html(
             <span class="terminal-prompt">$</span>
             <span>echo "{sha256}  {pkg_filename}" | sha256sum -c</span>
           </div>
-          <div style="color: #34d399; font-size: 0.8rem;">
+          <div style="color: #34d399; margin-bottom: 0.75rem; font-size: 0.8rem;">
             {pkg_filename}: OK
+          </div>
+          <div class="terminal-line">
+            <span class="terminal-prompt">$</span>
+            <span>curl -s {clean_base_esc}/{slug}/version.json</span>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <span class="brand-badge">SELFSO</span>
-          <p>Private computing infrastructure and creative portal. Operating continuously since 2001.</p>
-        </div>
-        <div class="footer-col">
-          <h5>Navigation</h5>
-          <ul class="footer-links">
-            <li><a href="/">Home</a></li>
-            <li><a href="/news.html">News &amp; Timeline</a></li>
-            <li><a href="/projects/">Projects</a></li>
-            <li><a href="/software/android/">Android Software</a></li>
-            <li><a href="/software/windows/">Windows Software</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>Information</h5>
-          <ul class="footer-links">
-            <li><a href="/info.html">About &amp; Philosophy</a></li>
-            <li><a href="/links.html">Resources</a></li>
-            <li><a href="/poweredby.html">Powered By</a></li>
-            <li><a href="/contact.html">Contact</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>&copy; 2001&ndash;2026 SELFSO.COM. All Rights Reserved.</span>
-        <span>Built with Pure Static HTML</span>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    (function() {{
-      var btn = document.getElementById('mobileNavBtn');
-      var menu = document.getElementById('navMenu');
-      if (btn && menu) {{
-        btn.addEventListener('click', function() {{
-          menu.classList.toggle('open');
-        }});
-      }}
-    }})();
-  </script>
-</body>
-</html>
-"""
+{footer_and_script}"""
 
 
 def publish_app(
@@ -1425,6 +1565,110 @@ def publish_app(
     return manifest
 
 
+def bridge_external_catalog_entry(
+    manifest: Dict[str, Any],
+    www_software_dir: Union[str, Path],
+    www_base_url: str = "https://www.selfso.com/software/windows/",
+) -> Path:
+    """Mirror an externally hosted Windows app manifest into www's master version.json & index.html without copying binaries."""
+    target_dir = Path(www_software_dir).resolve()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    master_json_path = target_dir / "version.json"
+    clean_www_base = www_base_url if www_base_url.endswith("/") else f"{www_base_url}/"
+    catalog: Dict[str, Any] = {
+        "schemaVersion": 1,
+        "baseUrl": clean_www_base,
+        "updatedAt": manifest.get("publishedAt", ""),
+        "apps": {},
+    }
+    if master_json_path.is_file():
+        try:
+            with open(master_json_path, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+            if isinstance(existing, dict):
+                catalog["schemaVersion"] = existing.get("schemaVersion", 1)
+                catalog["baseUrl"] = existing.get("baseUrl") or clean_www_base
+                if isinstance(existing.get("apps"), dict):
+                    catalog["apps"] = existing["apps"]
+        except Exception:
+            pass
+
+    app_id = manifest["applicationId"]
+    catalog["updatedAt"] = manifest.get("publishedAt", catalog.get("updatedAt", ""))
+    catalog["apps"][app_id] = copy.deepcopy(manifest)
+
+    with open(master_json_path, "w", encoding="utf-8") as f:
+        json.dump(catalog, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    portal_html = render_portal_html(catalog, catalog["baseUrl"])
+    with open(target_dir / "index.html", "w", encoding="utf-8") as f:
+        f.write(portal_html)
+
+    return master_json_path
+
+
+def _catalog_has_external_entry(web_root: Path, slug: str, app_id: str, base_url: str) -> bool:
+    master_json_path = web_root / "version.json"
+    if not master_json_path.is_file():
+        return False
+    try:
+        with open(master_json_path, "r", encoding="utf-8") as f:
+            catalog = json.load(f)
+        for k, entry in (catalog.get("apps") or {}).items():
+            if isinstance(entry, dict) and (
+                entry.get("slug") == slug or entry.get("applicationId") == app_id or k == slug
+            ):
+                if is_external_catalog_entry(entry, base_url):
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def publish_all(
+    web_root: Union[str, Path],
+    workspace_root: Optional[Union[str, Path]] = None,
+    base_url: str = "https://www.selfso.com/software/windows/",
+    release_notes: Optional[str] = None,
+    published_at: Optional[str] = None,
+    force_public: bool = False,
+    dry_run: bool = False,
+) -> Dict[str, Dict[str, Any]]:
+    """Batch-publish all known Windows applications with existing built binaries, skipping externally hosted entries."""
+    ws_root = Path(workspace_root).resolve() if workspace_root else (Path.home() / "work")
+    w_root = Path(web_root).resolve()
+    ctx = parse_portal_context(base_url)
+    published: Dict[str, Dict[str, Any]] = {}
+
+    for slug, meta in KNOWN_WINDOWS_APPS.items():
+        app_id = meta.get("applicationId", "")
+        if _catalog_has_external_entry(w_root, slug, app_id, base_url) or (
+            slug == "octi" and ctx["is_selfso_portal"]
+        ):
+            print(f"  [-] {slug:18s}: Hosted externally (preserving catalog bridge); skipping.")
+            continue
+        cand = find_candidate_package(slug, ws_root)
+        if not cand:
+            print(f"  [-] {slug:18s}: No candidate package found under workspace; skipping.")
+            continue
+        print(f"  [+] Publishing {slug:16s} from: {cand}")
+        manifest = publish_app(
+            slug=slug,
+            package_path=cand,
+            web_root=w_root,
+            workspace_root=ws_root,
+            base_url=base_url,
+            release_notes=release_notes,
+            published_at=published_at,
+            force_public=force_public,
+            dry_run=dry_run,
+        )
+        published[slug] = manifest
+
+    return published
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     """Build CLI argument parser for publish_windows_app.py."""
     parser = argparse.ArgumentParser(
@@ -1448,8 +1692,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--web-root",
-        default=str(Path.home() / "work" / "www" / "selfso" / "html" / "software" / "windows"),
-        help="Root path of the static web portal hierarchy.",
+        default=None,
+        help="Root path of the static web portal hierarchy (defaults to octi/web/html/software/windows for --slug octi, else www/selfso/html/software/windows).",
     )
     parser.add_argument(
         "--workspace-root",
@@ -1458,8 +1702,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--base-url",
-        default="https://www.selfso.com/software/windows/",
-        help="Base public URL for static package distribution.",
+        default=None,
+        help="Base public URL for static package distribution (defaults to https://octi.selfso.com/software/windows/ for --slug octi, else https://www.selfso.com/software/windows/).",
+    )
+    parser.add_argument(
+        "--bridge-www-catalog",
+        default=None,
+        help="Optional www software/windows directory whose version.json & index.html should mirror this external app entry without copying binaries.",
     )
     parser.add_argument(
         "--release-notes",
@@ -1493,7 +1742,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def re_render_existing_portal(web_root: Path, base_url: str) -> int:
-    """Re-render master portal index.html and all per-app index.html files from existing version.json manifests."""
+    """Re-render master portal index.html and all local per-app index.html files from existing version.json manifests."""
     master_json_path = web_root / "version.json"
     if not master_json_path.is_file():
         sys.stderr.write(f"Error: Master catalog not found at {master_json_path}\n")
@@ -1504,6 +1753,8 @@ def re_render_existing_portal(web_root: Path, base_url: str) -> int:
     rendered_apps = 0
     for key, app_manifest in catalog.get("apps", {}).items():
         if not isinstance(app_manifest, dict):
+            continue
+        if is_external_catalog_entry(app_manifest, base_url):
             continue
         slug = app_manifest.get("slug") or key
         app_dir = web_root / slug
@@ -1529,46 +1780,32 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = build_arg_parser()
     args = parser.parse_args(argv)
 
-    web_root = Path(args.web_root).resolve()
     ws_root = Path(args.workspace_root).resolve()
 
     if args.render_only:
-        return re_render_existing_portal(web_root, args.base_url)
+        web_root, base_url = resolve_cli_target_defaults(
+            args.slug, args.web_root, args.base_url, ws_root
+        )
+        return re_render_existing_portal(web_root, base_url)
 
     if args.publish_all:
-        published_count = 0
-        skipped_count = 0
+        web_root, base_url = resolve_cli_target_defaults(
+            None, args.web_root, args.base_url, ws_root
+        )
         print(f"Batch publishing all known Windows applications to: {web_root}")
-        for slug in KNOWN_WINDOWS_APPS.keys():
-            cand = find_candidate_package(slug, ws_root)
-            if not cand:
-                print(f"  [-] {slug:18s}: No candidate package found under workspace; skipping.")
-                skipped_count += 1
-                continue
-
-            print(f"  [+] Publishing {slug:16s} from: {cand}")
-            try:
-                manifest = publish_app(
-                    slug=slug,
-                    package_path=cand,
-                    web_root=web_root,
-                    workspace_root=ws_root,
-                    base_url=args.base_url,
-                    release_notes=args.release_notes,
-                    published_at=args.published_at,
-                    force_public=args.force_public,
-                    dry_run=args.dry_run,
-                )
-                print(
-                    f"      => v{manifest['versionName']} (code={manifest['versionCode']}), "
-                    f"type={manifest['installType']}, {format_size_bytes(manifest['sizeBytes'])}, "
-                    f"sha256={manifest['sha256'][:16]}..."
-                )
-                published_count += 1
-            except Exception as e:
-                sys.stderr.write(f"      [!] Error publishing {slug}: {e}\n")
-
-        print(f"\nBatch publish complete: {published_count} published, {skipped_count} skipped.")
+        published = publish_all(
+            web_root=web_root,
+            workspace_root=ws_root,
+            base_url=base_url,
+            release_notes=args.release_notes,
+            published_at=args.published_at,
+            force_public=args.force_public,
+            dry_run=args.dry_run,
+        )
+        print(
+            f"\nBatch publish complete: {len(published)} published, "
+            f"{len(KNOWN_WINDOWS_APPS) - len(published)} skipped."
+        )
         return 0
 
     # Single-app publishing mode
@@ -1582,6 +1819,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "Application slug could not be auto-detected from current directory. "
                 "Specify --slug or use --publish-all."
             )
+
+    web_root, base_url = resolve_cli_target_defaults(
+        slug, args.web_root, args.base_url, ws_root
+    )
 
     package_path = args.package_path
     if not package_path:
@@ -1600,12 +1841,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             package_path=package_path,
             web_root=web_root,
             workspace_root=ws_root,
-            base_url=args.base_url,
+            base_url=base_url,
             release_notes=args.release_notes,
             published_at=args.published_at,
             force_public=args.force_public,
             dry_run=args.dry_run,
         )
+        if args.bridge_www_catalog and not args.dry_run:
+            bridge_external_catalog_entry(manifest, args.bridge_www_catalog)
     except Exception as e:
         sys.stderr.write(f"Error publishing application '{slug}': {e}\n")
         return 1

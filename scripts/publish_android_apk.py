@@ -2,6 +2,7 @@
 # Copyright (C) 2026, Charles Chiou
 
 import argparse
+import copy
 import datetime
 import html
 import json
@@ -9,7 +10,8 @@ import os
 from pathlib import Path
 import shutil
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+import urllib.parse
 
 # Enable importing gen_version_json from current or scripts directory
 _SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -163,13 +165,275 @@ def detect_slug_from_cwd(cwd: Optional[Path] = None) -> Optional[str]:
     return None
 
 
+def parse_portal_context(base_url: str) -> Dict[str, Any]:
+    """Derive host, origin, path, and portal-mode flags from base_url."""
+    clean_base = (base_url or "https://www.selfso.com/software/android/").strip().rstrip("/")
+    parsed = urllib.parse.urlparse(clean_base)
+    scheme = parsed.scheme or "https"
+    host = parsed.netloc or "www.selfso.com"
+    origin = f"{scheme}://{host}"
+    path_slash = (parsed.path.rstrip("/") + "/") if parsed.path else "/software/android/"
+    is_selfso_portal = host.lower() in ("www.selfso.com", "selfso.com")
+    arena_host = "octi.selfso.com" if is_selfso_portal else host
+    arena_origin = f"https://{arena_host}" if is_selfso_portal else origin
+    return {
+        "clean_base": clean_base,
+        "base_url_slash": f"{clean_base}/",
+        "scheme": scheme,
+        "site_host": host,
+        "site_origin": origin,
+        "host_path": f"{host}{path_slash}",
+        "is_selfso_portal": is_selfso_portal,
+        "arena_host": arena_host,
+        "arena_origin": arena_origin,
+    }
+
+
+def is_external_catalog_entry(app_manifest: Dict[str, Any], portal_base_url: str) -> bool:
+    """Return True if an entry in version.json points to a different host than portal_base_url."""
+    portal_host = (urllib.parse.urlparse(portal_base_url or "").netloc or "").lower()
+    entry_url = str(
+        app_manifest.get("apkUrl")
+        or app_manifest.get("packageUrl")
+        or app_manifest.get("pageUrl")
+        or ""
+    )
+    entry_host = (urllib.parse.urlparse(entry_url).netloc or "").lower()
+    return bool(entry_host and portal_host and entry_host != portal_host)
+
+
+def resolve_cli_target_defaults(
+    slug: Optional[str],
+    web_root_arg: Optional[str],
+    base_url_arg: Optional[str],
+    workspace_root: Union[str, Path],
+) -> Tuple[Path, str]:
+    """Resolve CLI default web_root and base_url (--slug octi defaults to octi standalone portal)."""
+    ws = Path(workspace_root).resolve()
+    if slug == "octi":
+        w_root = (
+            Path(web_root_arg).resolve()
+            if web_root_arg
+            else (ws / "octi/web/html/software/android")
+        )
+        if base_url_arg:
+            b_url = base_url_arg
+        elif web_root_arg and "www/selfso" in Path(web_root_arg).as_posix():
+            b_url = "https://www.selfso.com/software/android/"
+        else:
+            b_url = "https://octi.selfso.com/software/android/"
+    else:
+        w_root = (
+            Path(web_root_arg).resolve()
+            if web_root_arg
+            else (ws / "www/selfso/html/software/android")
+        )
+        b_url = base_url_arg or "https://www.selfso.com/software/android/"
+    return w_root, b_url
+
+
+def _render_site_chrome(ctx: Dict[str, Any], page_title: str, meta_description: str) -> Tuple[str, str]:
+    """Render matching header/head and footer/script HTML for Selfso vs standalone OCTI/custom portals."""
+    desc_esc = html.escape(meta_description)
+    if ctx["is_selfso_portal"]:
+        head_and_header = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{desc_esc}">
+  <title>{page_title} &bull; SELFSO.COM</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <span class="brand-badge">SELFSO</span>
+        <div class="brand-text">
+          <span class="brand-name">SELFSO.COM</span>
+          <span class="brand-tagline">Systems &bull; Code &bull; Philosophy</span>
+        </div>
+      </a>
+
+      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <nav>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/news.html" class="nav-link">News</a></li>
+          <li><a href="/projects/" class="nav-link active">Projects</a></li>
+          <li><a href="/info.html" class="nav-link">Info</a></li>
+          <li><a href="/links.html" class="nav-link">Links</a></li>
+          <li><a href="/contact.html" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>"""
+        footer_and_script = """  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="brand-badge">SELFSO</span>
+          <p>Private computing infrastructure and creative portal. Operating continuously since 2001.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Navigation</h5>
+          <ul class="footer-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/news.html">News &amp; Timeline</a></li>
+            <li><a href="/projects/">Projects</a></li>
+            <li><a href="/software/android/">Android Software</a></li>
+            <li><a href="/software/windows/">Windows Software</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Information</h5>
+          <ul class="footer-links">
+            <li><a href="/info.html">About &amp; Philosophy</a></li>
+            <li><a href="/links.html">Resources</a></li>
+            <li><a href="/poweredby.html">Powered By</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2001&ndash;2026 SELFSO.COM. All Rights Reserved.</span>
+        <span>Built with Pure Static HTML</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('mobileNavBtn');
+      var menu = document.getElementById('navMenu');
+      if (btn && menu) {
+        btn.addEventListener('click', function() {
+          menu.classList.toggle('open');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
+"""
+        return head_and_header, footer_and_script
+
+    host_esc = html.escape(ctx["site_host"])
+    head_and_header = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{desc_esc}">
+  <title>{page_title} &bull; {host_esc}</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <span class="brand-badge">OCTI</span>
+        <div class="brand-text">
+          <span class="brand-name" data-dynamic-host>{host_esc}</span>
+          <span class="brand-tagline">Online Arena &bull; Clients &bull; Archive</span>
+        </div>
+      </a>
+
+      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <nav>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="/" class="nav-link">Arena</a></li>
+          <li><a href="/#play" class="nav-link">Browser Play</a></li>
+          <li><a href="/archives/" class="nav-link">Archives</a></li>
+          <li><a href="/robots/" class="nav-link">Bots</a></li>
+          <li><a href="/journal/" class="nav-link">Journal</a></li>
+          <li><a href="/software/android/" class="nav-link active">Android</a></li>
+          <li><a href="/software/windows/" class="nav-link">Windows</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>"""
+    footer_and_script = f"""  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="brand-badge">OCTI</span>
+          <p>Online multiplayer OCTI arena, game archive, and native client distribution.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Arena &amp; Downloads</h5>
+          <ul class="footer-links">
+            <li><a href="/">OCTI Online Arena</a></li>
+            <li><a href="/software/android/">Android Software</a></li>
+            <li><a href="/software/windows/">Windows Software</a></li>
+            <li><a href="/archives/">Game Archives</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Resources</h5>
+          <ul class="footer-links">
+            <li><a href="/robots/">Bring Your &rsquo;Bot!</a></li>
+            <li><a href="/journal/">The OCTI Journal</a></li>
+            <li><a href="/privacy/">Privacy Policy</a></li>
+            <li><a href="/data-deletion/">Data Deletion</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2001&ndash;2026 Charles Chiou &bull; <span data-dynamic-host>{host_esc}</span></span>
+        <span>Built with Pure Static HTML</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {{
+      var btn = document.getElementById('mobileNavBtn');
+      var menu = document.getElementById('navMenu');
+      if (btn && menu) {{
+        btn.addEventListener('click', function() {{
+          menu.classList.toggle('open');
+        }});
+      }}
+      if (window.location && window.location.host) {{
+        var els = document.querySelectorAll('[data-dynamic-host]');
+        for (var i = 0; i < els.length; i++) {{
+          els[i].textContent = window.location.host;
+        }}
+      }}
+    }})();
+  </script>
+</body>
+</html>
+"""
+    return head_and_header, footer_and_script
+
+
 def render_android_install_guide_html(
     apk_filename: str = "octi.apk",
     app_title: str = "OCTI Strategy Game",
     app_id: str = "com.selfso.octi",
     sha256_hint: str = "088b054e74bac4ca96bcd2417865d9066f85e6456d125b3cd4c9449ff1203c24",
+    base_url: str = "https://www.selfso.com/software/android/",
 ) -> str:
     """Render the comprehensive Android sideloading, Settings permissions, Play Protect, and Google SSO onboarding guide."""
+    ctx = parse_portal_context(base_url)
+    site_host_esc = html.escape(ctx["site_host"])
+    host_path_esc = html.escape(ctx["host_path"])
+    base_url_slash_esc = html.escape(ctx["base_url_slash"])
+    arena_host_esc = html.escape(ctx["arena_host"])
+    arena_origin_esc = html.escape(ctx["arena_origin"])
     sha_short = (sha256_hint[:16] + "...") if len(sha256_hint) > 16 else (sha256_hint or "<sha256>")
     return f"""
       <!-- Comprehensive Android Sideloading, Settings Permissions & Google Onboarding Guide -->
@@ -300,7 +564,7 @@ def render_android_install_guide_html(
         <span class="badge badge-vermilion" style="margin-bottom: 0.75rem;">Step-by-Step Visual Installation &amp; Onboarding Guide</span>
         <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">How to Install on Android (Direct APK) &amp; Onboard with Google</h2>
         <p style="color: var(--text-secondary); max-width: 820px; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
-          Because Selfso Android applications are distributed directly from <code>selfso.com</code> via our independent Over-The-Air (OTA) portal rather than hosted on the commercial <strong>Google Play Store</strong>, Android requires you to grant <strong>Install unknown apps</strong> permission and confirm <strong>Google Play Protect</strong> on your first install. Follow this step-by-step visual guide with screenshots to install the app and sign in with your <strong>Google Account</strong>.
+          Because first-party Android applications here are distributed directly from <code>{site_host_esc}</code> via our independent Over-The-Air (OTA) portal rather than hosted on the commercial <strong>Google Play Store</strong>, Android requires you to grant <strong>Install unknown apps</strong> permission and confirm <strong>Google Play Protect</strong> on your first install. Follow this step-by-step visual guide with screenshots to install the app and sign in with your <strong>Google Account</strong>.
         </p>
 
         <!-- Why Android Warns You (The Facts) -->
@@ -312,10 +576,10 @@ def render_android_install_guide_html(
             <h3 style="font-size: 1.2rem; color: #92400e; margin: 0;">Why Does Android Warn You About Installing <code>{apk_filename}</code>?</h3>
           </div>
           <p style="color: #78350f; font-size: 0.96rem; line-height: 1.65; margin-bottom: 0.85rem;">
-            <strong>1. Direct Independent OTA Distribution (Not on Google Play Store):</strong> Selfso distributes Android applications directly from <code>www.selfso.com/software/android/</code> so releases and updates reach your device immediately without app-store gatekeeping or telemetry trackers. By default, Android blocks web browsers (such as Chrome) from installing <code>.apk</code> packages outside the Play Store until you toggle <strong>Allow from this source</strong> in Android Settings.
+            <strong>1. Direct Independent OTA Distribution (Not on Google Play Store):</strong> Applications on this portal are distributed directly from <code>{host_path_esc}</code> so releases and updates reach your device immediately without app-store gatekeeping or telemetry trackers. By default, Android blocks web browsers (such as Chrome) from installing <code>.apk</code> packages outside the Play Store until you toggle <strong>Allow from this source</strong> in Android Settings.
           </p>
           <p style="color: #78350f; font-size: 0.96rem; line-height: 1.65; margin-bottom: 0;">
-            <strong>2. Cryptographic Signing &amp; One-Time Setup:</strong> Every Selfso APK (<code>{app_id}</code>) is cryptographically signed with the official Selfso release key and published alongside its <strong>SHA-256 digest</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once you complete this initial install, all future updates are verified and installed directly inside the app via <code>com.selfso.selfupdate</code>!
+            <strong>2. Cryptographic Signing &amp; One-Time Setup:</strong> Every release APK (<code>{app_id}</code>) is cryptographically signed with the official release key and published alongside its <strong>SHA-256 digest</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once you complete this initial install, all future updates are verified and installed directly inside the app via <code>com.selfso.selfupdate</code>!
           </p>
         </div>
 
@@ -359,7 +623,7 @@ def render_android_install_guide_html(
 
               <!-- Browser address bar -->
               <rect x="85" y="66" width="310" height="28" rx="14" fill="#0f172a"/>
-              <text x="104" y="84" fill="#cbd5e1" font-size="11" font-family="monospace">https://www.selfso.com/software/android/</text>
+              <text x="104" y="84" fill="#cbd5e1" font-size="11" font-family="monospace">{base_url_slash_esc}</text>
 
               <!-- Bottom sheet modal -->
               <rect x="77" y="138" width="326" height="182" rx="16" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
@@ -505,7 +769,7 @@ def render_android_install_guide_html(
               <span class="badge badge-vermilion" style="margin-bottom: 0.35rem;">Most Important Step &bull; Google Play Protect</span>
               <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 3: Pass Google Play Protect (&ldquo;More details&rdquo; &rarr; &ldquo;Install anyway&rdquo;)</h3>
               <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
-                During installation, <strong>Google Play Protect</strong> may display an <em>&ldquo;Unrecognized app&rdquo;</em> or <em>&ldquo;Blocked by Play Protect&rdquo;</em> dialog because the app is distributed directly from <code>selfso.com</code> rather than the Play Store. <strong>Do NOT tap &ldquo;Don&rsquo;t install&rdquo; or &ldquo;OK&rdquo;</strong> &mdash; follow the two taps below:
+                During installation, <strong>Google Play Protect</strong> may display an <em>&ldquo;Unrecognized app&rdquo;</em> or <em>&ldquo;Blocked by Play Protect&rdquo;</em> dialog because the app is distributed directly from <code>{site_host_esc}</code> rather than the Play Store. <strong>Do NOT tap &ldquo;Don&rsquo;t install&rdquo; or &ldquo;OK&rdquo;</strong> &mdash; follow the two taps below:
               </p>
             </div>
           </div>
@@ -556,7 +820,7 @@ def render_android_install_guide_html(
               <text x="548" y="90" fill="#fbbf24" font-size="12" font-weight="700">&#9888; Google Play Protect (Expanded)</text>
               <text x="548" y="114" fill="#cbd5e1" font-size="11.5">Play Protect hasn&apos;t seen this app before</text>
               <text x="548" y="132" fill="#cbd5e1" font-size="11.5">because it was downloaded directly from</text>
-              <text x="548" y="150" fill="#93c5fd" font-size="11.5" font-family="monospace">www.selfso.com</text>
+              <text x="548" y="150" fill="#93c5fd" font-size="11.5" font-family="monospace">{site_host_esc}</text>
 
               <!-- Install anyway highlighted -->
               <rect x="544" y="170" width="154" height="38" rx="8" fill="#16a34a" fill-opacity="0.28" stroke="#22c55e" stroke-width="2.5"/>
@@ -654,7 +918,7 @@ def render_android_install_guide_html(
               <span class="badge badge-indigo" style="margin-bottom: 0.35rem;">Google OAuth 2.0 SSO &bull; Instant Deep-Link Return</span>
               <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 5: Sign In &amp; Onboard with Your Google Account</h3>
               <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
-                Sign in with your Google Account inside the Android app to play rated online matches, join live voice/text chat rooms, and synchronize your Elo ratings and game archives across Android, Windows Desktop, and Web (<code>https://octi.selfso.com</code>).
+                Sign in with your Google Account inside the Android app to play rated online matches, join live voice/text chat rooms, and synchronize your Elo ratings and game archives across Android, Windows Desktop, and Web (<code>{arena_origin_esc}</code>).
               </p>
             </div>
           </div>
@@ -697,7 +961,7 @@ def render_android_install_guide_html(
               <text x="340" y="48" fill="#1e293b" font-size="11" font-weight="700">5B &bull; Select Google Account</text>
 
               <text x="344" y="80" fill="#202124" font-size="15.5" font-weight="700">Choose an account</text>
-              <text x="344" y="100" fill="#5f6368" font-size="11.5">to continue to <tspan fill="#1a73e8" font-weight="700">octi.selfso.com</tspan></text>
+              <text x="344" y="100" fill="#5f6368" font-size="11.5">to continue to <tspan fill="#1a73e8" font-weight="700">{arena_host_esc}</tspan></text>
 
               <!-- Account row highlighted -->
               <rect x="338" y="118" width="244" height="64" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
@@ -748,6 +1012,8 @@ def render_android_install_guide_html(
 
 def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
     """Render the master portal index.html with cards for all available apps."""
+    ctx = parse_portal_context(base_url)
+    base_url_slash_esc = html.escape(ctx["base_url_slash"])
     apps_dict = catalog_data.get("apps", {})
     sorted_apps = []
 
@@ -772,10 +1038,22 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
         sha256 = html.escape(app.get("sha256", ""))
         apk_filename = app.get("apkFilename") or meta.get("apkFilename") or f"{slug}.apk"
         apk_url = html.escape(app.get("apkUrl", f"{slug}/{apk_filename}"))
-        page_url = f"{slug}/"
+        is_ext = is_external_catalog_entry(app, base_url)
+        if is_ext:
+            raw_page_url = str(app.get("pageUrl") or f"{slug}/")
+            page_url = html.escape(raw_page_url)
+            manifest_btn_url = html.escape(raw_page_url.rstrip("/") + "/version.json")
+            ext_host = html.escape(
+                urllib.parse.urlparse(str(app.get("apkUrl") or raw_page_url)).netloc
+            )
+            ext_badge_html = f'\n            <span class="badge">Hosted on {ext_host}</span>'
+        else:
+            page_url = f"{html.escape(slug)}/"
+            manifest_btn_url = f"{html.escape(slug)}/version.json"
+            ext_badge_html = ""
 
         card = f"""        <!-- App Card: {title} -->
-        <div class="card" id="{slug}">
+        <div class="card" id="{html.escape(slug)}">
           <span class="card-tag">{category}</span>
           <h2 class="card-title" style="font-size: 1.45rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">{title}</h2>
           <p class="card-desc" style="margin-bottom: 1rem;">{tagline}</p>
@@ -784,7 +1062,7 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
             <span class="badge">v{version_name} (Build {version_code})</span>
             <span class="badge">{min_sdk_str}</span>
             <span class="badge">{size_str}</span>
-            <span class="badge">{pub_date}</span>
+            <span class="badge">{pub_date}</span>{ext_badge_html}
           </div>
 
           <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
@@ -804,60 +1082,38 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
             </a>
             <a href="{page_url}" class="btn btn-outline">Release Details &amp; Install Guide &rarr;</a>
             <a href="#android-install-guide" class="btn btn-outline">Step-by-Step Setup</a>
-            <a href="{slug}/version.json" class="btn btn-outline">version.json</a>
+            <a href="{manifest_btn_url}" class="btn btn-outline">version.json</a>
           </div>
         </div>"""
         cards_html.append(card)
 
     cards_joined = "\n\n".join(cards_html) if cards_html else "        <p>No applications published yet.</p>"
-    portal_install_guide_html = render_android_install_guide_html()
+    portal_install_guide_html = render_android_install_guide_html(base_url=base_url)
 
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SELFSO.COM Android Software Distribution Portal — Independent Android companion applications and algorithmic tools.">
-  <title>Android Software & OTA Distribution &bull; SELFSO.COM</title>
-  <link rel="stylesheet" href="/css/main.css">
-</head>
-<body>
-  <header class="site-header">
-    <div class="nav-container">
-      <a href="/" class="brand">
-        <span class="brand-badge">SELFSO</span>
-        <div class="brand-text">
-          <span class="brand-name">SELFSO.COM</span>
-          <span class="brand-tagline">Systems &bull; Code &bull; Philosophy</span>
-        </div>
-      </a>
+    if ctx["is_selfso_portal"]:
+        meta_desc = "SELFSO.COM Android Software Distribution Portal — Independent Android companion applications and algorithmic tools."
+        portal_heading = "Selfso Android Applications"
+        back_href = "/projects/"
+        back_label = "&larr; Back to Projects"
+    else:
+        meta_desc = f"{ctx['site_host']} Android Software Distribution Portal — Direct APK downloads and cryptographic OTA self-update."
+        portal_heading = "OCTI Android Software Portal"
+        back_href = "/"
+        back_label = "&larr; Back to OCTI Arena"
 
-      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+    head_and_header, footer_and_script = _render_site_chrome(
+        ctx, "Android Software &amp; OTA Distribution", meta_desc
+    )
 
-      <nav>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="/" class="nav-link">Home</a></li>
-          <li><a href="/news.html" class="nav-link">News</a></li>
-          <li><a href="/projects/" class="nav-link active">Projects</a></li>
-          <li><a href="/info.html" class="nav-link">Info</a></li>
-          <li><a href="/links.html" class="nav-link">Links</a></li>
-          <li><a href="/contact.html" class="nav-link">Contact</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+    return f"""{head_and_header}
 
   <main class="site-wrapper">
     <div class="container" style="padding-top: 3.5rem; padding-bottom: 4rem;">
       <div style="margin-bottom: 2.5rem;">
-        <a href="/projects/" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none;">&larr; Back to Projects</a>
+        <a href="{back_href}" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none;">{back_label}</a>
         <div style="margin-top: 0.75rem;">
           <span class="badge" style="margin-bottom: 0.75rem;">OTA Distribution Portal</span>
-          <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">Selfso Android Applications</h1>
+          <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">{portal_heading}</h1>
         </div>
         <p style="color: var(--text-secondary); max-width: 720px; font-size: 1.05rem; line-height: 1.6;">
           Independent, open-source Android applications and mobile companion tools engineered for robotics, artificial intelligence, abstract gaming, and systems telemetry. Distributed directly via cryptographic OTA updates.
@@ -887,7 +1143,7 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
         <span class="badge" style="margin-bottom: 0.75rem;">Distribution &amp; Security Architecture</span>
         <h2 style="font-size: 1.75rem; margin-bottom: 0.75rem;">OTA Self-Update Architecture (<code>com.selfso.selfupdate</code>)</h2>
         <p style="color: var(--text-secondary); max-width: 760px; margin-bottom: 1.5rem; line-height: 1.6;">
-          All Selfso Android applications embed the first-party <code>com.selfso.selfupdate</code> in-app update engine. On launch or background trigger, applications poll <code>https://www.selfso.com/software/android/version.json</code>, verify cryptographic SHA-256 digests against streaming downloads, and commit in-place package installations via Android&rsquo;s <code>PackageInstaller</code> Session API.
+          Applications on this portal embed the first-party <code>com.selfso.selfupdate</code> in-app update engine. On launch or background trigger, applications poll <code>{base_url_slash_esc}version.json</code>, verify cryptographic SHA-256 digests against streaming downloads, and commit in-place package installations via Android&rsquo;s <code>PackageInstaller</code> Session API.
         </p>
 
         <div class="terminal-box">
@@ -902,10 +1158,10 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
           <div class="terminal-body">
             <div class="terminal-line">
               <span class="terminal-prompt">$</span>
-              <span>curl -s https://www.selfso.com/software/android/version.json</span>
+              <span>curl -s {base_url_slash_esc}version.json</span>
             </div>
             <div style="color: #a1a1aa; margin-bottom: 0.85rem; font-size: 0.8rem;">
-              &#123; "schemaVersion": 1, "baseUrl": "https://www.selfso.com/software/android/", "apps": &#123; ... &#125; &#125;
+              &#123; "schemaVersion": 1, "baseUrl": "{base_url_slash_esc}", "apps": &#123; ... &#125; &#125;
             </div>
             <div class="terminal-line">
               <span class="terminal-prompt">$</span>
@@ -920,65 +1176,21 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <span class="brand-badge">SELFSO</span>
-          <p>Private computing infrastructure and creative portal. Operating continuously since 2001.</p>
-        </div>
-        <div class="footer-col">
-          <h5>Navigation</h5>
-          <ul class="footer-links">
-            <li><a href="/">Home</a></li>
-            <li><a href="/news.html">News &amp; Timeline</a></li>
-            <li><a href="/projects/">Projects</a></li>
-            <li><a href="/software/android/">Android Software</a></li>
-            <li><a href="/software/windows/">Windows Software</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>Information</h5>
-          <ul class="footer-links">
-            <li><a href="/info.html">About &amp; Philosophy</a></li>
-            <li><a href="/links.html">Resources</a></li>
-            <li><a href="/poweredby.html">Powered By</a></li>
-            <li><a href="/contact.html">Contact</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>&copy; 2001&ndash;2026 SELFSO.COM. All Rights Reserved.</span>
-        <span>Built with Pure Static HTML</span>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    (function() {{
-      var btn = document.getElementById('mobileNavBtn');
-      var menu = document.getElementById('navMenu');
-      if (btn && menu) {{
-        btn.addEventListener('click', function() {{
-          menu.classList.toggle('open');
-        }});
-      }}
-    }})();
-  </script>
-</body>
-</html>
-"""
+{footer_and_script}"""
 
 
 def render_app_html(
     app_manifest: Dict[str, Any], app_meta: Dict[str, Any], base_url: str
 ) -> str:
     """Render a dedicated detail page index.html for a single application."""
+    ctx = parse_portal_context(base_url)
+    clean_base_esc = html.escape(ctx["clean_base"])
     slug = html.escape(app_manifest.get("slug", ""))
     title = html.escape(app_manifest.get("title") or app_meta.get("title") or slug.capitalize())
     category = html.escape(app_manifest.get("category") or app_meta.get("category") or "Software & Tools")
-    tagline = html.escape(app_manifest.get("tagline") or app_meta.get("tagline") or app_manifest.get("releaseNotes", ""))
-    description = html.escape(app_manifest.get("description") or app_meta.get("description") or tagline)
+    raw_tagline = app_manifest.get("tagline") or app_meta.get("tagline") or app_manifest.get("releaseNotes", "")
+    tagline = html.escape(raw_tagline)
+    description = html.escape(app_manifest.get("description") or app_meta.get("description") or raw_tagline)
     version_name = html.escape(str(app_manifest.get("versionName", "1.0")))
     version_code = int(app_manifest.get("versionCode", 1))
     app_id = html.escape(app_manifest.get("applicationId", ""))
@@ -989,49 +1201,19 @@ def render_app_html(
     release_notes = html.escape(app_manifest.get("releaseNotes", ""))
     apk_filename = html.escape(app_manifest.get("apkFilename") or app_meta.get("apkFilename") or f"{slug}.apk")
     project_url = app_manifest.get("projectUrl") or app_meta.get("projectUrl")
+    if not ctx["is_selfso_portal"] and project_url == "/projects/octi/":
+        project_url = "/"
 
     project_btn_html = ""
     if project_url:
-        project_btn_html = f'<a href="{html.escape(project_url)}" class="btn btn-outline">Project Documentation</a>'
+        btn_label = "OCTI Online Arena" if (not ctx["is_selfso_portal"] and project_url == "/") else "Project Documentation"
+        project_btn_html = f'<a href="{html.escape(project_url)}" class="btn btn-outline">{btn_label}</a>'
 
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="{tagline}">
-  <title>{title} &bull; Android Distribution &bull; SELFSO.COM</title>
-  <link rel="stylesheet" href="/css/main.css">
-</head>
-<body>
-  <header class="site-header">
-    <div class="nav-container">
-      <a href="/" class="brand">
-        <span class="brand-badge">SELFSO</span>
-        <div class="brand-text">
-          <span class="brand-name">SELFSO.COM</span>
-          <span class="brand-tagline">Systems &bull; Code &bull; Philosophy</span>
-        </div>
-      </a>
+    head_and_header, footer_and_script = _render_site_chrome(
+        ctx, f"{title} &bull; Android Distribution", raw_tagline
+    )
 
-      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
-      <nav>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="/" class="nav-link">Home</a></li>
-          <li><a href="/news.html" class="nav-link">News</a></li>
-          <li><a href="/projects/" class="nav-link active">Projects</a></li>
-          <li><a href="/info.html" class="nav-link">Info</a></li>
-          <li><a href="/links.html" class="nav-link">Links</a></li>
-          <li><a href="/contact.html" class="nav-link">Contact</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+    return f"""{head_and_header}
 
   <main class="site-wrapper">
     <div class="container" style="padding-top: 3.5rem; padding-bottom: 4rem;">
@@ -1087,7 +1269,7 @@ def render_app_html(
         </div>
       </div>
 
-{render_android_install_guide_html(apk_filename=apk_filename, app_title=title, app_id=app_id, sha256_hint=sha256)}
+{render_android_install_guide_html(apk_filename=apk_filename, app_title=title, app_id=app_id, sha256_hint=sha256, base_url=base_url)}
 
       <!-- Verification Terminal Box -->
       <div class="terminal-box">
@@ -1109,61 +1291,14 @@ def render_app_html(
           </div>
           <div class="terminal-line">
             <span class="terminal-prompt">$</span>
-            <span>curl -s https://www.selfso.com/software/android/{slug}/version.json</span>
+            <span>curl -s {clean_base_esc}/{slug}/version.json</span>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <span class="brand-badge">SELFSO</span>
-          <p>Private computing infrastructure and creative portal. Operating continuously since 2001.</p>
-        </div>
-        <div class="footer-col">
-          <h5>Navigation</h5>
-          <ul class="footer-links">
-            <li><a href="/">Home</a></li>
-            <li><a href="/news.html">News &amp; Timeline</a></li>
-            <li><a href="/projects/">Projects</a></li>
-            <li><a href="/software/android/">Android Software</a></li>
-            <li><a href="/software/windows/">Windows Software</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>Information</h5>
-          <ul class="footer-links">
-            <li><a href="/info.html">About &amp; Philosophy</a></li>
-            <li><a href="/links.html">Resources</a></li>
-            <li><a href="/poweredby.html">Powered By</a></li>
-            <li><a href="/contact.html">Contact</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>&copy; 2001&ndash;2026 SELFSO.COM. All Rights Reserved.</span>
-        <span>Built with Pure Static HTML</span>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    (function() {{
-      var btn = document.getElementById('mobileNavBtn');
-      var menu = document.getElementById('navMenu');
-      if (btn && menu) {{
-        btn.addEventListener('click', function() {{
-          menu.classList.toggle('open');
-        }});
-      }}
-    }})();
-  </script>
-</body>
-</html>
-"""
+{footer_and_script}"""
 
 
 def publish_app(
@@ -1344,6 +1479,67 @@ def publish_app(
     return manifest
 
 
+def bridge_external_catalog_entry(
+    manifest: Dict[str, Any],
+    www_software_dir: Union[str, Path],
+    www_base_url: str = "https://www.selfso.com/software/android/",
+) -> Path:
+    """Mirror an externally hosted app manifest into www's master version.json & index.html without copying binaries."""
+    target_dir = Path(www_software_dir).resolve()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    master_json_path = target_dir / "version.json"
+    clean_www_base = www_base_url if www_base_url.endswith("/") else f"{www_base_url}/"
+    catalog: Dict[str, Any] = {
+        "schemaVersion": 1,
+        "baseUrl": clean_www_base,
+        "updatedAt": manifest.get("publishedAt", ""),
+        "apps": {},
+    }
+    if master_json_path.is_file():
+        try:
+            with open(master_json_path, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+            if isinstance(existing, dict):
+                catalog["schemaVersion"] = existing.get("schemaVersion", 1)
+                catalog["baseUrl"] = existing.get("baseUrl") or clean_www_base
+                if isinstance(existing.get("apps"), dict):
+                    catalog["apps"] = existing["apps"]
+        except Exception:
+            pass
+
+    app_id = manifest["applicationId"]
+    catalog["updatedAt"] = manifest.get("publishedAt", catalog.get("updatedAt", ""))
+    catalog["apps"][app_id] = copy.deepcopy(manifest)
+
+    with open(master_json_path, "w", encoding="utf-8") as f:
+        json.dump(catalog, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    portal_html = render_portal_html(catalog, catalog["baseUrl"])
+    with open(target_dir / "index.html", "w", encoding="utf-8") as f:
+        f.write(portal_html)
+
+    return master_json_path
+
+
+def _catalog_has_external_entry(web_root: Path, slug: str, app_id: str, base_url: str) -> bool:
+    master_json_path = web_root / "version.json"
+    if not master_json_path.is_file():
+        return False
+    try:
+        with open(master_json_path, "r", encoding="utf-8") as f:
+            catalog = json.load(f)
+        for k, entry in (catalog.get("apps") or {}).items():
+            if isinstance(entry, dict) and (
+                entry.get("slug") == slug or entry.get("applicationId") == app_id or k == slug
+            ):
+                if is_external_catalog_entry(entry, base_url):
+                    return True
+    except Exception:
+        pass
+    return False
+
+
 def publish_all(
     web_root: Union[str, Path],
     workspace_root: Optional[Union[str, Path]] = None,
@@ -1358,9 +1554,17 @@ def publish_all(
 ) -> Dict[str, Dict[str, Any]]:
     """Discover and publish all available built APKs from KNOWN_APPS."""
     ws = Path(workspace_root) if workspace_root else (Path.home() / "work")
+    w_root = Path(web_root).resolve()
+    ctx = parse_portal_context(base_url)
     published: Dict[str, Dict[str, Any]] = {}
 
-    for slug in KNOWN_APPS:
+    for slug, meta in KNOWN_APPS.items():
+        app_id = meta.get("applicationId", "")
+        if _catalog_has_external_entry(w_root, slug, app_id, base_url) or (
+            slug == "octi" and ctx["is_selfso_portal"]
+        ):
+            print(f"Skipping {slug}: hosted externally (preserving catalog bridge).")
+            continue
         cand = find_candidate_apk(slug, ws)
         if cand:
             print(f"Publishing {slug} from {cand}...")
@@ -1386,7 +1590,7 @@ def publish_all(
 
 
 def re_render_existing_portal(web_root: Path, base_url: str) -> int:
-    """Re-render master portal index.html and all per-app index.html files from existing version.json manifests."""
+    """Re-render master portal index.html and all local per-app index.html files from existing version.json manifests."""
     master_json_path = web_root / "version.json"
     if not master_json_path.is_file():
         sys.stderr.write(f"Error: Master catalog not found at {master_json_path}\n")
@@ -1397,6 +1601,8 @@ def re_render_existing_portal(web_root: Path, base_url: str) -> int:
     rendered_apps = 0
     for key, app_manifest in catalog.get("apps", {}).items():
         if not isinstance(app_manifest, dict):
+            continue
+        if is_external_catalog_entry(app_manifest, base_url):
             continue
         slug = app_manifest.get("slug") or key
         app_dir = web_root / slug
@@ -1419,11 +1625,10 @@ def re_render_existing_portal(web_root: Path, base_url: str) -> int:
 
 
 def main(argv: Optional[list] = None) -> int:
-    default_web_root = Path.home() / "work/www/selfso/html/software/android"
     default_ws_root = Path.home() / "work"
 
     parser = argparse.ArgumentParser(
-        description="Publish Android APKs to Selfso static web portal."
+        description="Publish Android APKs to static web distribution portal."
     )
     parser.add_argument("--slug", help="Application slug to publish (e.g. octi, aimon)")
     parser.add_argument("--apk", help="Path to APK binary to publish")
@@ -1434,8 +1639,8 @@ def main(argv: Optional[list] = None) -> int:
     )
     parser.add_argument(
         "--web-root",
-        default=str(default_web_root),
-        help="Target web root directory for software/android",
+        default=None,
+        help="Target web root directory for software/android (defaults to octi/web/html/software/android for --slug octi, else www/selfso/html/software/android)",
     )
     parser.add_argument(
         "--workspace-root",
@@ -1444,8 +1649,13 @@ def main(argv: Optional[list] = None) -> int:
     )
     parser.add_argument(
         "--base-url",
-        default="https://www.selfso.com/software/android/",
-        help="Base distribution URL",
+        default=None,
+        help="Base distribution URL (defaults to https://octi.selfso.com/software/android/ for --slug octi, else https://www.selfso.com/software/android/)",
+    )
+    parser.add_argument(
+        "--bridge-www-catalog",
+        default=None,
+        help="Optional www software/android directory whose version.json & index.html should mirror this external app entry without copying binaries",
     )
     parser.add_argument("--release-notes", help="Release notes text")
     parser.add_argument(
@@ -1474,13 +1684,19 @@ def main(argv: Optional[list] = None) -> int:
     args = parser.parse_args(argv)
 
     if args.render_only:
-        return re_render_existing_portal(Path(args.web_root).resolve(), args.base_url)
+        w_root, b_url = resolve_cli_target_defaults(
+            args.slug, args.web_root, args.base_url, args.workspace_root
+        )
+        return re_render_existing_portal(w_root, b_url)
 
     if args.publish_all:
+        w_root, b_url = resolve_cli_target_defaults(
+            None, args.web_root, args.base_url, args.workspace_root
+        )
         published = publish_all(
-            web_root=args.web_root,
+            web_root=w_root,
             workspace_root=args.workspace_root,
-            base_url=args.base_url,
+            base_url=b_url,
             release_notes=args.release_notes,
             no_extra_copy=args.no_extra_copy,
             keep_debug_suffix=args.keep_debug_suffix,
@@ -1495,6 +1711,10 @@ def main(argv: Optional[list] = None) -> int:
     if not slug:
         sys.stderr.write("Error: Either --slug (or running inside a project dir) or --publish-all is required.\n")
         return 1
+
+    w_root, b_url = resolve_cli_target_defaults(
+        slug, args.web_root, args.base_url, args.workspace_root
+    )
 
     apk_path = args.apk
     if not apk_path:
@@ -1511,9 +1731,9 @@ def main(argv: Optional[list] = None) -> int:
         manifest = publish_app(
             slug=slug,
             apk_path=apk_path,
-            web_root=args.web_root,
+            web_root=w_root,
             workspace_root=args.workspace_root,
-            base_url=args.base_url,
+            base_url=b_url,
             release_notes=args.release_notes,
             no_extra_copy=args.no_extra_copy,
             keep_debug_suffix=args.keep_debug_suffix,
@@ -1521,6 +1741,8 @@ def main(argv: Optional[list] = None) -> int:
             published_at=args.published_at,
             force_public=args.force_public,
         )
+        if args.bridge_www_catalog:
+            bridge_external_catalog_entry(manifest, args.bridge_www_catalog)
         print(
             f"Successfully published {manifest['slug']} v{manifest['versionName']} (Build {manifest['versionCode']})."
         )

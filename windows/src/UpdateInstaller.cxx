@@ -411,6 +411,7 @@ InstallResult UpdateInstaller::executeBinaryCopy(const std::string& stagedBinary
     if (!std::filesystem::exists(stagedBinaryPath, ec) ||
         !std::filesystem::is_regular_file(stagedBinaryPath, ec)) {
         result.success = false;
+        result.errorCode = UpdateErrorCode::NoStagedPackage;
         result.errorMessage = "Staged binary path does not exist or is not a regular file: " + stagedBinaryPath;
         return result;
     }
@@ -427,6 +428,7 @@ InstallResult UpdateInstaller::executeBinaryCopy(const std::string& stagedBinary
     }
     if (targetExe.empty()) {
         result.success = false;
+        result.errorCode = UpdateErrorCode::TargetExeNotFound;
         result.errorMessage = "Cannot determine target executable path for binary copy";
         return result;
     }
@@ -458,6 +460,7 @@ InstallResult UpdateInstaller::executeBinaryCopy(const std::string& stagedBinary
                 stagedBinaryPath, targetExe, _options.relaunchArgs, _options.relaunchAfterInstall);
             if (trampoline.empty()) {
                 result.success = false;
+                result.errorCode = UpdateErrorCode::BinaryCopyFailed;
                 result.errorMessage = "Failed to rename running executable to .old and failed to generate trampoline";
                 return result;
             }
@@ -467,11 +470,13 @@ InstallResult UpdateInstaller::executeBinaryCopy(const std::string& stagedBinary
             if (!_options.dryRun) {
                 if (!launchTrampoline(trampoline)) {
                     result.success = false;
+                    result.errorCode = UpdateErrorCode::BinaryCopyFailed;
                     result.errorMessage = "Failed to launch binary copy trampoline script";
                     return result;
                 }
             }
             result.success = true;
+            result.errorCode = UpdateErrorCode::None;
             return result;
         }
     }
@@ -508,11 +513,13 @@ InstallResult UpdateInstaller::executeBinaryCopy(const std::string& stagedBinary
         }
         result.success = false;
         result.backupExePath = renamed ? backupExe : "";
+        result.errorCode = UpdateErrorCode::BinaryCopyFailed;
         result.errorMessage = "Failed to copy staged binary to target executable; restored backup";
         return result;
     }
 
     result.success = true;
+    result.errorCode = UpdateErrorCode::None;
     if (renamed) {
         result.backupExePath = backupExe;
     }
@@ -539,6 +546,7 @@ InstallResult UpdateInstaller::executeSetupInstaller(const UpdateManifest& manif
     if (!std::filesystem::exists(stagedInstallerPath, ec) ||
         !std::filesystem::is_regular_file(stagedInstallerPath, ec)) {
         result.success = false;
+        result.errorCode = UpdateErrorCode::NoStagedPackage;
         result.errorMessage = "Staged installer path does not exist or is not a regular file: " + stagedInstallerPath;
         return result;
     }
@@ -561,6 +569,7 @@ InstallResult UpdateInstaller::executeSetupInstaller(const UpdateManifest& manif
 
         if (trampoline.empty()) {
             result.success = false;
+            result.errorCode = UpdateErrorCode::InstallerLaunchFailed;
             result.errorMessage = "Failed to generate installer trampoline script";
             return result;
         }
@@ -572,11 +581,13 @@ InstallResult UpdateInstaller::executeSetupInstaller(const UpdateManifest& manif
         if (!_options.dryRun) {
             if (!launchTrampoline(trampoline)) {
                 result.success = false;
+                result.errorCode = UpdateErrorCode::InstallerLaunchFailed;
                 result.errorMessage = "Failed to launch installer trampoline script";
                 return result;
             }
         }
         result.success = true;
+        result.errorCode = UpdateErrorCode::None;
     } else {
         std::vector<std::string> argsVec;
         if (!installerArgs.empty()) {
@@ -588,11 +599,13 @@ InstallResult UpdateInstaller::executeSetupInstaller(const UpdateManifest& manif
         if (!_options.dryRun) {
             if (!spawnDetachedProcess(stagedInstallerPath, argsVec)) {
                 result.success = false;
+                result.errorCode = UpdateErrorCode::InstallerLaunchFailed;
                 result.errorMessage = "Failed to launch setup installer directly";
                 return result;
             }
         }
         result.success = true;
+        result.errorCode = UpdateErrorCode::None;
     }
 
     return result;

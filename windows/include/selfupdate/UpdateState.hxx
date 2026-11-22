@@ -8,6 +8,7 @@
 #define SELFUPDATE_UPDATE_STATE_HXX
 
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include "UpdateManifest.hxx"
 
@@ -23,6 +24,75 @@ enum class UpdatePhase {
     Installing,
     Relaunching,
     Error
+};
+
+enum class UpdateErrorCode {
+    None = 0,
+    Cancelled,
+    ManifestFetchFailed,
+    ManifestParseFailed,
+    NoPackageUrl,
+    StagingFailed,
+    DownloadFailed,
+    SizeMismatch,
+    Sha256Mismatch,
+    NoStagedPackage,
+    TargetExeNotFound,
+    BinaryCopyFailed,
+    InstallerLaunchFailed,
+    Unknown
+};
+
+inline const char* updateErrorCodeToString(UpdateErrorCode code)
+{
+    switch (code) {
+    case UpdateErrorCode::None:
+        return "None";
+    case UpdateErrorCode::Cancelled:
+        return "Cancelled";
+    case UpdateErrorCode::ManifestFetchFailed:
+        return "ManifestFetchFailed";
+    case UpdateErrorCode::ManifestParseFailed:
+        return "ManifestParseFailed";
+    case UpdateErrorCode::NoPackageUrl:
+        return "NoPackageUrl";
+    case UpdateErrorCode::StagingFailed:
+        return "StagingFailed";
+    case UpdateErrorCode::DownloadFailed:
+        return "DownloadFailed";
+    case UpdateErrorCode::SizeMismatch:
+        return "SizeMismatch";
+    case UpdateErrorCode::Sha256Mismatch:
+        return "Sha256Mismatch";
+    case UpdateErrorCode::NoStagedPackage:
+        return "NoStagedPackage";
+    case UpdateErrorCode::TargetExeNotFound:
+        return "TargetExeNotFound";
+    case UpdateErrorCode::BinaryCopyFailed:
+        return "BinaryCopyFailed";
+    case UpdateErrorCode::InstallerLaunchFailed:
+        return "InstallerLaunchFailed";
+    case UpdateErrorCode::Unknown:
+    default:
+        return "Unknown";
+    }
+}
+
+class UpdateException : public std::runtime_error {
+public:
+    UpdateException(UpdateErrorCode code, const std::string& message)
+        : std::runtime_error(message)
+        , _code(code)
+    {
+    }
+
+    UpdateErrorCode code() const noexcept
+    {
+        return _code;
+    }
+
+private:
+    UpdateErrorCode _code;
 };
 
 inline const char* updatePhaseToString(UpdatePhase phase)
@@ -59,6 +129,7 @@ struct UpdateState {
     int64_t bytesRead = 0;
     int64_t totalBytes = -1;
     std::string stagedPackagePath;
+    UpdateErrorCode errorCode = UpdateErrorCode::None;
     std::string errorMessage;
     bool isManualCheck = false;
 

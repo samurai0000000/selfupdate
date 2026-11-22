@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <!-- Dialog & Banner Titles -->
+    <string name="selfupdate_title_available">Доступно обновление</string>
+    <string name="selfupdate_title_downloading">Загрузка обновления…</string>
+    <string name="selfupdate_title_permission_required">Требуется разрешение</string>
+    <string name="selfupdate_title_ready_to_install">Готово к установке</string>
+    <string name="selfupdate_title_update_ready">Обновление готово</string>
+    <string name="selfupdate_title_installing">Установка обновления…</string>
+    <string name="selfupdate_title_error">Ошибка обновления</string>
+    <string name="selfupdate_title_up_to_date">Установлена актуальная версия</string>
+
+    <!-- Dialog Body & Metadata -->
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">Размер: %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256: %1$s…</string>
+    <string name="selfupdate_release_notes_heading">Примечания к выпуску</string>
+    <string name="selfupdate_downloading_version">Загрузка версии %1$s…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">Загружено: %1$s</string>
+    <string name="selfupdate_permission_dialog_body">Для установки обновлений с selfso.com Android требует предоставить этому приложению разрешение «Установка неизвестных приложений».</string>
+    <string name="selfupdate_permission_dialog_hint">Нажмите «Открыть настройки», разрешите установку для этого приложения и вернитесь для продолжения.</string>
+    <string name="selfupdate_ready_dialog_body">Готово к установке v%1$s (%2$d).</string>
+    <string name="selfupdate_launching_installer_dialog">Запуск установщика пакетов Android…</string>
+
+    <!-- Banner Body & Metadata -->
+    <string name="selfupdate_banner_available_body">Доступна версия %1$s (установлена: %2$s).</string>
+    <string name="selfupdate_banner_downloading_title">Загрузка обновления v%1$s…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Для применения обновления Android требует разрешить установку из неизвестных источников.</string>
+    <string name="selfupdate_banner_ready_body">Версия v%1$s загружена и проверена.</string>
+    <string name="selfupdate_banner_launching_installer">Запуск установщика пакетов Android…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">Проверка обновлений…</string>
+    <string name="selfupdate_banner_idle_prompt">Проверить обновления</string>
+
+    <!-- Action Buttons -->
+    <string name="selfupdate_action_download_and_install">Скачать и установить</string>
+    <string name="selfupdate_action_update">Обновить</string>
+    <string name="selfupdate_action_later">Позже</string>
+    <string name="selfupdate_action_cancel">Отмена</string>
+    <string name="selfupdate_action_details">Подробнее</string>
+    <string name="selfupdate_action_open_settings">Открыть настройки</string>
+    <string name="selfupdate_action_settings">Настройки</string>
+    <string name="selfupdate_action_retry_install">Повторить установку</string>
+    <string name="selfupdate_action_install_now">Установить сейчас</string>
+    <string name="selfupdate_action_retry">Повторить</string>
+    <string name="selfupdate_action_dismiss">Скрыть</string>
+    <string name="selfupdate_action_reinstall">Переустановить</string>
+    <string name="selfupdate_action_check_again">Проверить снова</string>
+    <string name="selfupdate_action_check_now">Проверить сейчас</string>
+
+    <!-- Controller Fallback Errors -->
+    <string name="selfupdate_error_install_status">Сбой установки (код состояния %1$d)</string>
+    <string name="selfupdate_error_download_failed">Не удалось загрузить пакет обновления</string>
+    <string name="selfupdate_error_reinstall_failed">Не удалось переустановить пакет обновления</string>
+    <string name="selfupdate_error_launch_installer">Не удалось запустить установщик пакетов</string>
+</resources>

@@ -32,7 +32,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.selfso.selfupdate.R
 import com.selfso.selfupdate.SelfUpdateController
 import com.selfso.selfupdate.UpdateManifest
 import com.selfso.selfupdate.UpdateState
@@ -112,12 +114,16 @@ fun SelfUpdateBanner(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Update Available",
+                        text = stringResource(R.string.selfupdate_title_available),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Version ${currentState.manifest.versionName} is available (installed: ${currentState.installedVersionName}).",
+                        text = stringResource(
+                            R.string.selfupdate_banner_available_body,
+                            currentState.manifest.versionName,
+                            currentState.installedVersionName
+                        ),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -126,14 +132,14 @@ fun SelfUpdateBanner(
                         horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(onClick = { controller.dismiss() }) {
-                            Text("Later")
+                            Text(stringResource(R.string.selfupdate_action_later))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(onClick = {
                             showDialog = true
                             controller.downloadAndInstall(currentState.manifest)
                         }) {
-                            Text("Update")
+                            Text(stringResource(R.string.selfupdate_action_update))
                         }
                     }
                 }
@@ -147,7 +153,10 @@ fun SelfUpdateBanner(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Downloading update v${currentState.manifest.versionName}…",
+                        text = stringResource(
+                            R.string.selfupdate_banner_downloading_title,
+                            currentState.manifest.versionName
+                        ),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -168,14 +177,18 @@ fun SelfUpdateBanner(
                     ) {
                         Text(
                             text = if (fraction != null) {
-                                "${formatBytes(currentState.bytesRead)} / ${formatBytes(currentState.totalBytes)}"
+                                stringResource(
+                                    R.string.selfupdate_banner_progress_pair,
+                                    formatBytes(currentState.bytesRead),
+                                    formatBytes(currentState.totalBytes)
+                                )
                             } else {
                                 formatBytes(currentState.bytesRead)
                             },
                             style = MaterialTheme.typography.bodySmall
                         )
                         TextButton(onClick = { showDialog = true }) {
-                            Text("Details")
+                            Text(stringResource(R.string.selfupdate_action_details))
                         }
                     }
                 }
@@ -189,12 +202,12 @@ fun SelfUpdateBanner(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Permission Required",
+                        text = stringResource(R.string.selfupdate_title_permission_required),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Android requires granting unknown apps installation permission to apply update.",
+                        text = stringResource(R.string.selfupdate_banner_permission_body),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -203,11 +216,11 @@ fun SelfUpdateBanner(
                         horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(onClick = { controller.dismiss() }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.selfupdate_action_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(onClick = { controller.openUnknownSourcesSettings() }) {
-                            Text("Settings")
+                            Text(stringResource(R.string.selfupdate_action_settings))
                         }
                     }
                 }
@@ -221,12 +234,15 @@ fun SelfUpdateBanner(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Update Ready",
+                        text = stringResource(R.string.selfupdate_title_update_ready),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "v${currentState.manifest.versionName} has been downloaded and verified.",
+                        text = stringResource(
+                            R.string.selfupdate_banner_ready_body,
+                            currentState.manifest.versionName
+                        ),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -235,13 +251,13 @@ fun SelfUpdateBanner(
                         horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(onClick = { controller.dismiss() }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.selfupdate_action_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(onClick = {
                             controller.installReadyApk(currentState.apkFile, currentState.manifest)
                         }) {
-                            Text("Install Now")
+                            Text(stringResource(R.string.selfupdate_action_install_now))
                         }
                     }
                 }
@@ -260,7 +276,7 @@ fun SelfUpdateBanner(
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     Text(
-                        text = "Launching Android package installer…",
+                        text = stringResource(R.string.selfupdate_banner_launching_installer),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -274,7 +290,7 @@ fun SelfUpdateBanner(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Update Error",
+                        text = stringResource(R.string.selfupdate_title_error),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -289,14 +305,14 @@ fun SelfUpdateBanner(
                         horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(onClick = { controller.dismiss() }) {
-                            Text("Dismiss")
+                            Text(stringResource(R.string.selfupdate_action_dismiss))
                         }
                         if (currentState.recoverableManifest != null) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(onClick = {
                                 controller.downloadAndInstall(currentState.recoverableManifest)
                             }) {
-                                Text("Retry")
+                                Text(stringResource(R.string.selfupdate_action_retry))
                             }
                         }
                     }
@@ -317,12 +333,16 @@ fun SelfUpdateBanner(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "App is up to date",
+                                text = stringResource(R.string.selfupdate_title_up_to_date),
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "v${currentState.installedVersionName} (${currentState.installedVersionCode})",
+                                text = stringResource(
+                                    R.string.selfupdate_banner_version_code,
+                                    currentState.installedVersionName,
+                                    currentState.installedVersionCode
+                                ),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -331,11 +351,11 @@ fun SelfUpdateBanner(
                                 showDialog = true
                                 controller.reinstall()
                             }) {
-                                Text("Reinstall")
+                                Text(stringResource(R.string.selfupdate_action_reinstall))
                             }
                             Spacer(modifier = Modifier.width(4.dp))
                             TextButton(onClick = { controller.checkForUpdates() }) {
-                                Text("Check Again")
+                                Text(stringResource(R.string.selfupdate_action_check_again))
                             }
                         }
                     }
@@ -356,7 +376,7 @@ fun SelfUpdateBanner(
                     ) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp))
                         Text(
-                            text = "Checking for updates…",
+                            text = stringResource(R.string.selfupdate_banner_checking),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -376,11 +396,11 @@ fun SelfUpdateBanner(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Check for updates",
+                            text = stringResource(R.string.selfupdate_banner_idle_prompt),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         TextButton(onClick = { controller.checkForUpdates() }) {
-                            Text("Check Now")
+                            Text(stringResource(R.string.selfupdate_action_check_now))
                         }
                     }
                 }

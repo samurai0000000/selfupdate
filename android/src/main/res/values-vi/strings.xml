@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml
+
+    Copyright (C) 2026, Charles Chiou
+-->
+<resources>
+    <!-- Dialog & Banner Titles -->
+    <string name="selfupdate_title_available">Có Bản Cập Nhật Mới</string>
+    <string name="selfupdate_title_downloading">Đang Tải Bản Cập Nhật…</string>
+    <string name="selfupdate_title_permission_required">Cần Cấp Quyền</string>
+    <string name="selfupdate_title_ready_to_install">Sẵn Sàng Cài Đặt</string>
+    <string name="selfupdate_title_update_ready">Bản Cập Nhật Đã Sẵn Sàng</string>
+    <string name="selfupdate_title_installing">Đang Cài Đặt Bản Cập Nhật…</string>
+    <string name="selfupdate_title_error">Lỗi Cập Nhật</string>
+    <string name="selfupdate_title_up_to_date">Ứng dụng đã ở phiên bản mới nhất</string>
+
+    <!-- Dialog Body & Metadata -->
+    <string name="selfupdate_version_transition">%1$s (%2$d) → %3$s (%4$d)</string>
+    <string name="selfupdate_size_label">Dung lượng: %1$s</string>
+    <string name="selfupdate_sha256_prefix">SHA-256: %1$s…</string>
+    <string name="selfupdate_release_notes_heading">Ghi Chú Phát Hành</string>
+    <string name="selfupdate_downloading_version">Đang tải phiên bản %1$s…</string>
+    <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
+    <string name="selfupdate_progress_indeterminate">Đã tải %1$s</string>
+    <string name="selfupdate_permission_dialog_body">Android yêu cầu cấp quyền \"Cài đặt ứng dụng không rõ nguồn gốc\" cho ứng dụng này trước khi có thể cài đặt bản cập nhật từ selfso.com.</string>
+    <string name="selfupdate_permission_dialog_hint">Vui lòng chạm vào \"Mở Cài đặt\", bật quyền cài đặt cho ứng dụng này, sau đó quay lại để tiếp tục.</string>
+    <string name="selfupdate_ready_dialog_body">Sẵn sàng cài đặt v%1$s (%2$d).</string>
+    <string name="selfupdate_launching_installer_dialog">Đang mở Trình cài đặt gói Android…</string>
+
+    <!-- Banner Body & Metadata -->
+    <string name="selfupdate_banner_available_body">Đã có phiên bản %1$s (đang cài: %2$s).</string>
+    <string name="selfupdate_banner_downloading_title">Đang tải bản cập nhật v%1$s…</string>
+    <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
+    <string name="selfupdate_banner_permission_body">Android yêu cầu cấp quyền cài đặt ứng dụng không rõ nguồn gốc để áp dụng bản cập nhật.</string>
+    <string name="selfupdate_banner_ready_body">Đã tải xuống và xác minh v%1$s.</string>
+    <string name="selfupdate_banner_launching_installer">Đang mở trình cài đặt gói Android…</string>
+    <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
+    <string name="selfupdate_banner_checking">Đang kiểm tra cập nhật…</string>
+    <string name="selfupdate_banner_idle_prompt">Kiểm tra cập nhật</string>
+
+    <!-- Action Buttons -->
+    <string name="selfupdate_action_download_and_install">Tải xuống &amp; Cài đặt</string>
+    <string name="selfupdate_action_update">Cập nhật</string>
+    <string name="selfupdate_action_later">Để sau</string>
+    <string name="selfupdate_action_cancel">Hủy</string>
+    <string name="selfupdate_action_details">Chi tiết</string>
+    <string name="selfupdate_action_open_settings">Mở Cài đặt</string>
+    <string name="selfupdate_action_settings">Cài đặt</string>
+    <string name="selfupdate_action_retry_install">Thử cài lại</string>
+    <string name="selfupdate_action_install_now">Cài đặt ngay</string>
+    <string name="selfupdate_action_retry">Thử lại</string>
+    <string name="selfupdate_action_dismiss">Đóng</string>
+    <string name="selfupdate_action_reinstall">Cài đặt lại</string>
+    <string name="selfupdate_action_check_again">Kiểm tra lại</string>
+    <string name="selfupdate_action_check_now">Kiểm tra ngay</string>
+
+    <!-- Controller Fallback Errors -->
+    <string name="selfupdate_error_install_status">Cài đặt thất bại với mã trạng thái %1$d</string>
+    <string name="selfupdate_error_download_failed">Không thể tải gói cập nhật</string>
+    <string name="selfupdate_error_reinstall_failed">Không thể cài đặt lại gói cập nhật</string>
+    <string name="selfupdate_error_launch_installer">Không thể mở trình cài đặt gói</string>
+</resources>
