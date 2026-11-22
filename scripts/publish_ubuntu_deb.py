@@ -16,28 +16,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Known Selfso Ubuntu packages registry
 KNOWN_UBUNTU_PACKAGES: Dict[str, Dict[str, Any]] = {
-    "octi-server": {
-        "title": "OCTI Multiplayer & Archive Server",
-        "packageName": "octi-server",
-        "binaryPath": "/usr/sbin/octi-server",
-        "serviceName": "octi-server.service",
-        "defaultPort": 6874,
-        "stateDir": "/var/lib/octi",
-        "configLabel": "OIDC SSO Configuration",
-        "configPath": "/etc/octi/oidc.json",
-        "envConfigPath": "/etc/default/octi-server",
-        "suite": "noble",
-        "component": "main",
-        "arch": "amd64",
-        "minOs": "Ubuntu 24.04 LTS (Noble Numbat) amd64",
-        "tagline": "C++17 HTTP/REST multiplayer room manager, 5-provider OIDC SSO verifier, Elo rating engine & SQLite WAL archive daemon for OCTI.",
-        "description": "Production Ubuntu 24.04 LTS (noble) systemd daemon packaging of the OCTI multiplayer game server (/usr/sbin/octi-server), featuring 5-provider OIDC authentication, matchmaking, P2P voice relay coordination, and persistent SQLite WAL game archive.",
-        "category": "Multiplayer Game Server",
-        "projectUrl": "/projects/octi/",
-        "defaultDebCandidates": [
-            "octi/server/build/octi-server_*_amd64.deb",
-        ],
-    },
     "abc-80": {
         "title": "ABC-80 Microcomputer Emulator & Web Server",
         "packageName": "abc-80",
@@ -263,8 +241,6 @@ def detect_slug_from_cwd(
     """Detect package slug from current working directory."""
     cwd_path = Path(cwd).resolve() if cwd is not None else Path.cwd().resolve()
     cwd_str = str(cwd_path)
-    if "octi" in cwd_str:
-        return "octi-server"
     if "abc-80" in cwd_str:
         return "abc-80"
     for slug in KNOWN_UBUNTU_PACKAGES.keys():
@@ -612,13 +588,12 @@ curl -fsSL https://ppa.selfso.com/ubuntu/selfso-archive-keyring.gpg | sudo tee /
 <span style="color: #a1a1aa;"># 2. Add repository source list</span>
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/selfso-archive-keyring.gpg] https://ppa.selfso.com/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/selfso.list
 
-<span style="color: #a1a1aa;"># 3. Update and install Selfso Ubuntu packages (octi-server, abc-80)</span>
+<span style="color: #a1a1aa;"># 3. Update and install Selfso Ubuntu packages (abc-80)</span>
 sudo apt-get update
-sudo apt-get install -y octi-server abc-80
+sudo apt-get install -y abc-80
 
 <span style="color: #a1a1aa;"># 4. Verify systemd daemon status</span>
-systemctl status octi-server.service abc-80.service
-/usr/sbin/octi-server --version
+systemctl status abc-80.service
 /usr/sbin/abc80_server --version</pre>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; font-size: 0.88rem;">
@@ -735,10 +710,10 @@ def render_package_html(pkg: Dict[str, Any], base_apt_url: str) -> str:
     sha1 = html.escape(pkg.get("sha1", ""))
     md5 = html.escape(pkg.get("md5", ""))
     fingerprint = html.escape(pkg.get("gpgFingerprint", ""))
-    state_dir = html.escape(pkg.get("stateDir", "/var/lib/octi"))
-    config_label = html.escape(pkg.get("configLabel", "OIDC SSO Configuration"))
-    config_path = html.escape(pkg.get("configPath", "/etc/octi/oidc.json"))
-    env_config_path = html.escape(pkg.get("envConfigPath", "/etc/default/octi-server"))
+    state_dir = html.escape(pkg.get("stateDir", f"/etc/{slug}"))
+    config_label = html.escape(pkg.get("configLabel", "Daemon Configuration"))
+    config_path = html.escape(pkg.get("configPath", f"/etc/{slug}/{slug}.cfg"))
+    env_config_path = html.escape(pkg.get("envConfigPath", f"/etc/default/{slug}"))
     deb_filename = f"{slug}_{arch}.deb"
     pool_deb = pkg.get("poolDebPath", "")
     deb_download_url = f"{base_apt_url}/{pool_deb}" if pool_deb else deb_filename
@@ -1096,7 +1071,9 @@ def publish_ubuntu_package(
             with open(catalog_path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
                 if isinstance(existing.get("packages"), dict):
-                    catalog["packages"].update(existing["packages"])
+                    for k, v in existing["packages"].items():
+                        if k in KNOWN_UBUNTU_PACKAGES:
+                            catalog["packages"][k] = v
         except Exception:
             pass
 
@@ -1137,7 +1114,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--slug",
-        help="Package slug to publish (e.g. 'octi-server'). Auto-detected if omitted.",
+        help="Package slug to publish (e.g. 'abc-80'). Auto-detected if omitted.",
     )
     parser.add_argument(
         "--deb",

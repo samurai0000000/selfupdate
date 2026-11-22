@@ -31,11 +31,11 @@ from scripts.publish_ubuntu_deb import (
 
 def create_synthetic_deb(
     output_path: Path,
-    package: str = "octi-server",
-    version: str = "2.0.5",
+    package: str = "abc-80",
+    version: str = "1.1.3",
     arch: str = "amd64",
-    depends: str = "libc6 (>= 2.38), libgcc-s1 (>= 3.0), libsqlite3-0 (>= 3.5.9), libssl3t64 (>= 3.0.0), libstdc++6 (>= 13.1), adduser",
-    description: str = "OCTI Multiplayer, SSO & Game Archive Server\n Authoritative server daemon.",
+    depends: str = "libc6 (>= 2.38), libconfig++9v5 (>= 1.5-0.4~), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)",
+    description: str = "ABC-80 Microcomputer Emulator & Web Server\n Cycle-accurate Z80 microcomputer emulator.",
 ) -> Path:
     """Create a minimal synthetic .deb archive via dpkg-deb for hermetic testing."""
     output_path = output_path.resolve()
@@ -47,12 +47,12 @@ def create_synthetic_deb(
         control_text = (
             f"Package: {package}\n"
             f"Version: {version}\n"
-            f"Section: games\n"
+            f"Section: otherosfs\n"
             f"Priority: optional\n"
             f"Architecture: {arch}\n"
             f"Depends: {depends}\n"
             f"Maintainer: Charles Chiou <samurai@selfso.com>\n"
-            f"Homepage: https://www.selfso.com/projects/octi/\n"
+            f"Homepage: https://www.selfso.com/projects/\n"
             f"Description: {description}\n"
         )
         (deb_dir / "control").write_text(control_text, encoding="utf-8")
@@ -60,7 +60,7 @@ def create_synthetic_deb(
         bin_dir = root / "usr" / "sbin"
         bin_dir.mkdir(parents=True, exist_ok=True)
         dummy_bin = bin_dir / package
-        dummy_bin.write_bytes(b"#!/bin/sh\necho 'octi_server version 2.0.5'\n")
+        dummy_bin.write_bytes(b"#!/bin/sh\necho 'abc80_server version 1.1.3'\n")
         dummy_bin.chmod(0o755)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -106,14 +106,14 @@ class TestPublishUbuntuDeb(unittest.TestCase):
 
     def test_inspect_deb_package(self):
         """Verify inspect_deb_package extracts stanzas, hashes, and sizes accurately."""
-        deb_path = self.tmp_path / "octi-server_2.0.5_amd64.deb"
-        create_synthetic_deb(deb_path, package="octi-server", version="2.0.5", arch="amd64")
+        deb_path = self.tmp_path / "abc-80_1.1.3_amd64.deb"
+        create_synthetic_deb(deb_path, package="abc-80", version="1.1.3", arch="amd64")
 
         info = inspect_deb_package(deb_path)
-        self.assertEqual(info["package"], "octi-server")
-        self.assertEqual(info["version"], "2.0.5")
+        self.assertEqual(info["package"], "abc-80")
+        self.assertEqual(info["version"], "1.1.3")
         self.assertEqual(info["architecture"], "amd64")
-        self.assertIn("libssl3t64", info["depends"])
+        self.assertIn("libconfig++9v5", info["depends"])
         self.assertEqual(info["maintainer"], "Charles Chiou <samurai@selfso.com>")
         self.assertEqual(info["size"], deb_path.stat().st_size)
 
@@ -126,31 +126,32 @@ class TestPublishUbuntuDeb(unittest.TestCase):
 
     def test_publish_ubuntu_package_full_workflow(self):
         """Verify full publish_ubuntu_package workflow: staging, APT metadata, GPG signing & gpgv verification."""
-        deb_path = self.tmp_path / "octi-server_2.0.5_amd64.deb"
-        create_synthetic_deb(deb_path, package="octi-server", version="2.0.5", arch="amd64")
+        self.assertNotIn("octi-server", KNOWN_UBUNTU_PACKAGES)
+        deb_path = self.tmp_path / "abc-80_1.1.3_amd64.deb"
+        create_synthetic_deb(deb_path, package="abc-80", version="1.1.3", arch="amd64")
 
         manifest = publish_ubuntu_package(
-            slug="octi-server",
+            slug="abc-80",
             deb_path=deb_path,
             web_root=self.web_root,
             gnupg_home=self.gnupg_home,
             workspace_root=self.ws_root,
             base_apt_url="https://ppa.selfso.com/ubuntu",
-            release_notes="OCTI server 2.0.5 noble test release.",
+            release_notes="ABC-80 1.1.3 noble test release.",
         )
 
-        self.assertEqual(manifest["slug"], "octi-server")
-        self.assertEqual(manifest["version"], "2.0.5")
+        self.assertEqual(manifest["slug"], "abc-80")
+        self.assertEqual(manifest["version"], "1.1.3")
         self.assertEqual(manifest["architecture"], "amd64")
         self.assertEqual(manifest["suite"], "noble")
 
         # 1. Staged pool package
-        pool_deb = self.web_root / "pool" / "main" / "o" / "octi-server" / "octi-server_2.0.5_amd64.deb"
+        pool_deb = self.web_root / "pool" / "main" / "a" / "abc-80" / "abc-80_1.1.3_amd64.deb"
         self.assertTrue(pool_deb.is_file())
         self.assertEqual(pool_deb.stat().st_size, deb_path.stat().st_size)
 
         # 2. Direct download copy
-        direct_deb = self.web_root / "octi-server" / "octi-server_amd64.deb"
+        direct_deb = self.web_root / "abc-80" / "abc-80_amd64.deb"
         self.assertTrue(direct_deb.is_file())
         self.assertEqual(direct_deb.stat().st_size, deb_path.stat().st_size)
 
@@ -162,9 +163,9 @@ class TestPublishUbuntuDeb(unittest.TestCase):
         self.assertTrue(packages_gz_path.is_file())
 
         pkg_text = packages_path.read_text(encoding="utf-8")
-        self.assertIn("Package: octi-server", pkg_text)
-        self.assertIn("Version: 2.0.5", pkg_text)
-        self.assertIn("Filename: pool/main/o/octi-server/octi-server_2.0.5_amd64.deb", pkg_text)
+        self.assertIn("Package: abc-80", pkg_text)
+        self.assertIn("Version: 1.1.3", pkg_text)
+        self.assertIn("Filename: pool/main/a/abc-80/abc-80_1.1.3_amd64.deb", pkg_text)
         self.assertIn(f"SHA256: {manifest['sha256']}", pkg_text)
 
         # 4. dists/stable relative symlink
@@ -227,65 +228,61 @@ class TestPublishUbuntuDeb(unittest.TestCase):
             cat_data = json.load(f)
         self.assertEqual(cat_data["schemaVersion"], 1)
         self.assertEqual(cat_data["suite"], "noble")
-        self.assertIn("octi-server", cat_data["packages"])
-        self.assertEqual(cat_data["packages"]["octi-server"]["version"], "2.0.5")
-        self.assertEqual(cat_data["packages"]["octi-server"]["sha256"], manifest["sha256"])
+        self.assertIn("abc-80", cat_data["packages"])
+        self.assertNotIn("octi-server", cat_data["packages"])
+        self.assertEqual(cat_data["packages"]["abc-80"]["version"], "1.1.3")
+        self.assertEqual(cat_data["packages"]["abc-80"]["sha256"], manifest["sha256"])
 
-        pkg_json_path = self.web_root / "octi-server" / "version.json"
+        pkg_json_path = self.web_root / "abc-80" / "version.json"
         self.assertTrue(pkg_json_path.is_file())
         with open(pkg_json_path, "r", encoding="utf-8") as f:
             pkg_data = json.load(f)
-        self.assertEqual(pkg_data["version"], "2.0.5")
-        self.assertEqual(pkg_data["binaryPath"], "/usr/sbin/octi-server")
-        self.assertEqual(pkg_data["serviceName"], "octi-server.service")
-        self.assertEqual(pkg_data["defaultPort"], 6874)
+        self.assertEqual(pkg_data["version"], "1.1.3")
+        self.assertEqual(pkg_data["binaryPath"], "/usr/sbin/abc80_server")
+        self.assertEqual(pkg_data["serviceName"], "abc-80.service")
+        self.assertEqual(pkg_data["defaultPort"], 8008)
 
         # 9. HTML portal rendering
         portal_html = self.web_root / "index.html"
         self.assertTrue(portal_html.is_file())
         p_html_text = portal_html.read_text(encoding="utf-8")
-        self.assertIn("OCTI Multiplayer &amp; Archive Server", p_html_text)
-        self.assertIn("/usr/sbin/octi-server", p_html_text)
-        self.assertIn("apt-get install -y octi-server", p_html_text)
+        self.assertIn("ABC-80 Microcomputer Emulator &amp; Web Server", p_html_text)
+        self.assertIn("/usr/sbin/abc80_server", p_html_text)
+        self.assertIn("apt-get install -y abc-80", p_html_text)
+        self.assertNotIn("octi-server", p_html_text)
         self.assertIn(manifest["sha256"], p_html_text)
 
-        pkg_html = self.web_root / "octi-server" / "index.html"
+        pkg_html = self.web_root / "abc-80" / "index.html"
         self.assertTrue(pkg_html.is_file())
         k_html_text = pkg_html.read_text(encoding="utf-8")
-        self.assertIn("OCTI Multiplayer &amp; Archive Server", k_html_text)
-        self.assertIn("/var/lib/octi", k_html_text)
-        self.assertIn("/etc/octi/oidc.json", k_html_text)
-        self.assertIn("/etc/default/octi-server", k_html_text)
+        self.assertIn("ABC-80 Microcomputer Emulator &amp; Web Server", k_html_text)
+        self.assertIn("/etc/abc-80", k_html_text)
+        self.assertIn("/etc/abc-80/abc-80.cfg", k_html_text)
+        self.assertIn("/etc/default/abc-80", k_html_text)
 
     def test_find_candidate_deb(self):
         """Verify candidate discovery selects the newest candidate by modification time."""
-        c1 = self.ws_root / "octi/server/build/octi-server_2.0.4_amd64.deb"
-        c2 = self.ws_root / "octi/server/build/octi-server_2.0.5_amd64.deb"
-        create_synthetic_deb(c1, version="2.0.4")
-        create_synthetic_deb(c2, version="2.0.5")
+        c1 = self.ws_root / "abc-80/build/abc-80_1.1.2_amd64.deb"
+        c2 = self.ws_root / "abc-80/build/abc-80_1.1.3_amd64.deb"
+        create_synthetic_deb(c1, version="1.1.2")
+        create_synthetic_deb(c2, version="1.1.3")
 
         os.utime(str(c1), (1000.0, 1000.0))
         os.utime(str(c2), (2000.0, 2000.0))
 
-        cand = find_candidate_deb("octi-server", workspace_root=self.ws_root)
+        cand = find_candidate_deb("abc-80", workspace_root=self.ws_root)
         self.assertIsNotNone(cand)
-        self.assertEqual(cand.name, "octi-server_2.0.5_amd64.deb")
+        self.assertEqual(cand.name, "abc-80_1.1.3_amd64.deb")
 
     def test_detect_slug_from_cwd(self):
-        """Verify detect_slug_from_cwd detects octi-server and abc-80 slugs from paths."""
-        slug = detect_slug_from_cwd()
-        if "octi" in str(Path.cwd()):
-            self.assertEqual(slug, "octi-server")
-        elif "abc-80" in str(Path.cwd()):
-            self.assertEqual(slug, "abc-80")
-
+        """Verify detect_slug_from_cwd detects abc-80 and ignores octi paths."""
         abc80_dir = self.ws_root / "abc-80"
         abc80_dir.mkdir(parents=True, exist_ok=True)
         octi_dir = self.ws_root / "octi" / "server"
         octi_dir.mkdir(parents=True, exist_ok=True)
 
         self.assertEqual(detect_slug_from_cwd(cwd=abc80_dir), "abc-80")
-        self.assertEqual(detect_slug_from_cwd(cwd=octi_dir), "octi-server")
+        self.assertIsNone(detect_slug_from_cwd(cwd=octi_dir))
 
         orig_cwd = Path.cwd()
         try:
@@ -360,30 +357,30 @@ class TestPublishUbuntuDeb(unittest.TestCase):
 
     def test_dry_run_mode(self):
         """Verify dry-run mode computes manifest without writing files to web_root."""
-        deb_path = self.tmp_path / "octi-server_2.0.5_amd64.deb"
+        deb_path = self.tmp_path / "abc-80_1.1.3_amd64.deb"
         create_synthetic_deb(deb_path)
 
         manifest = publish_ubuntu_package(
-            slug="octi-server",
+            slug="abc-80",
             deb_path=deb_path,
             web_root=self.web_root,
             gnupg_home=self.gnupg_home,
             dry_run=True,
         )
         self.assertTrue(manifest.get("dryRun"))
-        self.assertEqual(manifest["version"], "2.0.5")
+        self.assertEqual(manifest["version"], "1.1.3")
         self.assertFalse((self.web_root / "dists").exists())
         self.assertFalse((self.web_root / "pool").exists())
 
     def test_cli_invocation(self):
         """Verify CLI main entry point accepts arguments and runs cleanly."""
-        deb_path = self.tmp_path / "octi-server_2.0.5_amd64.deb"
+        deb_path = self.tmp_path / "abc-80_1.1.3_amd64.deb"
         create_synthetic_deb(deb_path)
 
         ret = main(
             [
                 "--slug",
-                "octi-server",
+                "abc-80",
                 "--deb",
                 str(deb_path),
                 "--web-root",
