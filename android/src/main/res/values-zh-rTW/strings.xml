@@ -20,14 +20,14 @@
     <string name="selfupdate_downloading_version">正在下載版本 %1$s…</string>
     <string name="selfupdate_progress_determinate">%1$s / %2$s (%3$d%%)</string>
     <string name="selfupdate_progress_indeterminate">已下載 %1$s</string>
-    <string name="selfupdate_permission_dialog_body">Android 需要先授予此應用程式「安裝未知應用程式」權限，才能安裝來自 selfso.com 的更新。</string>
+    <string name="selfupdate_permission_dialog_body">Android 需要先授予此應用程式「安裝不明應用程式」權限，才能安裝來自 selfso.com 的更新。</string>
     <string name="selfupdate_permission_dialog_hint">請輕觸「開啟設定」，啟用此應用程式的安裝權限後返回以繼續。</string>
     <string name="selfupdate_ready_dialog_body">已準備好安裝 v%1$s (%2$d)。</string>
     <string name="selfupdate_launching_installer_dialog">正在啟動 Android 套件安裝程式…</string>
     <string name="selfupdate_banner_available_body">版本 %1$s 現已推出（已安裝：%2$s）。</string>
     <string name="selfupdate_banner_downloading_title">正在下載更新 v%1$s…</string>
     <string name="selfupdate_banner_progress_pair">%1$s / %2$s</string>
-    <string name="selfupdate_banner_permission_body">Android 需要授予安裝未知應用程式權限才能套用更新。</string>
+    <string name="selfupdate_banner_permission_body">Android 需要授予「安裝不明應用程式」權限才能套用更新。</string>
     <string name="selfupdate_banner_ready_body">v%1$s 已下載並完成驗證。</string>
     <string name="selfupdate_banner_launching_installer">正在啟動 Android 套件安裝程式…</string>
     <string name="selfupdate_banner_version_code">v%1$s (%2$d)</string>
