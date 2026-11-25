@@ -449,7 +449,7 @@ class TestPublishWindowsApp(unittest.TestCase):
             self.assertNotIn("selfso.com", text.lower(), f"Leak found in {rel}")
             self.assertIn("www.octi.net", text, f"Expected www.octi.net in {rel}")
 
-    def test_octi_cli_standalone_defaults_and_www_catalog_bridge(self):
+    def test_octi_cli_standalone_defaults_isolated_from_www(self):
         src_exe = self._create_mock_exe(
             "octi/desktop/build/windows/octi-setup-2.7.0.exe",
             slug="octi",
@@ -464,10 +464,6 @@ class TestPublishWindowsApp(unittest.TestCase):
         )
 
         www_win = self.ws_root / "www/selfso/html/software/windows"
-        (www_win / "octi").mkdir(parents=True, exist_ok=True)
-        redirect_stub = "<html><head><meta http-equiv='refresh' content='0; url=https://octi.selfso.com/software/windows/octi/'></head></html>"
-        (www_win / "octi/index.html").write_text(redirect_stub, encoding="utf-8")
-
         publish_app(
             slug="aimon",
             package_path=aimon_exe,
@@ -484,14 +480,13 @@ class TestPublishWindowsApp(unittest.TestCase):
                 str(src_exe),
                 "--workspace-root",
                 str(self.ws_root),
-                "--bridge-www-catalog",
-                str(www_win),
             ]
         )
         self.assertEqual(ret, 0)
 
         octi_portal = self.ws_root / "octi/web/html/software/windows"
         self.assertTrue((octi_portal / "octi/octi-setup.exe").is_file())
+        self.assertTrue((octi_portal / "version.json").is_file())
         self.assertNotIn(
             "www.selfso.com",
             (octi_portal / "index.html").read_text(encoding="utf-8").lower(),
@@ -500,30 +495,37 @@ class TestPublishWindowsApp(unittest.TestCase):
             "www.selfso.com",
             (octi_portal / "octi/index.html").read_text(encoding="utf-8").lower(),
         )
+        octi_cat = json.loads((octi_portal / "version.json").read_text(encoding="utf-8"))
+        self.assertEqual(octi_cat["baseUrl"], "https://octi.selfso.com/software/windows/")
+        self.assertIn("com.selfso.octi", octi_cat["apps"])
 
-        self.assertFalse((www_win / "octi/octi-setup.exe").exists())
-        self.assertFalse((www_win / "octi/octi-setup-latest.exe").exists())
+        self.assertFalse((www_win / "octi").exists())
         www_cat = json.loads((www_win / "version.json").read_text(encoding="utf-8"))
         self.assertIn("com.selfso.aimon", www_cat["apps"])
-        self.assertIn("com.selfso.octi", www_cat["apps"])
-        self.assertEqual(
-            www_cat["apps"]["com.selfso.octi"]["packageUrl"],
-            "https://octi.selfso.com/software/windows/octi/octi-setup.exe",
-        )
-        self.assertEqual(
-            www_cat["apps"]["com.selfso.octi"]["pageUrl"],
-            "https://octi.selfso.com/software/windows/octi/",
-        )
+        self.assertNotIn("com.selfso.octi", www_cat["apps"])
+
+        with self.assertRaises(SystemExit) as cm:
+            main(
+                [
+                    "--slug",
+                    "octi",
+                    "--package",
+                    str(src_exe),
+                    "--workspace-root",
+                    str(self.ws_root),
+                    "--bridge-www-catalog",
+                    str(www_win),
+                ]
+            )
+        self.assertNotEqual(cm.exception.code, 0)
 
         self.assertEqual(
             main(["--render-only", "--web-root", str(www_win), "--workspace-root", str(self.ws_root)]),
             0,
         )
-        self.assertEqual((www_win / "octi/index.html").read_text(encoding="utf-8"), redirect_stub)
-        self.assertIn(
-            "https://octi.selfso.com/software/windows/octi/octi-setup.exe",
-            (www_win / "index.html").read_text(encoding="utf-8"),
-        )
+        www_html = (www_win / "index.html").read_text(encoding="utf-8")
+        self.assertIn("aimon-setup.exe", www_html)
+        self.assertNotIn("com.selfso.octi", www_html)
 
         published_batch = publish_all(
             web_root=www_win,
@@ -531,7 +533,7 @@ class TestPublishWindowsApp(unittest.TestCase):
             base_url="https://www.selfso.com/software/windows/",
         )
         self.assertNotIn("octi", published_batch)
-        self.assertFalse((www_win / "octi/octi-setup.exe").exists())
+        self.assertFalse((www_win / "octi").exists())
 
 
 if __name__ == "__main__":

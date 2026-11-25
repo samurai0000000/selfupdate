@@ -10,9 +10,9 @@ Copyright (C) 2026, Charles Chiou
 
 `selfupdate` is a first-party, zero-dependency self-update engine and distribution toolkit designed for personal applications across Android and Windows (`aimon`, `robohero`, `octi`, `nigosh`):
 
-- **Android OTA Library (`com.selfso.selfupdate`)**: In-app update engine (`android/`) using Android's `PackageInstaller` Session API and Jetpack Compose UI components, distributed via `https://www.selfso.com/software/android/`.
-- **Windows C++ / Qt6 Library (`namespace selfupdate`)**: Zero-dependency C++17 library (`windows/`) using native Win32 WinHTTP (POSIX socket fallback on Linux), RFC 6234 SHA-256 verification, detached PID-wait setup installer execution or atomic `.old` in-place binary copy, and an optional header-only Qt6 GUI thread-marshaling bridge (`QtSelfUpdateBridge.hxx`), distributed via `https://www.selfso.com/software/windows/`.
-- **Static Distribution Portals**: Pure static HTML distribution portals hosted on `selfso.com` providing browsable catalogs, app detail pages, downloadable binaries, and cryptographic `version.json` manifests.
+- **Android OTA Library (`com.selfso.selfupdate`)**: In-app update engine (`android/`) using Android's `PackageInstaller` Session API and Jetpack Compose UI components, distributed via `https://www.selfso.com/software/android/` (or `https://octi.selfso.com/software/android/` for standalone OCTI).
+- **Windows C++ / Qt6 Library (`namespace selfupdate`)**: Zero-dependency C++17 library (`windows/`) using native Win32 WinHTTP (POSIX socket fallback on Linux), RFC 6234 SHA-256 verification, detached PID-wait setup installer execution or atomic `.old` in-place binary copy, and an optional header-only Qt6 GUI thread-marshaling bridge (`QtSelfUpdateBridge.hxx`), distributed via `https://www.selfso.com/software/windows/` (or `https://octi.selfso.com/software/windows/` for standalone OCTI).
+- **Static Distribution Portals**: Pure static HTML distribution portals hosted on `www.selfso.com` (for `aimon`, `robohero`, `nigosh`, `vidaicut`) and `octi.selfso.com` (standalone for `octi`) providing browsable catalogs, app detail pages, downloadable binaries, and cryptographic `version.json` manifests.
 - **Automated Publishing Tooling (`scripts/`)**: CLI tools to inspect built APKs (`aapt2`) or Windows executables (PE header & `.rsrc` `RT_VERSION` parsing), stage binaries into static web directories, update per-app and master `version.json` manifests non-destructively, and generate static HTML pages.
 
 ---
@@ -52,7 +52,7 @@ selfupdate_target_sources(my_app_target)
 selfupdate::CheckerConfig config;
 config.applicationId = "com.selfso.octi";
 config.slug = "octi";
-config.manifestUrl = "https://www.selfso.com/software/windows/";
+config.manifestUrl = "https://octi.selfso.com/software/windows/";
 
 auto controller = std::make_shared<selfupdate::SelfUpdateController>(config);
 
@@ -128,12 +128,12 @@ SelfUpdateBanner(
 
 The update architecture uses dual-schema JSON manifests supporting both master catalogs and single-app manifests.
 
-### 4.1 Windows Manifest Schema (`https://www.selfso.com/software/windows/version.json`)
+### 4.1 Windows Manifest Schema (`https://octi.selfso.com/software/windows/version.json`)
 
 ```json
 {
   "schemaVersion": 1,
-  "baseUrl": "https://www.selfso.com/software/windows/",
+  "baseUrl": "https://octi.selfso.com/software/windows/",
   "updatedAt": "2026-10-22T12:00:00Z",
   "apps": {
     "com.selfso.octi": {
@@ -147,8 +147,8 @@ The update architecture uses dual-schema JSON manifests supporting both master c
       "executableName": "octi.exe",
       "arch": "x86_64",
       "minOs": "Windows 10 (64-bit)+",
-      "packageUrl": "https://www.selfso.com/software/windows/octi/octi-setup.exe",
-      "pageUrl": "https://www.selfso.com/software/windows/octi/",
+      "packageUrl": "https://octi.selfso.com/software/windows/octi/octi-setup.exe",
+      "pageUrl": "https://octi.selfso.com/software/windows/octi/",
       "sha256": "ec9f1da66a3ca38145225b765381ddd17a4cc2ae50db736dc07c9d5d52101ac0",
       "sizeBytes": 22458182,
       "publishedAt": "2026-10-22T12:00:00Z",
@@ -165,26 +165,26 @@ The update architecture uses dual-schema JSON manifests supporting both master c
 ### 5.1 Windows Application Publishing (`scripts/`)
 
 - **`scripts/gen_windows_version_json.py`**: Parses PE header and traverses `.rsrc` table down to `RT_VERSION` (type ID 16) to extract machine architecture, `VS_FIXEDFILEINFO`, and `StringFileInfo` keys while remaining immune to embedded `RT_RCDATA` payloads. Emits single-app manifest JSON.
-- **`scripts/publish_windows_app.py`**: Staged publisher for Windows applications. Non-destructively updates `~/work/www/selfso/html/software/windows/version.json`, stages packages, and renders static HTML portal pages.
+- **`scripts/publish_windows_app.py`**: Staged publisher for Windows applications. Non-destructively updates `~/work/www/selfso/html/software/windows/version.json` (or `~/work/octi/web/html/software/windows/version.json` for `--slug octi`), stages packages, and renders static HTML portal pages.
 
 ```bash
-# Publish a single Windows application from its build output:
+# Publish standalone OCTI Windows portal (~/work/octi/web/html/software/windows/):
 python3 scripts/publish_windows_app.py --slug octi
 
-# Batch-publish all known Windows applications across the workspace:
+# Batch-publish all Selfso Windows applications to ~/work/www/selfso/html/software/windows/ (skips standalone octi):
 python3 scripts/publish_windows_app.py --publish-all
 ```
 
 ### 5.2 Android APK Publishing (`scripts/`)
 
 - **`scripts/gen_version_json.py`**: Inspects Android `.apk` files using `aapt2` or AGP `output-metadata.json`.
-- **`scripts/publish_android_apk.py`**: Stages APKs to `~/work/www/selfso/html/software/android/` and updates Android portal pages.
+- **`scripts/publish_android_apk.py`**: Stages APKs to `~/work/www/selfso/html/software/android/` (or `~/work/octi/web/html/software/android/` for `--slug octi`) and updates Android portal pages.
 
 ```bash
-# Publish a single Android application:
+# Publish standalone OCTI Android portal (~/work/octi/web/html/software/android/):
 python3 scripts/publish_android_apk.py --slug octi
 
-# Batch-publish all known Android applications:
+# Batch-publish all Selfso Android applications to ~/work/www/selfso/html/software/android/ (skips standalone octi):
 python3 scripts/publish_android_apk.py --publish-all
 ```
 

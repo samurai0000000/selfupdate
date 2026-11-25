@@ -2,7 +2,6 @@
 # Copyright (C) 2026, Charles Chiou
 
 import argparse
-import copy
 import datetime
 import html
 import json
@@ -187,19 +186,6 @@ def parse_portal_context(base_url: str) -> Dict[str, Any]:
         "arena_host": arena_host,
         "arena_origin": arena_origin,
     }
-
-
-def is_external_catalog_entry(app_manifest: Dict[str, Any], portal_base_url: str) -> bool:
-    """Return True if an entry in version.json points to a different host than portal_base_url."""
-    portal_host = (urllib.parse.urlparse(portal_base_url or "").netloc or "").lower()
-    entry_url = str(
-        app_manifest.get("apkUrl")
-        or app_manifest.get("packageUrl")
-        or app_manifest.get("pageUrl")
-        or ""
-    )
-    entry_host = (urllib.parse.urlparse(entry_url).netloc or "").lower()
-    return bool(entry_host and portal_host and entry_host != portal_host)
 
 
 def resolve_cli_target_defaults(
@@ -1038,19 +1024,8 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
         sha256 = html.escape(app.get("sha256", ""))
         apk_filename = app.get("apkFilename") or meta.get("apkFilename") or f"{slug}.apk"
         apk_url = html.escape(app.get("apkUrl", f"{slug}/{apk_filename}"))
-        is_ext = is_external_catalog_entry(app, base_url)
-        if is_ext:
-            raw_page_url = str(app.get("pageUrl") or f"{slug}/")
-            page_url = html.escape(raw_page_url)
-            manifest_btn_url = html.escape(raw_page_url.rstrip("/") + "/version.json")
-            ext_host = html.escape(
-                urllib.parse.urlparse(str(app.get("apkUrl") or raw_page_url)).netloc
-            )
-            ext_badge_html = f'\n            <span class="badge">Hosted on {ext_host}</span>'
-        else:
-            page_url = f"{html.escape(slug)}/"
-            manifest_btn_url = f"{html.escape(slug)}/version.json"
-            ext_badge_html = ""
+        page_url = f"{html.escape(slug)}/"
+        manifest_btn_url = f"{html.escape(slug)}/version.json"
 
         card = f"""        <!-- App Card: {title} -->
         <div class="card" id="{html.escape(slug)}">
@@ -1062,7 +1037,7 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
             <span class="badge">v{version_name} (Build {version_code})</span>
             <span class="badge">{min_sdk_str}</span>
             <span class="badge">{size_str}</span>
-            <span class="badge">{pub_date}</span>{ext_badge_html}
+            <span class="badge">{pub_date}</span>
           </div>
 
           <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
@@ -1479,67 +1454,6 @@ def publish_app(
     return manifest
 
 
-def bridge_external_catalog_entry(
-    manifest: Dict[str, Any],
-    www_software_dir: Union[str, Path],
-    www_base_url: str = "https://www.selfso.com/software/android/",
-) -> Path:
-    """Mirror an externally hosted app manifest into www's master version.json & index.html without copying binaries."""
-    target_dir = Path(www_software_dir).resolve()
-    target_dir.mkdir(parents=True, exist_ok=True)
-    master_json_path = target_dir / "version.json"
-    clean_www_base = www_base_url if www_base_url.endswith("/") else f"{www_base_url}/"
-    catalog: Dict[str, Any] = {
-        "schemaVersion": 1,
-        "baseUrl": clean_www_base,
-        "updatedAt": manifest.get("publishedAt", ""),
-        "apps": {},
-    }
-    if master_json_path.is_file():
-        try:
-            with open(master_json_path, "r", encoding="utf-8") as f:
-                existing = json.load(f)
-            if isinstance(existing, dict):
-                catalog["schemaVersion"] = existing.get("schemaVersion", 1)
-                catalog["baseUrl"] = existing.get("baseUrl") or clean_www_base
-                if isinstance(existing.get("apps"), dict):
-                    catalog["apps"] = existing["apps"]
-        except Exception:
-            pass
-
-    app_id = manifest["applicationId"]
-    catalog["updatedAt"] = manifest.get("publishedAt", catalog.get("updatedAt", ""))
-    catalog["apps"][app_id] = copy.deepcopy(manifest)
-
-    with open(master_json_path, "w", encoding="utf-8") as f:
-        json.dump(catalog, f, indent=2, ensure_ascii=False)
-        f.write("\n")
-
-    portal_html = render_portal_html(catalog, catalog["baseUrl"])
-    with open(target_dir / "index.html", "w", encoding="utf-8") as f:
-        f.write(portal_html)
-
-    return master_json_path
-
-
-def _catalog_has_external_entry(web_root: Path, slug: str, app_id: str, base_url: str) -> bool:
-    master_json_path = web_root / "version.json"
-    if not master_json_path.is_file():
-        return False
-    try:
-        with open(master_json_path, "r", encoding="utf-8") as f:
-            catalog = json.load(f)
-        for k, entry in (catalog.get("apps") or {}).items():
-            if isinstance(entry, dict) and (
-                entry.get("slug") == slug or entry.get("applicationId") == app_id or k == slug
-            ):
-                if is_external_catalog_entry(entry, base_url):
-                    return True
-    except Exception:
-        pass
-    return False
-
-
 def publish_all(
     web_root: Union[str, Path],
     workspace_root: Optional[Union[str, Path]] = None,
@@ -1559,11 +1473,8 @@ def publish_all(
     published: Dict[str, Dict[str, Any]] = {}
 
     for slug, meta in KNOWN_APPS.items():
-        app_id = meta.get("applicationId", "")
-        if _catalog_has_external_entry(w_root, slug, app_id, base_url) or (
-            slug == "octi" and ctx["is_selfso_portal"]
-        ):
-            print(f"Skipping {slug}: hosted externally (preserving catalog bridge).")
+        if slug == "octi" and ctx["is_selfso_portal"]:
+            print(f"Skipping {slug}: hosted standalone on octi.selfso.com.")
             continue
         cand = find_candidate_apk(slug, ws)
         if cand:
@@ -1601,8 +1512,6 @@ def re_render_existing_portal(web_root: Path, base_url: str) -> int:
     rendered_apps = 0
     for key, app_manifest in catalog.get("apps", {}).items():
         if not isinstance(app_manifest, dict):
-            continue
-        if is_external_catalog_entry(app_manifest, base_url):
             continue
         slug = app_manifest.get("slug") or key
         app_dir = web_root / slug
@@ -1651,11 +1560,6 @@ def main(argv: Optional[list] = None) -> int:
         "--base-url",
         default=None,
         help="Base distribution URL (defaults to https://octi.selfso.com/software/android/ for --slug octi, else https://www.selfso.com/software/android/)",
-    )
-    parser.add_argument(
-        "--bridge-www-catalog",
-        default=None,
-        help="Optional www software/android directory whose version.json & index.html should mirror this external app entry without copying binaries",
     )
     parser.add_argument("--release-notes", help="Release notes text")
     parser.add_argument(
@@ -1741,8 +1645,6 @@ def main(argv: Optional[list] = None) -> int:
             published_at=args.published_at,
             force_public=args.force_public,
         )
-        if args.bridge_www_catalog:
-            bridge_external_catalog_entry(manifest, args.bridge_www_catalog)
         print(
             f"Successfully published {manifest['slug']} v{manifest['versionName']} (Build {manifest['versionCode']})."
         )

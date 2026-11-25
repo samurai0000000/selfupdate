@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
         liveCfg.applicationId = "com.selfso.octi";
         liveCfg.installedVersionName = "1.0.0";
         liveCfg.installedVersionCode = 10000;
-        liveCfg.manifestUrl = "https://www.selfso.com/software/windows/";
+        liveCfg.manifestUrl = "https://octi.selfso.com/software/windows/";
         selfupdate::SelfUpdateChecker liveChecker(liveCfg);
         selfupdate::UpdateState state = liveChecker.checkForUpdate(true);
         if (state.phase != selfupdate::UpdatePhase::Available) {

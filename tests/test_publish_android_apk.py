@@ -463,7 +463,7 @@ class TestPublishAndroidApk(unittest.TestCase):
             self.assertNotIn("selfso.com", text.lower(), f"Leak found in {rel}")
             self.assertIn("www.octi.net", text, f"Expected www.octi.net in {rel}")
 
-    def test_octi_cli_standalone_defaults_and_www_catalog_bridge(self):
+    def test_octi_cli_standalone_defaults_isolated_from_www(self):
         dummy_apk = self.workspace_root / "octi/android/app/build/outputs/apk/release/app-release.apk"
         dummy_apk.parent.mkdir(parents=True, exist_ok=True)
         dummy_apk.write_bytes(b"octi 2.7.0 standalone apk bytes")
@@ -479,9 +479,6 @@ class TestPublishAndroidApk(unittest.TestCase):
         )
 
         www_android = self.workspace_root / "www/selfso/html/software/android"
-        (www_android / "octi").mkdir(parents=True, exist_ok=True)
-        redirect_stub = "<html><head><meta http-equiv='refresh' content='0; url=https://octi.selfso.com/software/android/octi/'></head></html>"
-        (www_android / "octi/index.html").write_text(redirect_stub, encoding="utf-8")
 
         # Seed www catalog with another local app
         aimon_apk = self.workspace_root / "aimon/web/aimon-companion.apk"
@@ -507,15 +504,13 @@ class TestPublishAndroidApk(unittest.TestCase):
             aapt2_bin="",
         )
 
-        # Publish octi using CLI standalone defaults + --bridge-www-catalog
+        # Publish octi using CLI standalone defaults without touching www
         ret = main(
             [
                 "--slug",
                 "octi",
                 "--workspace-root",
                 str(self.workspace_root),
-                "--bridge-www-catalog",
-                str(www_android),
                 "--no-extra-copy",
             ]
         )
@@ -523,6 +518,7 @@ class TestPublishAndroidApk(unittest.TestCase):
 
         octi_portal = self.workspace_root / "octi/web/html/software/android"
         self.assertTrue((octi_portal / "octi/octi.apk").is_file())
+        self.assertTrue((octi_portal / "version.json").is_file())
         self.assertNotIn(
             "www.selfso.com",
             (octi_portal / "index.html").read_text(encoding="utf-8").lower(),
@@ -531,32 +527,39 @@ class TestPublishAndroidApk(unittest.TestCase):
             "www.selfso.com",
             (octi_portal / "octi/index.html").read_text(encoding="utf-8").lower(),
         )
+        octi_cat = json.loads((octi_portal / "version.json").read_text(encoding="utf-8"))
+        self.assertEqual(octi_cat["baseUrl"], "https://octi.selfso.com/software/android/")
+        self.assertIn("com.selfso.octi", octi_cat["apps"])
 
-        # Verify www has ZERO octi .apk binaries, preserves redirect stub, and mirrors external URLs
-        self.assertFalse((www_android / "octi/octi.apk").exists())
-        self.assertFalse((www_android / "octi/octi-latest.apk").exists())
+        # Verify www has zero octi entries or directories while preserving aimon
+        self.assertFalse((www_android / "octi").exists())
         www_cat = json.loads((www_android / "version.json").read_text(encoding="utf-8"))
         self.assertIn("com.selfso.aimon", www_cat["apps"])
-        self.assertIn("com.selfso.octi", www_cat["apps"])
-        self.assertEqual(
-            www_cat["apps"]["com.selfso.octi"]["apkUrl"],
-            "https://octi.selfso.com/software/android/octi/octi.apk",
-        )
-        self.assertEqual(
-            www_cat["apps"]["com.selfso.octi"]["pageUrl"],
-            "https://octi.selfso.com/software/android/octi/",
-        )
+        self.assertNotIn("com.selfso.octi", www_cat["apps"])
 
-        # --render-only and --publish-all on www must preserve redirect stub and external entry
+        with self.assertRaises(SystemExit) as cm:
+            main(
+                [
+                    "--slug",
+                    "octi",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                    "--bridge-www-catalog",
+                    str(www_android),
+                    "--no-extra-copy",
+                ]
+            )
+        self.assertNotEqual(cm.exception.code, 0)
+
+        # --render-only and --publish-all on www must leave octi out cleanly
         self.assertEqual(
             main(["--render-only", "--web-root", str(www_android), "--workspace-root", str(self.workspace_root)]),
             0,
         )
-        self.assertEqual((www_android / "octi/index.html").read_text(encoding="utf-8"), redirect_stub)
-        self.assertIn(
-            "https://octi.selfso.com/software/android/octi/octi.apk",
-            (www_android / "index.html").read_text(encoding="utf-8"),
-        )
+        www_html = (www_android / "index.html").read_text(encoding="utf-8")
+        self.assertIn("aimon-companion.apk", www_html)
+        self.assertNotIn('id="octi"', www_html)
+        self.assertNotIn("https://octi.selfso.com/software/", www_html)
 
         published_batch = publish_all(
             web_root=www_android,
@@ -566,7 +569,7 @@ class TestPublishAndroidApk(unittest.TestCase):
             aapt2_bin="",
         )
         self.assertNotIn("octi", published_batch)
-        self.assertFalse((www_android / "octi/octi.apk").exists())
+        self.assertFalse((www_android / "octi").exists())
 
 
 if __name__ == "__main__":
