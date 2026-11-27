@@ -463,6 +463,16 @@ class TestPublishAndroidApk(unittest.TestCase):
             self.assertNotIn("selfso.com", text.lower(), f"Leak found in {rel}")
             self.assertIn("www.octi.net", text, f"Expected www.octi.net in {rel}")
 
+        for rel in ("index.html", "octi/index.html"):
+            text = (custom_web / rel).read_text(encoding="utf-8")
+            self.assertNotIn("/css/main.css", text, f"Selfso stylesheet leaked in {rel}")
+            self.assertNotIn("Built with Pure Static HTML", text, f"Selfso footer leaked in {rel}")
+            self.assertNotIn("engineered for robotics", text.lower(), f"Selfso copy leaked in {rel}")
+            self.assertNotIn("com.selfso.selfupdate", text, f"Selfso package leaked in {rel}")
+            self.assertIn("/favicon.svg", text, f"Expected OCTI favicon in {rel}")
+            self.assertIn("/#tournaments", text, f"Expected OCTI nav in {rel}")
+            self.assertIn("/#puzzles", text, f"Expected OCTI puzzles nav in {rel}")
+
     def test_octi_cli_standalone_defaults_isolated_from_www(self):
         dummy_apk = self.workspace_root / "octi/android/app/build/outputs/apk/release/app-release.apk"
         dummy_apk.parent.mkdir(parents=True, exist_ok=True)

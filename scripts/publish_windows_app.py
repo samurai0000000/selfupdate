@@ -336,94 +336,732 @@ def _render_site_chrome(ctx: Dict[str, Any], page_title: str, meta_description: 
 
     host_esc = html.escape(ctx["site_host"])
     head_and_header = f"""<!DOCTYPE html>
+<!--
+  Copyright (C) 2026, Charles Chiou
+-->
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="{desc_esc}">
-  <title>{page_title} &bull; {host_esc}</title>
-  <link rel="stylesheet" href="/css/main.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="{desc_esc}">
+<title>{page_title}</title>
+<meta property="og:title" content="{page_title}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="{desc_esc}">
+<meta property="og:image" content="/octi_icon_1024.png">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<style>
+:root {{
+  --bg: #fbfbfa;
+  --panel: #ffffff;
+  --panel-elev: #f4f4f5;
+  --line: #e4e4e7;
+  --fg: #18181b;
+  --dim: #52525b;
+  --muted: #71717a;
+  --acc: #18181b;
+  --acc-bright: #2563eb;
+  --emerald: #10b981;
+  --emerald-dark: #059669;
+  --gold: #c8a253;
+  --gold-bright: #fde047;
+  --cyan: #38bdf8;
+  --ruby: #f43f5e;
+  --obsidian: #0b0f17;
+  --slate-dark: #0f172a;
+}}
+* {{ box-sizing: border-box; }}
+html {{ scroll-behavior: smooth; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14.5px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}}
+header {{
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 20px;
+  background: rgba(251, 251, 250, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}}
+.brand {{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none !important;
+}}
+.brand-badge {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--fg);
+  padding: 0.25rem 0.6rem;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.05em;
+}}
+.brand-text {{ display: flex; flex-direction: column; }}
+.brand-name {{
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}}
+.brand-sub {{ font-size: 11px; color: var(--dim); }}
+nav {{ display: flex; gap: 4px; flex-wrap: wrap; }}
+nav .btn, .header-right .btn {{
+  padding: 5px 9px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}}
+.btn {{
+  background: #ffffff;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: all 0.16s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}}
+.btn:hover {{ background: #f4f4f5; border-color: #d4d4d8; color: var(--fg); }}
+.btn-primary {{ background: var(--fg); color: #ffffff; border-color: var(--fg); }}
+.btn-primary:hover {{ background: #27272a; border-color: #27272a; color: #ffffff; }}
+.btn-gold {{
+  background: linear-gradient(135deg, #fde047 0%, #eab308 100%);
+  color: #0b0f17;
+  border: 1px solid #fef08a;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
+}}
+.btn-gold:hover {{
+  background: linear-gradient(135deg, #fef08a 0%, #facc15 100%);
+  color: #0b0f17;
+  border-color: #fef9c3;
+}}
+.btn-hero-ghost {{
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(147, 197, 253, 0.55);
+  color: #e0f2fe;
+  font-weight: 700;
+}}
+.btn-hero-ghost:hover {{
+  background: rgba(30, 58, 138, 0.65);
+  border-color: #93c5fd;
+  color: #ffffff;
+}}
+.btn-amber-soft {{
+  background: #fffbeb;
+  border-color: #d97706;
+  color: #92400e;
+}}
+.btn-amber-soft:hover {{
+  background: #fef3c7;
+  border-color: #b45309;
+  color: #78350f;
+}}
+.header-right {{ margin-left: auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }}
+
+main {{
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+  flex: 1 0 auto;
+}}
+
+/* OCTI Hero Banner (Windows Blue-Obsidian Edition) */
+.hero {{
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #070d1a 0%, #0f2042 54%, #17336e 100%);
+  border: 1px solid #2b4c8c;
+  border-radius: 14px;
+  padding: 30px 34px;
+  color: #f8fafc;
+  box-shadow: 0 12px 34px rgba(7, 13, 26, 0.32);
+  margin-bottom: 24px;
+}}
+.hero::before {{
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #c8a253 0%, #fde047 35%, #38bdf8 70%, #10b981 100%);
+}}
+.hero-grid {{
+  display: grid;
+  grid-template-columns: 1.28fr 0.88fr;
+  gap: 28px;
+  align-items: center;
+}}
+@media (max-width: 920px) {{
+  .hero {{ padding: 24px 20px; }}
+  .hero-grid {{ grid-template-columns: 1fr; gap: 20px; }}
+}}
+.hero-badge {{
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(59, 130, 246, 0.24);
+  border: 1px solid #60a5fa;
+  color: #bae6fd;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}}
+.hero h1 {{
+  margin: 0 0 10px 0;
+  font-size: clamp(26px, 3.6vw, 36px);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-weight: 800;
+}}
+.hero p {{
+  margin: 0 0 18px 0;
+  font-size: 15px;
+  color: #dbeafe;
+  line-height: 1.65;
+  max-width: 680px;
+}}
+.hero-actions {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}}
+.hero-actions .btn {{ padding: 10px 18px; font-size: 13.5px; }}
+.hero-pills {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}}
+.hero-pill {{
+  background: rgba(15, 23, 42, 0.52);
+  border: 1px solid rgba(147, 197, 253, 0.28);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #dbeafe;
+}}
+.hero-pill strong {{ color: #fde047; }}
+.hero-art {{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}}
+.hero-art svg {{
+  width: 100%;
+  max-width: 390px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 12px 26px rgba(0, 0, 0, 0.4));
+}}
+
+/* Section Panels */
+.section-panel {{
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}}
+.section-header {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}}
+.section-header h2 {{
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}}
+.section-sub {{
+  margin: 0 0 16px 0;
+  color: var(--dim);
+  font-size: 14.5px;
+  line-height: 1.65;
+}}
+.release-notes-box {{
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}}
+.release-notes-label {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1d4ed8;
+  margin-bottom: 4px;
+}}
+.release-notes-box p {{
+  margin: 0;
+  color: #1e293b;
+  font-size: 14.5px;
+  line-height: 1.6;
+}}
+.spec-grid {{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}}
+@media (max-width: 860px) {{
+  .spec-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+}}
+@media (max-width: 480px) {{
+  .spec-grid {{ grid-template-columns: 1fr; }}
+}}
+.spec-item {{
+  background: #fafafa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+}}
+.spec-label {{
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}}
+.spec-value {{
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+}}
+.spec-value.mono {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+}}
+.checksum-bar {{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+}}
+.checksum-tag {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 3px 8px;
+  border-radius: 4px;
+}}
+.checksum-hash {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12.5px;
+  color: #0f172a;
+  word-break: break-all;
+  flex: 1 1 300px;
+}}
+
+/* Feature Cards Grid */
+.ops-grid {{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}}
+.op-card {{
+  background: #fafafa;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 20px;
+}}
+.op-card-tag {{
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}}
+.op-card h3 {{
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+}}
+.op-card p {{
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--dim);
+  line-height: 1.6;
+}}
+
+/* Guide Styles */
+.pill-tag {{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f4f4f5;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}}
+.pill-tag.warn {{
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}}
+.pill-tag.blue {{
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}}
+.guide-alert-box {{
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #d97706;
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+}}
+.guide-alert-box h3 {{
+  font-size: 16px;
+  color: #92400e;
+  margin: 0;
+}}
+.guide-alert-box p {{
+  color: #78350f;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0 0 10px 0;
+}}
+.guide-alert-box p:last-child {{ margin-bottom: 0; }}
+.guide-nav-pills {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+  padding: 12px 14px;
+  background: #fafafa;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}}
+.guide-nav-pill {{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-decoration: none !important;
+  transition: all 0.15s ease;
+}}
+.guide-nav-pill:hover {{
+  background: var(--fg);
+  color: #ffffff;
+  border-color: var(--fg);
+}}
+.guide-step-card {{
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}}
+.guide-step-card:last-child {{ margin-bottom: 0; }}
+.guide-step-header {{
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}}
+.step-num {{
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #0f2042;
+  color: #93c5fd;
+  border: 1px solid #2b4c8c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}}
+.guide-step-header h3 {{
+  margin: 6px 0 4px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fg);
+}}
+.guide-step-header p {{
+  margin: 0;
+  color: var(--dim);
+  font-size: 14px;
+}}
+.guide-callout-badge {{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #dc2626;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-right: 6px;
+  vertical-align: middle;
+}}
+.guide-checklist {{
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+}}
+.guide-checklist li {{
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: #fafafa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--dim);
+  font-size: 14px;
+  line-height: 1.6;
+}}
+.guide-checklist li strong {{ color: var(--fg); }}
+.guide-screenshot-frame {{
+  background: #0b0f17;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}}
+.guide-screenshot-bar {{
+  background: #0f172a;
+  color: #cbd5e1;
+  padding: 8px 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}}
+
+/* Code & Terminal Verification Box */
+code {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.88em;
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 2px 6px;
+  border-radius: 4px;
+}}
+.terminal-box {{
+  background: #0b0f17;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+}}
+.terminal-header {{
+  background: #0f172a;
+  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1e293b;
+}}
+.terminal-dots {{ display: flex; gap: 6px; }}
+.terminal-dot {{ width: 10px; height: 10px; border-radius: 50%; }}
+.dot-red {{ background: #ef4444; }}
+.dot-yellow {{ background: #f59e0b; }}
+.dot-green {{ background: #10b981; }}
+.terminal-title {{ font-size: 12px; color: #94a3b8; }}
+.terminal-body {{
+  padding: 16px 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #e2e8f0;
+  overflow-x: auto;
+}}
+.terminal-line {{ display: flex; gap: 10px; margin-bottom: 4px; }}
+.terminal-prompt {{ color: #34d399; user-select: none; }}
+
+footer {{
+  text-align: center;
+  padding: 24px 20px;
+  color: var(--dim);
+  font-size: 13px;
+  border-top: 1px solid var(--line);
+  background: #ffffff;
+  margin-top: auto;
+}}
+footer a {{ color: #1d4ed8; text-decoration: none; font-weight: 500; }}
+footer a:hover {{ text-decoration: underline; }}
+
+@media (max-width: 768px) {{
+  header {{ position: static; padding: 10px 14px; }}
+  nav {{ flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; padding-bottom: 2px; }}
+  .header-right {{ margin-left: 0; }}
+  main {{ padding: 18px 14px 48px; }}
+  .section-panel {{ padding: 18px 16px; }}
+  .guide-step-card {{ padding: 18px 16px; }}
+}}
+</style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="nav-container">
-      <a href="/" class="brand">
-        <span class="brand-badge">OCTI</span>
-        <div class="brand-text">
-          <span class="brand-name" data-dynamic-host>{host_esc}</span>
-          <span class="brand-tagline">Online Arena &bull; Clients &bull; Archive</span>
-        </div>
-      </a>
-
-      <button class="mobile-toggle" id="mobileNavBtn" aria-label="Toggle Navigation">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
-      <nav>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="/" class="nav-link">Arena</a></li>
-          <li><a href="/#play" class="nav-link">Browser Play</a></li>
-          <li><a href="/archives/" class="nav-link">Archives</a></li>
-          <li><a href="/robots/" class="nav-link">Bots</a></li>
-          <li><a href="/journal/" class="nav-link">Journal</a></li>
-          <li><a href="/software/android/" class="nav-link">Android</a></li>
-          <li><a href="/software/windows/" class="nav-link active">Windows</a></li>
-        </ul>
-      </nav>
+<header>
+  <a href="/" class="brand">
+    <span class="brand-badge">
+      <svg width="18" height="18" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+        <polygon points="45,16 83,16 112,45 112,83 83,112 45,112 16,83 16,45" fill="#E4C070" stroke="#FEF08A" stroke-width="4"/>
+        <polygon points="48,23 80,23 105,48 105,80 80,105 48,105 23,80 23,48" fill="#0F172A" stroke="#D97706" stroke-width="3"/>
+        <polygon points="59,44 55,24 64,6 73,24 69,44" fill="#FDE047"/>
+        <polygon points="54,40 74,40 88,54 88,74 74,88 54,88 40,74 40,54" fill="#10B981" stroke="#6EE7B7" stroke-width="3"/>
+        <circle cx="64" cy="64" r="7" fill="#FFFBEB"/>
+      </svg>
+      OCTI
+    </span>
+    <div class="brand-text">
+      <span class="brand-name">OCTI Desktop Player</span>
+      <span class="brand-sub"><span class="js-site-host">{host_esc}</span> &mdash; Windows Client</span>
     </div>
-  </header>"""
-    footer_and_script = f"""  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <span class="brand-badge">OCTI</span>
-          <p>Online multiplayer OCTI arena, game archive, and native client distribution.</p>
-        </div>
-        <div class="footer-col">
-          <h5>Arena &amp; Downloads</h5>
-          <ul class="footer-links">
-            <li><a href="/">OCTI Online Arena</a></li>
-            <li><a href="/software/windows/">Windows Software</a></li>
-            <li><a href="/software/android/">Android Software</a></li>
-            <li><a href="/archives/">Game Archives</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>Resources</h5>
-          <ul class="footer-links">
-            <li><a href="/robots/">Bring Your &rsquo;Bot!</a></li>
-            <li><a href="/journal/">The OCTI Journal</a></li>
-            <li><a href="/privacy/">Privacy Policy</a></li>
-            <li><a href="/data-deletion/">Data Deletion</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>&copy; 2001&ndash;2026 Charles Chiou &bull; <span data-dynamic-host>{host_esc}</span></span>
-        <span>Built with Pure Static HTML</span>
-      </div>
-    </div>
-  </footer>
+  </a>
+  <nav>
+    <a href="/#home" class="btn">Home</a>
+    <a href="/#play" class="btn">Browser-Play</a>
+    <a href="/#online" class="btn">Online-Play</a>
+    <a href="/#tournaments" class="btn">Tournaments</a>
+    <a href="/#users" class="btn">Players</a>
+    <a href="/#board" class="btn">Leaderboard</a>
+    <a href="/robots/" class="btn">Robots</a>
+    <a href="/#archive" class="btn">Archive</a>
+    <a href="/#rules" class="btn">Rulebook</a>
+    <a href="/journal/" class="btn">Journal</a>
+    <a href="/#puzzles" class="btn">Puzzles</a>
+  </nav>
+  <div class="header-right">
+    <a href="/software/windows/octi/" class="btn btn-primary">Windows</a>
+    <a href="/software/android/octi/" class="btn">Android</a>
+  </div>
+</header>"""
+    footer_and_script = f"""<footer>
+  <div>
+    <strong>OCTI Desktop Player</strong> &bull; Copyright &copy; 2026, Charles Chiou &bull;
+    <a href="/" class="js-site-host">{host_esc}</a> &bull;
+    <a href="/#play">Browser-Play</a> &bull;
+    <a href="/software/windows/octi/">Windows Client</a> &bull;
+    <a href="/software/android/octi/">Android APK</a> &bull;
+    <a href="/robots/">Robots</a> &bull;
+    <a href="/journal/">Journal</a> &bull;
+    <a href="/privacy/">Privacy Policy</a> &bull;
+    <a href="/data-deletion/">Data Deletion</a>
+  </div>
+</footer>
 
-  <script>
-    (function() {{
-      var btn = document.getElementById('mobileNavBtn');
-      var menu = document.getElementById('navMenu');
-      if (btn && menu) {{
-        btn.addEventListener('click', function() {{
-          menu.classList.toggle('open');
+<script>
+(function() {{
+  if (window.location && window.location.host) {{
+    var els = document.querySelectorAll('.js-site-host, [data-dynamic-host]');
+    for (var i = 0; i < els.length; i++) {{
+      els[i].textContent = window.location.host;
+    }}
+  }}
+  var copyBtns = document.querySelectorAll('[data-copy-text]');
+  for (var j = 0; j < copyBtns.length; j++) {{
+    copyBtns[j].addEventListener('click', function() {{
+      var btn = this;
+      var txt = btn.getAttribute('data-copy-text') || '';
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(txt).then(function() {{
+          var prev = btn.textContent;
+          btn.textContent = 'Copied';
+          setTimeout(function() {{ btn.textContent = prev; }}, 1600);
         }});
       }}
-      if (window.location && window.location.host) {{
-        var els = document.querySelectorAll('[data-dynamic-host]');
-        for (var i = 0; i < els.length; i++) {{
-          els[i].textContent = window.location.host;
-        }}
-      }}
-    }})();
-  </script>
+    }});
+  }}
+}})();
+</script>
 </body>
 </html>
 """
@@ -508,11 +1146,39 @@ def render_windows_install_guide_html(
     arena_host_esc = html.escape(ctx["arena_host"])
     arena_origin_esc = html.escape(ctx["arena_origin"])
     sha_short = (sha256_hint[:16] + "...") if len(sha256_hint) > 16 else (sha256_hint or "<sha256>")
-    return f"""
+    is_selfso = ctx["is_selfso_portal"]
+    install_dir_display = f"C:\\Program Files\\Selfso\\{executable_name}" if is_selfso else f"C:\\Program Files\\OCTI\\{executable_name}"
+    guide_lead = (
+        f"Because desktop applications on this portal are distributed directly from <code>{site_host_esc}</code> as independent first-party builds rather than through the commercial Microsoft Store, <strong>Microsoft Windows 11</strong> and your web browser will show unrecognized-app security prompts on first install. Follow this visual guide to understand why these warnings appear, safely complete installation, configure Windows permissions, and sign in with your <strong>Google Account</strong>."
+        if is_selfso
+        else f"Because <strong>{app_title}</strong> is distributed directly from <code>{site_host_esc}</code> rather than the commercial Microsoft Store, <strong>Windows 11</strong> and your browser will display an unrecognized-app prompt on first install. Follow these five steps to safely complete setup, allow multiplayer networking and voice chat, and sign in with your <strong>Google Account</strong>."
+    )
+    why_p1 = (
+        "<strong>1. Direct Independent Distribution (No Commercial EV Certificate):</strong> Microsoft Windows 11 <strong>Defender SmartScreen</strong> requires software publishers either to distribute through the Microsoft Store or to purchase expensive commercial Extended Validation (EV) Authenticode hardware tokens from third-party Certificate Authorities and accumulate tens of thousands of telemetry downloads before suppressing warnings. Because independent, ad-free engineering and strategy software is published here directly without commercial middlemen, Windows labels the installer as <code>Publisher: Unknown publisher</code>."
+        if is_selfso
+        else f"<strong>1. Direct First-Party Distribution (No Microsoft Store Gatekeeping):</strong> Windows 11 <strong>Defender SmartScreen</strong> flags installers distributed outside the Microsoft Store unless signed with a commercial Extended Validation (EV) Authenticode token and backed by large-scale telemetry downloads. Because {app_title} is published directly from <code>{site_host_esc}</code> with zero ads or trackers, Windows displays <code>Publisher: Unknown publisher</code>."
+    )
+    why_p2 = (
+        f"<strong>2. Cryptographic Integrity Without Third-Party Lock-In:</strong> Instead of commercial store gatekeeping, every installer is served over TLS from <code>{site_host_esc}</code> with a published <strong>RFC 6234 SHA-256 checksum</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once installed, the built-in C++17 <code>selfupdate</code> engine verifies future updates cryptographically in memory before applying them."
+        if is_selfso
+        else f"<strong>2. Verified Cryptographic Integrity:</strong> Every release installer is served over HTTPS from <code>{site_host_esc}</code> alongside its published <strong>RFC 6234 SHA-256 checksum</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once installed, {app_title}&rsquo;s built-in updater verifies every future update in memory before applying it."
+    )
+    step4_lead = (
+        f"When launching <code>{executable_name}</code> for online multiplayer, P2P voice chat, or local hardware bridge telemetry, Windows will ask for network and microphone permissions."
+        if is_selfso
+        else f"When launching <code>{executable_name}</code> for online multiplayer, live tournaments, or P2P table voice chat, Windows will ask for network and microphone permissions."
+    )
+    step3_wizard_line2 = (
+        "&#10003; C++17 Self-Update Engine Registered"
+        if is_selfso
+        else "&#10003; Automatic SHA-256 Updater Registered"
+    )
+    guide_style_and_open = (
+        """
       <!-- Comprehensive Windows 11 / 10 Installation & Google Onboarding Guide -->
       <section id="windows-install-guide" style="margin-top: 3rem; border-top: 1px solid var(--border-subtle); padding-top: 2.75rem;">
         <style>
-          .guide-alert-box {{
+          .guide-alert-box {
             background: #fffbeb;
             border: 1px solid #fde68a;
             border-left: 5px solid #d97706;
@@ -520,8 +1186,8 @@ def render_windows_install_guide_html(
             padding: 1.5rem 1.75rem;
             margin-bottom: 2rem;
             box-shadow: var(--shadow-card);
-          }}
-          .guide-nav-pills {{
+          }
+          .guide-nav-pills {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
@@ -531,8 +1197,8 @@ def render_windows_install_guide_html(
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-card);
-          }}
-          .guide-nav-pill {{
+          }
+          .guide-nav-pill {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
@@ -545,27 +1211,27 @@ def render_windows_install_guide_html(
             padding: 0.4rem 0.8rem;
             border-radius: var(--radius-sm);
             text-decoration: none !important;
-          }}
-          .guide-nav-pill:hover {{
+          }
+          .guide-nav-pill:hover {
             background: #18181b;
             color: #ffffff;
             border-color: #18181b;
-          }}
-          .guide-step-card {{
+          }
+          .guide-step-card {
             background: #ffffff;
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             padding: 2rem;
             margin-bottom: 2.25rem;
             box-shadow: var(--shadow-card);
-          }}
-          .guide-step-header {{
+          }
+          .guide-step-header {
             display: flex;
             align-items: flex-start;
             gap: 1rem;
             margin-bottom: 1.25rem;
-          }}
-          .guide-step-num {{
+          }
+          .guide-step-num {
             flex-shrink: 0;
             width: 38px;
             height: 38px;
@@ -579,8 +1245,8 @@ def render_windows_install_guide_html(
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-          }}
-          .guide-callout-badge {{
+          }
+          .guide-callout-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -594,16 +1260,16 @@ def render_windows_install_guide_html(
             font-weight: 700;
             margin-right: 0.35rem;
             vertical-align: middle;
-          }}
-          .guide-screenshot-frame {{
+          }
+          .guide-screenshot-frame {
             background: #f8fafc;
             border: 1px solid #cbd5e1;
             border-radius: 12px;
             overflow: hidden;
             margin-top: 1.25rem;
             box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
-          }}
-          .guide-screenshot-bar {{
+          }
+          .guide-screenshot-bar {
             background: #0f172a;
             color: #e2e8f0;
             padding: 0.55rem 1rem;
@@ -612,13 +1278,13 @@ def render_windows_install_guide_html(
             display: flex;
             align-items: center;
             justify-content: space-between;
-          }}
-          .guide-checklist {{
+          }
+          .guide-checklist {
             list-style: none;
             padding: 0;
             margin: 0 0 1.25rem 0;
-          }}
-          .guide-checklist li {{
+          }
+          .guide-checklist li {
             position: relative;
             padding: 0.6rem 0.85rem;
             margin-bottom: 0.55rem;
@@ -628,16 +1294,31 @@ def render_windows_install_guide_html(
             color: var(--text-secondary);
             font-size: 0.95rem;
             line-height: 1.6;
-          }}
-          .guide-checklist li strong {{
+          }
+          .guide-checklist li strong {
             color: var(--text-primary);
-          }}
+          }
         </style>
 
         <span class="badge badge-vermilion" style="margin-bottom: 0.75rem;">Step-by-Step Visual Installation &amp; Onboarding Guide</span>
         <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">How to Install on Windows 11 / 10 &amp; Onboard with Google</h2>
-        <p style="color: var(--text-secondary); max-width: 820px; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
-          Because desktop applications on this portal are distributed directly from <code>{site_host_esc}</code> as independent first-party builds rather than through the commercial Microsoft Store, <strong>Microsoft Windows 11</strong> and your web browser will show unrecognized-app security prompts on first install. Follow this visual guide to understand why these warnings appear, safely complete installation, configure Windows permissions, and sign in with your <strong>Google Account</strong>.
+        <p style="color: var(--text-secondary); max-width: 820px; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">"""
+        if is_selfso
+        else """
+      <!-- Comprehensive Windows 11 / 10 Installation & Google Onboarding Guide -->
+      <section id="windows-install-guide" class="section-panel">
+        <div class="section-header">
+          <h2>How to Install on Windows 11 / 10 &amp; Sign In with Google</h2>
+          <span class="pill-tag warn">5-Step Visual Walkthrough</span>
+        </div>
+        <p class="section-sub">"""
+    )
+    step_num_cls = "guide-step-num" if is_selfso else "step-num"
+    badge_default_cls = "badge" if is_selfso else "pill-tag"
+    badge_warn_cls = "badge badge-vermilion" if is_selfso else "pill-tag warn"
+    badge_blue_cls = "badge badge-indigo" if is_selfso else "pill-tag blue"
+    return f"""{guide_style_and_open}
+          {guide_lead}
         </p>
 
         <!-- Why Windows 11 Warns You (The Facts) -->
@@ -646,13 +1327,13 @@ def render_windows_install_guide_html(
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
-            <h3 style="font-size: 1.2rem; color: #92400e; margin: 0;">Why Does Windows 11 Flag <code>{pkg_filename}</code> as an &ldquo;Unrecognized App&rdquo;?</h3>
+            <h3 style="font-size: 1.15rem; color: #92400e; margin: 0;">Why Does Windows 11 Flag <code>{pkg_filename}</code> as an &ldquo;Unrecognized App&rdquo;?</h3>
           </div>
-          <p style="color: #78350f; font-size: 0.96rem; line-height: 1.65; margin-bottom: 0.85rem;">
-            <strong>1. Direct Independent Distribution (No Commercial EV Certificate):</strong> Microsoft Windows 11 <strong>Defender SmartScreen</strong> requires software publishers either to distribute through the Microsoft Store or to purchase expensive commercial Extended Validation (EV) Authenticode hardware tokens from third-party Certificate Authorities and accumulate tens of thousands of telemetry downloads before suppressing warnings. Because independent, ad-free engineering and strategy software is published here directly without commercial middlemen, Windows labels the installer as <code>Publisher: Unknown publisher</code>.
+          <p>
+            {why_p1}
           </p>
-          <p style="color: #78350f; font-size: 0.96rem; line-height: 1.65; margin-bottom: 0;">
-            <strong>2. Cryptographic Integrity Without Third-Party Lock-In:</strong> Instead of commercial store gatekeeping, every installer is served over TLS from <code>{site_host_esc}</code> with a published <strong>RFC 6234 SHA-256 checksum</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once installed, the built-in C++17 <code>selfupdate</code> engine verifies future updates cryptographically in memory before applying them.
+          <p>
+            {why_p2}
           </p>
         </div>
 
@@ -668,11 +1349,11 @@ def render_windows_install_guide_html(
         <!-- STEP 1: Browser Download Prompt -->
         <div class="guide-step-card" id="win-step-1">
           <div class="guide-step-header">
-            <span class="guide-step-num">1</span>
+            <span class="{step_num_cls}">1</span>
             <div>
-              <span class="badge" style="margin-bottom: 0.35rem;">Microsoft Edge &bull; Google Chrome &bull; Brave</span>
-              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 1: Download <code>{pkg_filename}</code> &amp; Confirm Browser Keep Prompt</h3>
-              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+              <span class="{badge_default_cls}" style="margin-bottom: 0.35rem;">Microsoft Edge &bull; Google Chrome &bull; Brave</span>
+              <h3>Step 1: Download <code>{pkg_filename}</code> &amp; Confirm Browser Keep Prompt</h3>
+              <p>
                 When downloading an independent <code>.exe</code> setup installer, Microsoft Edge or Google Chrome may pause the file in the Downloads bar with <em>&ldquo;{pkg_filename} isn&rsquo;t commonly downloaded.&rdquo;</em>
               </p>
             </div>
@@ -755,11 +1436,11 @@ def render_windows_install_guide_html(
         <!-- STEP 2: Windows 11 Defender SmartScreen -->
         <div class="guide-step-card" id="win-step-2">
           <div class="guide-step-header">
-            <span class="guide-step-num">2</span>
+            <span class="{step_num_cls}">2</span>
             <div>
-              <span class="badge badge-vermilion" style="margin-bottom: 0.35rem;">Most Common Roadblock on Windows 11</span>
-              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 2: Bypass Windows 11 SmartScreen (&ldquo;Windows protected your PC&rdquo;)</h3>
-              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+              <span class="{badge_warn_cls}" style="margin-bottom: 0.35rem;">Most Common Roadblock on Windows 11</span>
+              <h3>Step 2: Bypass Windows 11 SmartScreen (&ldquo;Windows protected your PC&rdquo;)</h3>
+              <p>
                 When you launch <code>{pkg_filename}</code>, Windows 11 displays a blue dialog titled <strong>&ldquo;Windows protected your PC&rdquo;</strong>. By default, Windows hides the <em>Run anyway</em> button until you click <strong>More info</strong>.
               </p>
             </div>
@@ -831,11 +1512,11 @@ def render_windows_install_guide_html(
         <!-- STEP 3: Windows 11 App Settings, SmartScreen Policy & Setup Wizard -->
         <div class="guide-step-card" id="win-step-3">
           <div class="guide-step-header">
-            <span class="guide-step-num">3</span>
+            <span class="{step_num_cls}">3</span>
             <div>
-              <span class="badge" style="margin-bottom: 0.35rem;">Windows 11 Settings &bull; UAC &bull; NSIS Installer</span>
-              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 3: Adjust Windows 11 App Settings (If Blocked) &amp; Complete Setup Wizard</h3>
-              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+              <span class="{badge_default_cls}" style="margin-bottom: 0.35rem;">Windows 11 Settings &bull; UAC &bull; NSIS Installer</span>
+              <h3>Step 3: Adjust Windows 11 App Settings (If Blocked) &amp; Complete Setup Wizard</h3>
+              <p>
                 If your Windows 11 PC is restricted to <em>&ldquo;The Microsoft Store only&rdquo;</em> or hides the <em>More info</em> link, adjust your Windows 11 App Settings as shown below, then complete the Setup Wizard.
               </p>
             </div>
@@ -884,9 +1565,9 @@ def render_windows_install_guide_html(
               <text x="524" y="42" fill="#f8fafc" font-size="12.5" font-weight="700">{app_title} Setup Wizard</text>
 
               <text x="528" y="82" fill="#f8fafc" font-size="15" font-weight="700">Completing {app_title} Setup</text>
-              <text x="528" y="106" fill="#cbd5e1" font-size="12">Installed to: C:\\Program Files\\Selfso\\{executable_name}</text>
+              <text x="528" y="106" fill="#cbd5e1" font-size="12">Installed to: {install_dir_display}</text>
               <text x="528" y="128" fill="#86efac" font-size="12" font-weight="600">&#10003; Desktop &amp; Start Menu Shortcuts Created</text>
-              <text x="528" y="150" fill="#86efac" font-size="12" font-weight="600">&#10003; C++17 Self-Update Engine Registered</text>
+              <text x="528" y="150" fill="#86efac" font-size="12" font-weight="600">{step3_wizard_line2}</text>
 
               <!-- Run checkbox -->
               <rect x="528" y="176" width="18" height="18" rx="4" fill="#2563eb"/>
@@ -905,12 +1586,12 @@ def render_windows_install_guide_html(
         <!-- STEP 4: Windows Defender Firewall & Microphone Permissions -->
         <div class="guide-step-card" id="win-step-4">
           <div class="guide-step-header">
-            <span class="guide-step-num">4</span>
+            <span class="{step_num_cls}">4</span>
             <div>
-              <span class="badge" style="margin-bottom: 0.35rem;">Network &amp; Voice Chat Permissions</span>
-              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 4: Grant Windows Firewall &amp; Microphone Permissions</h3>
-              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
-                When launching <code>{executable_name}</code> for online multiplayer, P2P voice chat, or local hardware bridge telemetry, Windows will ask for network and microphone permissions.
+              <span class="{badge_default_cls}" style="margin-bottom: 0.35rem;">Network &amp; Voice Chat Permissions</span>
+              <h3>Step 4: Grant Windows Firewall &amp; Microphone Permissions</h3>
+              <p>
+                {step4_lead}
               </p>
             </div>
           </div>
@@ -986,11 +1667,11 @@ def render_windows_install_guide_html(
         <!-- STEP 5: Onboarding with Google Account (SSO) -->
         <div class="guide-step-card" id="win-step-5">
           <div class="guide-step-header">
-            <span class="guide-step-num">5</span>
+            <span class="{step_num_cls}">5</span>
             <div>
-              <span class="badge badge-indigo" style="margin-bottom: 0.35rem;">Google OAuth 2.0 SSO &bull; Cross-Device Profile &amp; Elo Sync</span>
-              <h3 style="font-size: 1.4rem; margin-bottom: 0.25rem;">Step 5: Sign In &amp; Onboard with Your Google Account</h3>
-              <p style="color: var(--text-secondary); margin-bottom: 0; font-size: 0.96rem;">
+              <span class="{badge_blue_cls}" style="margin-bottom: 0.35rem;">Google OAuth 2.0 SSO &bull; Cross-Device Profile &amp; Elo Sync</span>
+              <h3>Step 5: Sign In &amp; Onboard with Your Google Account</h3>
+              <p>
                 Sign in with your Google Account to play rated online matches, join live voice/chat tables, and synchronize your player handle, avatar, Elo ratings, and game archives across Windows Desktop, Android, and Web (<code>{arena_origin_esc}</code>).
               </p>
             </div>
@@ -1088,12 +1769,244 @@ def render_windows_install_guide_html(
 """
 
 
+def _render_octi_windows_hero_svg(version_name: str) -> str:
+    """Render the signature OCTI Windows Desktop monitor preview SVG."""
+    return f"""<svg viewBox="0 0 360 250" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OCTI Windows Desktop Player Preview">
+            <defs>
+              <linearGradient id="winScreenBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#080c14"/>
+                <stop offset="100%" stop-color="#111b2c"/>
+              </linearGradient>
+            </defs>
+            <!-- Monitor Bezel -->
+            <rect x="12" y="10" width="336" height="196" rx="12" fill="#0b0f17" stroke="#60a5fa" stroke-width="2.2"/>
+            <rect x="18" y="16" width="324" height="22" rx="6" fill="#1e293b"/>
+            <circle cx="31" cy="27" r="4" fill="#ef4444"/>
+            <circle cx="44" cy="27" r="4" fill="#f59e0b"/>
+            <circle cx="57" cy="27" r="4" fill="#10b981"/>
+            <text x="74" y="31" fill="#93c5fd" font-family="ui-monospace, SFMono-Regular, monospace" font-size="10.5" font-weight="700">OCTI Desktop v{version_name} &bull; Windows x86_64</text>
+
+            <!-- Board Viewport -->
+            <rect x="24" y="45" width="186" height="150" rx="6" fill="url(#winScreenBg)" stroke="#334155" stroke-width="1.2"/>
+            <g stroke="#1e293b" stroke-width="1">
+              <line x1="61" y1="45" x2="61" y2="195"/>
+              <line x1="98" y1="45" x2="98" y2="195"/>
+              <line x1="135" y1="45" x2="135" y2="195"/>
+              <line x1="172" y1="45" x2="172" y2="195"/>
+              <line x1="24" y1="82" x2="210" y2="82"/>
+              <line x1="24" y1="120" x2="210" y2="120"/>
+              <line x1="24" y1="158" x2="210" y2="158"/>
+            </g>
+            <!-- Home Base Highlights -->
+            <rect x="98" y="45" width="37" height="37" fill="#2e0d19" stroke="#f43f5e" stroke-width="1.2"/>
+            <rect x="98" y="158" width="37" height="37" fill="#062e22" stroke="#10b981" stroke-width="1.2"/>
+
+            <!-- Multi-hop Jump Trajectory -->
+            <path d="M 80 140 Q 116 74 154 102" fill="none" stroke="#fde047" stroke-width="2.5" stroke-dasharray="5 3" stroke-linecap="round"/>
+            <polygon points="151,95 159,103 148,105" fill="#fde047"/>
+
+            <!-- Emerald Jumping Pod with Prongs -->
+            <g transform="translate(80, 140)">
+              <line x1="0" y1="-11" x2="0" y2="-20" stroke="#fde047" stroke-width="3" stroke-linecap="round"/>
+              <line x1="8" y1="-8" x2="15" y2="-15" stroke="#fde047" stroke-width="3" stroke-linecap="round"/>
+              <line x1="11" y1="0" x2="20" y2="0" stroke="#fde047" stroke-width="3" stroke-linecap="round"/>
+              <polygon points="-5,-12 5,-12 12,-5 12,5 5,12 -5,12 -12,5 -12,-5" fill="#10b981" stroke="#6ee7b7" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4.5" fill="#064e3b"/>
+            </g>
+
+            <!-- Ruby Pod -->
+            <g transform="translate(116, 102)">
+              <circle cx="0" cy="0" r="17" fill="none" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="3 2"/>
+              <line x1="0" y1="11" x2="0" y2="19" stroke="#e5c158" stroke-width="2.5" stroke-linecap="round"/>
+              <polygon points="-5,-11 5,-11 11,-5 11,5 5,11 -5,11 -11,5 -11,-5" fill="#f43f5e" stroke="#fda4af" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4.5" fill="#881337"/>
+            </g>
+
+            <!-- Advancing Emerald Pod -->
+            <g transform="translate(154, 140)">
+              <line x1="0" y1="-11" x2="0" y2="-19" stroke="#e5c158" stroke-width="2.5" stroke-linecap="round"/>
+              <polygon points="-5,-11 5,-11 11,-5 11,5 5,11 -5,11 -11,5 -11,-5" fill="#10b981" stroke="#6ee7b7" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="4.5" fill="#064e3b"/>
+            </g>
+
+            <!-- Right Telemetry Sidebar -->
+            <rect x="218" y="45" width="118" height="68" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+            <text x="228" y="63" fill="#fde047" font-family="-apple-system, sans-serif" font-size="9.5" font-weight="800">AI ENGINE</text>
+            <text x="228" y="80" fill="#86efac" font-family="ui-monospace, monospace" font-size="10">Depth 9 &bull; +1.8</text>
+            <rect x="228" y="90" width="98" height="7" rx="3.5" fill="#0f172a"/>
+            <rect x="228" y="90" width="76" height="7" rx="3.5" fill="#3b82f6"/>
+
+            <rect x="218" y="122" width="118" height="73" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+            <text x="228" y="140" fill="#93c5fd" font-family="-apple-system, sans-serif" font-size="9.5" font-weight="800">ONLINE ARENA</text>
+            <text x="228" y="157" fill="#e2e8f0" font-family="-apple-system, sans-serif" font-size="9.5">P2P Voice &bull; Google SSO</text>
+            <rect x="228" y="167" width="98" height="16" rx="8" fill="#16a34a"/>
+            <text x="277" y="178" text-anchor="middle" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="8.5" font-weight="800">CONNECTED</text>
+
+            <!-- Monitor Stand -->
+            <path d="M 148 206 L 134 234 L 226 234 L 212 206 Z" fill="#334155"/>
+            <rect x="112" y="234" width="136" height="7" rx="3.5" fill="#60a5fa"/>
+          </svg>"""
+
+
 def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
     """Render the master portal index.html for all Windows desktop applications."""
     ctx = parse_portal_context(base_url)
     base_url_slash_esc = html.escape(ctx["base_url_slash"])
-    cards_list = []
     apps = catalog.get("apps", {})
+
+    if not ctx["is_selfso_portal"]:
+        octi_app = None
+        for key, candidate in apps.items():
+            if isinstance(candidate, dict) and (candidate.get("slug") == "octi" or key == "octi" or key == "com.selfso.octi"):
+                octi_app = candidate
+                break
+        if octi_app is None:
+            for candidate in apps.values():
+                if isinstance(candidate, dict):
+                    octi_app = candidate
+                    break
+        octi_app = octi_app or {}
+        meta = KNOWN_WINDOWS_APPS.get(octi_app.get("slug", "octi"), KNOWN_WINDOWS_APPS["octi"])
+        title = html.escape(octi_app.get("title") or meta.get("title") or "OCTI Desktop Player")
+        version_name = html.escape(str(octi_app.get("versionName", "1.0.0")))
+        version_code = int(octi_app.get("versionCode", 1))
+        app_id = html.escape(octi_app.get("applicationId", "com.selfso.octi"))
+        executable_name = html.escape(octi_app.get("executableName", "octi.exe"))
+        arch = html.escape(octi_app.get("arch", "x86_64"))
+        min_os = html.escape(octi_app.get("minOs", "Windows 10 (64-bit)+"))
+        size_str = html.escape(format_size_bytes(octi_app.get("sizeBytes", 0)))
+        pub_date = html.escape(format_date(octi_app.get("publishedAt", "")))
+        sha256 = html.escape(octi_app.get("sha256", ""))
+        release_notes = html.escape(octi_app.get("releaseNotes", ""))
+        pkg_filename = html.escape(octi_app.get("packageFilename") or meta.get("packageFilename") or "octi-setup.exe")
+        pkg_url = html.escape(octi_app.get("packageUrl") or f"octi/{pkg_filename}")
+        install_type = octi_app.get("installType", "installer")
+        install_badge = "Setup Installer" if install_type == "installer" else "Standalone Binary"
+
+        meta_desc = f"Download {title} for Windows 11/10 — native 64-bit Qt6 client, multi-threaded AI, online arena, P2P voice chat, and automatic updates."
+        head_and_header, footer_and_script = _render_site_chrome(
+            ctx, f"{title} &mdash; Windows Download Portal", meta_desc
+        )
+        guide_html = render_windows_install_guide_html(
+            pkg_filename=pkg_filename,
+            app_title=title,
+            executable_name=executable_name,
+            app_id=app_id,
+            sha256_hint=sha256,
+            base_url=base_url,
+        )
+        return f"""{head_and_header}
+
+<main>
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10.5 4.5V11.5H3V5.5ZM11.5 4.35L21 3V11.5H11.5V4.35ZM3 12.5H10.5V19.5L3 18.5V12.5ZM11.5 12.5H21V21L11.5 19.65V12.5Z"/></svg>
+          WINDOWS 11 / 10 &bull; 64-BIT QT6 CLIENT &bull; v{version_name}
+        </div>
+        <h1>{title} for Windows</h1>
+        <p>
+          Native 64-bit C++17 &amp; Qt6 desktop studio for OCTI and OCTI for Kids (OFK). Compete offline against multi-threaded minimax AI, join live multiplayer tables and tournaments with P2P voice chat, and stay up to date with automatic cryptographic self-updates.
+        </p>
+        <div class="hero-actions">
+          <a href="{pkg_url}" class="btn btn-gold" download>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download {pkg_filename} ({size_str})
+          </a>
+          <a href="octi/" class="btn btn-hero-ghost">Release Details &amp; Notes &rarr;</a>
+          <a href="#windows-install-guide" class="btn btn-hero-ghost">Windows 11 Install Guide &darr;</a>
+        </div>
+        <div class="hero-pills">
+          <span class="hero-pill"><strong>v{version_name}</strong> (Build {version_code})</span>
+          <span class="hero-pill"><strong>{arch}</strong> &bull; {min_os}</span>
+          <span class="hero-pill"><strong>{size_str}</strong> &bull; {install_badge}</span>
+          <span class="hero-pill"><strong>Updated</strong> {pub_date}</span>
+        </div>
+      </div>
+      <div class="hero-art">
+        {_render_octi_windows_hero_svg(version_name)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-panel" id="octi">
+    <div class="section-header">
+      <h2>Current Windows Release &bull; v{version_name}</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="/software/android/octi/" class="btn">Looking for Android? &rarr;</a>
+        <a href="octi/version.json" class="btn">version.json</a>
+      </div>
+    </div>
+    <div class="release-notes-box">
+      <div class="release-notes-label">What&rsquo;s New in v{version_name}</div>
+      <p>{release_notes}</p>
+    </div>
+    <div class="spec-grid">
+      <div class="spec-item"><div class="spec-label">Version</div><div class="spec-value">v{version_name} (Build {version_code})</div></div>
+      <div class="spec-item"><div class="spec-label">Package Size</div><div class="spec-value">{size_str}</div></div>
+      <div class="spec-item"><div class="spec-label">Published</div><div class="spec-value">{pub_date}</div></div>
+      <div class="spec-item"><div class="spec-label">Minimum OS</div><div class="spec-value">{min_os}</div></div>
+      <div class="spec-item"><div class="spec-label">Architecture</div><div class="spec-value">{arch}</div></div>
+      <div class="spec-item"><div class="spec-label">Install Mode</div><div class="spec-value">{install_badge}</div></div>
+      <div class="spec-item"><div class="spec-label">Executable</div><div class="spec-value mono">{executable_name}</div></div>
+      <div class="spec-item"><div class="spec-label">Application ID</div><div class="spec-value mono">{app_id}</div></div>
+    </div>
+    <div class="checksum-bar">
+      <span class="checksum-tag">SHA-256</span>
+      <span class="checksum-hash">{sha256}</span>
+      <button type="button" class="btn" data-copy-text="{sha256}">Copy</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="{pkg_url}" class="btn btn-primary" download>Download {pkg_filename}</a>
+      <a href="octi/" class="btn">Full Release Page &rarr;</a>
+      <a href="/#play" class="btn">Play in Browser</a>
+      <a href="version.json" class="btn">Catalog Manifest</a>
+    </div>
+  </section>
+
+{guide_html}
+
+  <section class="section-panel">
+    <div class="section-header">
+      <h2>Automatic Self-Update &amp; Cryptographic Verification</h2>
+      <span class="pill-tag blue">RFC 6234 SHA-256</span>
+    </div>
+    <p class="section-sub">
+      {title} polls <code>{base_url_slash_esc}version.json</code> over HTTPS, verifies the streaming SHA-256 digest of every installer before execution, and launches a clean PID-wait upgrade automatically. You can also verify the downloaded file manually:
+    </p>
+    <div class="terminal-box">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <span class="terminal-dot dot-red"></span>
+          <span class="terminal-dot dot-yellow"></span>
+          <span class="terminal-dot dot-green"></span>
+        </div>
+        <span class="terminal-title">SHA-256 Integrity Verification &bull; PowerShell / Bash</span>
+      </div>
+      <div class="terminal-body">
+        <div class="terminal-line">
+          <span class="terminal-prompt">PS&gt;</span>
+          <span>(Get-FileHash .\\{pkg_filename} -Algorithm SHA256).Hash.ToLower() -eq "{sha256}"</span>
+        </div>
+        <div style="color: #34d399; margin-bottom: 10px; font-size: 12px;">True</div>
+        <div class="terminal-line">
+          <span class="terminal-prompt">$</span>
+          <span>echo "{sha256}  {pkg_filename}" | sha256sum -c</span>
+        </div>
+        <div style="color: #34d399; margin-bottom: 10px; font-size: 12px;">{pkg_filename}: OK</div>
+        <div class="terminal-line">
+          <span class="terminal-prompt">$</span>
+          <span>curl -s {base_url_slash_esc}version.json</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{footer_and_script}"""
+
+    cards_list = []
 
     # Display in preferred order
     preferred_order = ["octi", "aimon", "robohero-teleop", "robohero-motion", "vidaicut"]
@@ -1121,16 +2034,10 @@ def render_portal_html(catalog: Dict[str, Any], base_url: str) -> str:
     cards_joined = "\n\n".join(cards_list)
     portal_install_guide_html = render_windows_install_guide_html(base_url=base_url)
 
-    if ctx["is_selfso_portal"]:
-        meta_desc = "SELFSO.COM Windows Desktop Software Distribution Portal — Independent 64-bit Windows Qt6 desktop applications and local hardware bridges with zero-dependency C++17 self-update."
-        portal_heading = "Selfso Windows Desktop Applications"
-        back_href = "/projects/"
-        back_label = "&larr; Back to Projects"
-    else:
-        meta_desc = f"{ctx['site_host']} Windows Desktop Software Distribution Portal — Native 64-bit Windows Qt6 installers with zero-dependency C++17 self-update."
-        portal_heading = "OCTI Windows Desktop Portal"
-        back_href = "/"
-        back_label = "&larr; Back to OCTI Arena"
+    meta_desc = "SELFSO.COM Windows Desktop Software Distribution Portal — Independent 64-bit Windows Qt6 desktop applications and local hardware bridges with zero-dependency C++17 self-update."
+    portal_heading = "Selfso Windows Desktop Applications"
+    back_href = "/projects/"
+    back_label = "&larr; Back to Projects"
 
     head_and_header, footer_and_script = _render_site_chrome(
         ctx, "Windows Software &amp; Self-Update Distribution", meta_desc
@@ -1228,7 +2135,8 @@ def render_app_html(
     executable_name = html.escape(app_manifest.get("executableName", f"{slug}.exe"))
     arch = html.escape(app_manifest.get("arch", "x86_64"))
     min_os = html.escape(app_manifest.get("minOs", "Windows 10 (64-bit)+"))
-    size_str = html.escape(format_size_bytes(app_manifest.get("sizeBytes", 0)))
+    size_bytes = int(app_manifest.get("sizeBytes", 0))
+    size_str = html.escape(format_size_bytes(size_bytes))
     pub_date = html.escape(format_date(app_manifest.get("publishedAt", "")))
     sha256 = html.escape(app_manifest.get("sha256", ""))
     release_notes = html.escape(app_manifest.get("releaseNotes", ""))
@@ -1240,9 +2148,194 @@ def render_app_html(
     if not ctx["is_selfso_portal"] and project_url == "/projects/octi/":
         project_url = "/"
 
+    if not ctx["is_selfso_portal"]:
+        head_and_header, footer_and_script = _render_site_chrome(
+            ctx,
+            f"{title} &mdash; Windows 11/10 Download &amp; Install Guide",
+            raw_tagline,
+        )
+        guide_html = render_windows_install_guide_html(
+            pkg_filename=pkg_filename,
+            app_title=title,
+            executable_name=executable_name,
+            app_id=app_id,
+            sha256_hint=sha256,
+            base_url=base_url,
+        )
+        return f"""{head_and_header}
+
+<main>
+  <!-- OCTI Windows Desktop Hero -->
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10.5 4.5V11.5H3V5.5ZM11.5 4.35L21 3V11.5H11.5V4.35ZM3 12.5H10.5V19.5L3 18.5V12.5ZM11.5 12.5H21V21L11.5 19.65V12.5Z"/></svg>
+          WINDOWS 11 / 10 &bull; 64-BIT QT6 CLIENT &bull; v{version_name}
+        </div>
+        <h1>{title}</h1>
+        <p>{description}</p>
+        <div class="hero-actions">
+          <a href="{pkg_filename}" class="btn btn-gold" download>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download {pkg_filename} ({size_str})
+          </a>
+          <a href="#windows-install-guide" class="btn btn-hero-ghost">
+            &#9888; Windows 11 Install &amp; Google Sign-In Guide &darr;
+          </a>
+          <a href="/#play" class="btn btn-hero-ghost">Play in Browser &rarr;</a>
+        </div>
+        <div class="hero-pills">
+          <span class="hero-pill"><strong>v{version_name}</strong> (Build {version_code})</span>
+          <span class="hero-pill"><strong>{arch}</strong> &bull; {min_os}</span>
+          <span class="hero-pill"><strong>{size_str}</strong> &bull; {install_badge}</span>
+          <span class="hero-pill"><strong>Updated</strong> {pub_date}</span>
+          <span class="hero-pill"><strong>P2P Voice</strong> &amp; Google SSO</span>
+        </div>
+      </div>
+      <div class="hero-art">
+        {_render_octi_windows_hero_svg(version_name)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Release Specifications & What's New -->
+  <section class="section-panel" id="release-specs">
+    <div class="section-header">
+      <h2>Release Specifications &bull; v{version_name}</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="/software/android/octi/" class="btn">Get Android APK &rarr;</a>
+        <a href="version.json" class="btn">version.json</a>
+      </div>
+    </div>
+
+    <div class="release-notes-box">
+      <div class="release-notes-label">Release Notes &bull; v{version_name}</div>
+      <p>{release_notes}</p>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <div class="spec-label">Version</div>
+        <div class="spec-value">v{version_name} <span style="font-weight:500;color:var(--muted);font-size:12.5px;">(Build {version_code})</span></div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Package Size</div>
+        <div class="spec-value">{size_str} <span style="font-weight:500;color:var(--muted);font-size:12px;">({size_bytes:,} B)</span></div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Published Date</div>
+        <div class="spec-value">{pub_date}</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Minimum OS</div>
+        <div class="spec-value">{min_os}</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Architecture</div>
+        <div class="spec-value">{arch}</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Install Mode</div>
+        <div class="spec-value">{install_badge}</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Executable</div>
+        <div class="spec-value mono">{executable_name}</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Application ID</div>
+        <div class="spec-value mono">{app_id}</div>
+      </div>
+    </div>
+
+    <div class="checksum-bar">
+      <span class="checksum-tag">SHA-256</span>
+      <span class="checksum-hash">{sha256}</span>
+      <button type="button" class="btn" data-copy-text="{sha256}">Copy</button>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="{pkg_filename}" class="btn btn-primary" download>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Download {pkg_filename}
+      </a>
+      <a href="#windows-install-guide" class="btn btn-amber-soft">&#9888; Windows 11 SmartScreen &amp; Sign-In Guide &darr;</a>
+      <a href="/" class="btn">OCTI Online Arena</a>
+      <a href="version.json" class="btn">version.json</a>
+    </div>
+  </section>
+
+  <!-- Desktop Capabilities -->
+  <section class="section-panel">
+    <div class="section-header">
+      <h2>Built for Native OCTI Play</h2>
+      <span class="pill-tag blue">C++17 &bull; Qt6 &bull; 2P / 4P / OFK</span>
+    </div>
+    <div class="ops-grid">
+      <div class="op-card">
+        <span class="op-card-tag">AI Engine &amp; Themes</span>
+        <h3>Multi-Core Minimax AI &amp; 10 Board Themes</h3>
+        <p>Play 9&times;9 3-Base, 9&times;9 1-Base, 4-Player Partnership, and 6&times;7 OCTI for Kids offline against our native C++17 alpha-beta engine across ten curated board themes.</p>
+      </div>
+      <div class="op-card">
+        <span class="op-card-tag">Online Arena</span>
+        <h3>Live Tables, Tournaments &amp; P2P Voice Chat</h3>
+        <p>Join rated Elo matches, Swiss &amp; Knockout tournaments, and spectator lobbies with integrated low-latency P2P table voice chat and one-click Google SSO profile sync.</p>
+      </div>
+      <div class="op-card">
+        <span class="op-card-tag">Self-Update</span>
+        <h3>Verified Automatic Updates</h3>
+        <p>Checks for new releases over HTTPS, validates the RFC 6234 SHA-256 digest in memory before installing, and keeps your desktop client synchronized with the arena automatically.</p>
+      </div>
+    </div>
+  </section>
+
+{guide_html}
+
+  <!-- Cryptographic Integrity Verification -->
+  <section class="section-panel" id="verify-checksum">
+    <div class="section-header">
+      <h2>Cryptographic SHA-256 Verification</h2>
+      <span class="pill-tag blue">{pkg_filename}</span>
+    </div>
+    <p class="section-sub">
+      Confirm the downloaded installer matches the official published checksum before running it on Windows PowerShell or any Unix shell:
+    </p>
+    <div class="terminal-box">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <span class="terminal-dot dot-red"></span>
+          <span class="terminal-dot dot-yellow"></span>
+          <span class="terminal-dot dot-green"></span>
+        </div>
+        <span class="terminal-title">SHA-256 Verification &bull; {pkg_filename}</span>
+      </div>
+      <div class="terminal-body">
+        <div class="terminal-line">
+          <span class="terminal-prompt">PS&gt;</span>
+          <span>(Get-FileHash .\\{pkg_filename} -Algorithm SHA256).Hash.ToLower() -eq "{sha256}"</span>
+        </div>
+        <div style="color: #34d399; margin-bottom: 10px; font-size: 12px;">True</div>
+        <div class="terminal-line">
+          <span class="terminal-prompt">$</span>
+          <span>echo "{sha256}  {pkg_filename}" | sha256sum -c</span>
+        </div>
+        <div style="color: #34d399; margin-bottom: 10px; font-size: 12px;">{pkg_filename}: OK</div>
+        <div class="terminal-line">
+          <span class="terminal-prompt">$</span>
+          <span>curl -s {clean_base_esc}/{slug}/version.json</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{footer_and_script}"""
+
     project_btn_html = ""
     if project_url:
-        btn_label = "OCTI Online Arena" if (not ctx["is_selfso_portal"] and project_url == "/") else "Project Documentation"
+        btn_label = "Project Documentation"
         project_btn_html = f'<a href="{html.escape(project_url)}" class="btn btn-outline">{btn_label}</a>'
 
     head_and_header, footer_and_script = _render_site_chrome(
