@@ -336,19 +336,17 @@ def _render_site_chrome(ctx: Dict[str, Any], page_title: str, meta_description: 
   --panel: #ffffff;
   --panel-elev: #f4f4f5;
   --line: #e4e4e7;
+  --line-dim: #e4e4e7;
   --fg: #18181b;
   --dim: #52525b;
   --muted: #71717a;
   --acc: #18181b;
   --acc-bright: #2563eb;
-  --emerald: #10b981;
-  --emerald-dark: #059669;
-  --gold: #c8a253;
-  --gold-bright: #fde047;
-  --cyan: #38bdf8;
-  --ruby: #f43f5e;
-  --obsidian: #0b0f17;
-  --slate-dark: #0f172a;
+  --input-bg: #ffffff;
+  --a: #10b981;
+  --b: #f43f5e;
+  --c: #3b82f6;
+  --d: #f59e0b;
 }}
 * {{ box-sizing: border-box; }}
 html {{ scroll-behavior: smooth; }}
@@ -357,82 +355,132 @@ body {{
   background: var(--bg);
   color: var(--fg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 14.5px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  overflow-x: hidden;
 }}
 header {{
   position: sticky;
   top: 0;
   z-index: 100;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
   align-items: center;
-  gap: 8px 10px;
-  padding: 10px 20px;
+  column-gap: 16px;
+  row-gap: 6px;
+  white-space: nowrap;
+  padding: 8px 20px;
   background: rgba(251, 251, 250, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
 }}
 .brand {{
+  grid-column: 1;
+  grid-row: 1;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   text-decoration: none !important;
 }}
 .brand-badge {{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.82rem;
   font-weight: 700;
   color: #ffffff;
   background: var(--fg);
   padding: 0.25rem 0.6rem;
-  border-radius: 5px;
+  border-radius: 4px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   letter-spacing: 0.05em;
 }}
-.brand-text {{ display: flex; flex-direction: column; }}
+.brand-badge::before {{
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: #dc2626;
+  border-radius: 50%;
+}}
+.brand-text {{
+  display: flex;
+  flex-direction: column;
+}}
 .brand-name {{
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--fg);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
   line-height: 1.2;
 }}
-.brand-sub {{ font-size: 11px; color: var(--dim); }}
-nav {{ display: flex; gap: 4px; flex-wrap: wrap; }}
-nav .btn, .header-right .btn {{
-  padding: 5px 9px;
-  font-size: 12.5px;
-  white-space: nowrap;
+.brand-sub {{
+  font-size: 11px;
+  color: var(--dim);
+}}
+nav {{ display: flex; gap: 6px; flex-wrap: nowrap; white-space: nowrap; }}
+nav#nav {{
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  gap: 5px;
 }}
 .btn {{
   background: #ffffff;
   color: var(--fg);
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   text-decoration: none !important;
-  transition: all 0.16s ease;
+  touch-action: manipulation;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
 }}
-.btn:hover {{ background: #f4f4f5; border-color: #d4d4d8; color: var(--fg); }}
-.btn-primary {{ background: var(--fg); color: #ffffff; border-color: var(--fg); }}
-.btn-primary:hover {{ background: #27272a; border-color: #27272a; color: #ffffff; }}
+nav#nav .btn {{
+  padding: 6px 11px;
+  font-size: 13px;
+}}
+@media (max-width: 1560px) and (min-width: 769px) {{
+  nav#nav {{
+    flex-wrap: wrap;
+    row-gap: 5px;
+  }}
+  nav#nav .btn {{
+    padding: 5px 9px;
+    font-size: 12.5px;
+  }}
+}}
+.btn:hover:not(:disabled) {{
+  background: #f4f4f5;
+  border-color: #d4d4d8;
+  color: var(--fg);
+}}
+.btn.btn-primary {{
+  background: var(--fg);
+  color: #ffffff;
+  border-color: var(--fg);
+}}
+.btn.btn-primary:hover {{
+  background: #27272a;
+  border-color: #27272a;
+  color: #ffffff;
+}}
+.btn:disabled {{
+  opacity: 0.42;
+  cursor: not-allowed;
+}}
 .btn-gold {{
   background: linear-gradient(135deg, #fde047 0%, #eab308 100%);
   color: #0b0f17;
@@ -446,14 +494,14 @@ nav .btn, .header-right .btn {{
   border-color: #fef9c3;
 }}
 .btn-hero-ghost {{
-  background: rgba(6, 24, 18, 0.72);
-  border: 1px solid rgba(110, 231, 183, 0.55);
+  background: rgba(6, 24, 18, 0.7);
+  border: 1px solid #6ee7b7;
   color: #ecfdf5;
   font-weight: 700;
 }}
 .btn-hero-ghost:hover {{
   background: rgba(6, 78, 59, 0.75);
-  border-color: #6ee7b7;
+  border-color: #a7f3d0;
   color: #ffffff;
 }}
 .btn-amber-soft {{
@@ -466,75 +514,111 @@ nav .btn, .header-right .btn {{
   border-color: #b45309;
   color: #78350f;
 }}
-.header-right {{ margin-left: auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }}
-
-main {{
-  width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 24px 20px 64px;
-  flex: 1 0 auto;
+header > .header-account-bar {{
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+}}
+.header-account-bar #nav-account-btn {{
+  padding: 6px 11px;
+  font-size: 13px;
+}}
+.header-right {{
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  min-width: 0;
+}}
+#nav-auth-pill {{
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-size: 13px;
+}}
+#nav-auth-pill:hover {{
+  background: #dbeafe;
+}}
+.dim {{ color: var(--dim); }}
+@media (max-width: 1560px) {{
+  nav#nav {{
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }}
+}}
+@media (max-width: 1380px) {{
+  header {{
+    white-space: normal;
+  }}
+  nav#nav {{
+    flex-wrap: wrap;
+    white-space: normal;
+  }}
 }}
 
-/* OCTI Hero Banner (Android Emerald-Obsidian Edition) */
+main {{
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 20px 16px 40px 16px;
+}}
+
+/* OCTI Hero Panel (Matches Home Android Banner) */
 .hero {{
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #041711 0%, #073326 54%, #065f46 100%);
+  background: linear-gradient(135deg, #051b14 0%, #063729 55%, #047857 100%);
   border: 1px solid #10b981;
-  border-radius: 14px;
-  padding: 30px 34px;
+  border-radius: 12px;
+  padding: 24px 28px;
   color: #f8fafc;
-  box-shadow: 0 12px 34px rgba(4, 23, 17, 0.32);
-  margin-bottom: 24px;
-}}
-.hero::before {{
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #c8a253 0%, #fde047 35%, #38bdf8 70%, #10b981 100%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  margin-bottom: 20px;
 }}
 .hero-grid {{
   display: grid;
-  grid-template-columns: 1.28fr 0.88fr;
+  grid-template-columns: 1.25fr 0.95fr;
   gap: 28px;
   align-items: center;
 }}
-@media (max-width: 920px) {{
-  .hero {{ padding: 24px 20px; }}
+@media (max-width: 900px) {{
+  .hero {{ padding: 20px 18px; }}
   .hero-grid {{ grid-template-columns: 1fr; gap: 20px; }}
 }}
 .hero-badge {{
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(16, 185, 129, 0.24);
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.25);
   border: 1px solid #34d399;
   color: #a7f3d0;
   font-size: 11.5px;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  padding: 4px 12px;
-  border-radius: 999px;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 20px;
   margin-bottom: 12px;
   text-transform: uppercase;
 }}
 .hero h1 {{
   margin: 0 0 10px 0;
-  font-size: clamp(26px, 3.6vw, 36px);
-  line-height: 1.18;
+  font-size: 30px;
+  line-height: 1.25;
   letter-spacing: -0.02em;
   color: #ffffff;
   font-weight: 800;
 }}
 .hero p {{
   margin: 0 0 18px 0;
-  font-size: 15px;
+  font-size: 14.5px;
   color: #d1fae5;
-  line-height: 1.65;
+  line-height: 1.6;
   max-width: 680px;
 }}
 .hero-actions {{
@@ -550,8 +634,8 @@ main {{
   gap: 8px;
 }}
 .hero-pill {{
-  background: rgba(6, 24, 18, 0.56);
-  border: 1px solid rgba(110, 231, 183, 0.3);
+  background: rgba(6, 24, 18, 0.6);
+  border: 1px solid rgba(110, 231, 183, 0.35);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 12px;
@@ -565,53 +649,51 @@ main {{
 }}
 .hero-art svg {{
   width: 100%;
-  max-width: 390px;
+  max-width: 400px;
   height: auto;
   display: block;
-  filter: drop-shadow(0 12px 26px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
 }}
 
-/* Section Panels */
-.section-panel {{
+/* Standard OCTI Panel (Matches index.html .panel) */
+.panel {{
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 24px 28px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
 }}
 .section-header {{
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }}
 .section-header h2 {{
   margin: 0;
-  font-size: 21px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--fg);
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }}
 .section-sub {{
-  margin: 0 0 16px 0;
+  margin: 0 0 14px 0;
   color: var(--dim);
-  font-size: 14.5px;
-  line-height: 1.65;
+  font-size: 14px;
+  line-height: 1.6;
 }}
 .release-notes-box {{
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   border-left: 4px solid #059669;
   border-radius: 8px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
 }}
 .release-notes-label {{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -625,14 +707,14 @@ main {{
 .release-notes-box p {{
   margin: 0;
   color: #064e3b;
-  font-size: 14.5px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.55;
 }}
 .spec-grid {{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin-bottom: 14px;
 }}
 @media (max-width: 860px) {{
   .spec-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
@@ -644,7 +726,7 @@ main {{
   background: #fafafa;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 10px 12px;
 }}
 .spec-label {{
   font-size: 11px;
@@ -652,16 +734,16 @@ main {{
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }}
 .spec-value {{
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--fg);
 }}
 .spec-value.mono {{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 13px;
+  font-size: 12.5px;
 }}
 .checksum-bar {{
   display: flex;
@@ -671,8 +753,8 @@ main {{
   background: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 18px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
 }}
 .checksum-tag {{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -682,7 +764,7 @@ main {{
   letter-spacing: 0.05em;
   color: #065f46;
   background: #d1fae5;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 4px;
 }}
 .checksum-hash {{
@@ -697,31 +779,31 @@ main {{
 .ops-grid {{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  gap: 14px;
 }}
 .op-card {{
   background: #fafafa;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 18px 20px;
+  border-radius: 8px;
+  padding: 14px 16px;
 }}
 .op-card-tag {{
   display: inline-block;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #047857;
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.28);
-  padding: 2px 8px;
-  border-radius: 999px;
-  margin-bottom: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-bottom: 8px;
 }}
 .op-card h3 {{
-  margin: 0 0 8px 0;
-  font-size: 16px;
+  margin: 0 0 6px 0;
+  font-size: 15px;
   font-weight: 700;
   color: var(--fg);
 }}
@@ -729,19 +811,19 @@ main {{
   margin: 0;
   font-size: 13.5px;
   color: var(--dim);
-  line-height: 1.6;
+  line-height: 1.55;
 }}
 
 /* Guide Styles */
 .pill-tag {{
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 999px;
+  padding: 2px 8px;
+  border-radius: 4px;
   background: #f4f4f5;
   border: 1px solid var(--line);
   color: var(--dim);
@@ -767,31 +849,31 @@ main {{
   background: #fffbeb;
   border: 1px solid #fde68a;
   border-left: 4px solid #d97706;
-  border-radius: 10px;
-  padding: 18px 22px;
-  margin-bottom: 20px;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
 }}
 .guide-alert-box h3 {{
-  font-size: 16px;
+  font-size: 15.5px;
   color: #92400e;
   margin: 0;
 }}
 .guide-alert-box p {{
   color: #78350f;
-  font-size: 14px;
-  line-height: 1.65;
-  margin: 0 0 10px 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin: 0 0 8px 0;
 }}
 .guide-alert-box p:last-child {{ margin-bottom: 0; }}
 .guide-nav-pills {{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 22px;
-  padding: 12px 14px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
   background: #fafafa;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
 }}
 .guide-nav-pill {{
   display: inline-flex;
@@ -816,55 +898,54 @@ main {{
 .guide-step-card {{
   background: #ffffff;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 22px 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
 }}
 .guide-step-card:last-child {{ margin-bottom: 0; }}
 .guide-step-header {{
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 12px;
 }}
 .step-num {{
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   background: #064e3b;
   color: #6ee7b7;
   border: 1px solid #10b981;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13.5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }}
 .guide-step-header h3 {{
-  margin: 6px 0 4px 0;
-  font-size: 18px;
+  margin: 5px 0 3px 0;
+  font-size: 17px;
   font-weight: 700;
   color: var(--fg);
 }}
 .guide-step-header p {{
   margin: 0;
   color: var(--dim);
-  font-size: 14px;
+  font-size: 13.5px;
 }}
 .guide-callout-badge {{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 21px;
-  height: 21px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: #dc2626;
   color: #ffffff;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   margin-right: 6px;
   vertical-align: middle;
@@ -872,17 +953,17 @@ main {{
 .guide-checklist {{
   list-style: none;
   padding: 0;
-  margin: 0 0 16px 0;
+  margin: 0 0 14px 0;
 }}
 .guide-checklist li {{
-  padding: 10px 14px;
-  margin-bottom: 8px;
+  padding: 9px 12px;
+  margin-bottom: 6px;
   background: #fafafa;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--dim);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13.5px;
+  line-height: 1.55;
 }}
 .guide-checklist li strong {{ color: var(--fg); }}
 .guide-screenshot-frame {{
@@ -890,12 +971,12 @@ main {{
   border: 1.5px solid #cbd5e1;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
 }}
 .guide-screenshot-bar {{
   background: #0f172a;
   color: #cbd5e1;
-  padding: 8px 14px;
+  padding: 7px 14px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11.5px;
   border-bottom: 1px solid #1e293b;
@@ -912,20 +993,19 @@ code {{
   font-size: 0.88em;
   background: #f1f5f9;
   color: #0f172a;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 4px;
 }}
 .terminal-box {{
   background: #0b0f17;
   border: 1px solid #1e293b;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
 }}
 .terminal-header {{
   background: #0f172a;
-  padding: 9px 14px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -938,41 +1018,80 @@ code {{
 .dot-green {{ background: #10b981; }}
 .terminal-title {{ font-size: 12px; color: #94a3b8; }}
 .terminal-body {{
-  padding: 16px 18px;
-  font-size: 13px;
-  line-height: 1.7;
+  padding: 14px 16px;
+  font-size: 12.5px;
+  line-height: 1.65;
   color: #e2e8f0;
   overflow-x: auto;
 }}
 .terminal-line {{ display: flex; gap: 10px; margin-bottom: 4px; }}
 .terminal-prompt {{ color: #34d399; user-select: none; }}
 
-footer {{
-  text-align: center;
-  padding: 24px 20px;
-  color: var(--dim);
-  font-size: 13px;
-  border-top: 1px solid var(--line);
-  background: #ffffff;
-  margin-top: auto;
-}}
-footer a {{ color: #1d4ed8; text-decoration: none; font-weight: 500; }}
-footer a:hover {{ text-decoration: underline; }}
-
 @media (max-width: 768px) {{
-  header {{ position: static; padding: 10px 14px; }}
-  nav {{ flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; padding-bottom: 2px; }}
-  .header-right {{ margin-left: 0; }}
-  main {{ padding: 18px 14px 48px; }}
-  .section-panel {{ padding: 18px 16px; }}
-  .guide-step-card {{ padding: 18px 16px; }}
+  header {{
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto !important;
+    white-space: normal !important;
+    padding: 6px 10px !important;
+    gap: 6px !important;
+  }}
+  .brand {{
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+  }}
+  header > .header-account-bar {{
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }}
+  .header-account-bar #nav-account-btn {{
+    padding: 5px 8px !important;
+    font-size: 12px !important;
+  }}
+  .brand-sub, #health {{
+    display: none !important;
+  }}
+  .header-right {{
+    grid-column: 2 !important;
+    grid-row: 3 !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start;
+    row-gap: 6px;
+    min-width: 0 !important;
+    max-width: 100%;
+  }}
+  nav#nav {{
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 4px !important;
+    padding-bottom: 2px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+  }}
+  nav#nav .btn {{
+    padding: 5px 8px !important;
+    font-size: 12px !important;
+    flex: 1 0 auto !important;
+  }}
+  main {{
+    padding: 14px 10px 32px 10px;
+  }}
+  .panel, .guide-step-card {{
+    padding: 14px;
+  }}
 }}
 </style>
 </head>
 <body>
 <header>
   <a href="/" class="brand">
-    <span class="brand-badge">
+    <span class="brand-badge" style="display:inline-flex;align-items:center;gap:6px;">
       <svg width="18" height="18" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
         <polygon points="45,16 83,16 112,45 112,83 83,112 45,112 16,83 16,45" fill="#E4C070" stroke="#FEF08A" stroke-width="4"/>
         <polygon points="48,23 80,23 105,48 105,80 80,105 48,105 23,80 23,48" fill="#0F172A" stroke="#D97706" stroke-width="3"/>
@@ -983,43 +1102,32 @@ footer a:hover {{ text-decoration: underline; }}
       OCTI
     </span>
     <div class="brand-text">
-      <span class="brand-name">OCTI for Android</span>
-      <span class="brand-sub"><span class="js-site-host">{host_esc}</span> &mdash; Android Mobile App</span>
+      <span class="brand-name" id="brand-version-title">OCTI</span>
+      <span class="brand-sub js-site-host">{host_esc}</span>
     </div>
   </a>
-  <nav>
+  <nav id="nav">
     <a href="/#home" class="btn">Home</a>
     <a href="/#play" class="btn">Browser-Play</a>
     <a href="/#online" class="btn">Online-Play</a>
     <a href="/#tournaments" class="btn">Tournaments</a>
     <a href="/#users" class="btn">Players</a>
     <a href="/#board" class="btn">Leaderboard</a>
-    <a href="/robots/" class="btn">Robots</a>
+    <a href="/#robots" class="btn">Robots</a>
     <a href="/#archive" class="btn">Archive</a>
     <a href="/#rules" class="btn">Rulebook</a>
-    <a href="/journal/" class="btn">Journal</a>
+    <a href="/#journal" class="btn">Journal</a>
     <a href="/#puzzles" class="btn">Puzzles</a>
   </nav>
   <div class="header-right">
-    <a href="/software/windows/octi/" class="btn">Windows</a>
-    <a href="/software/android/octi/" class="btn btn-primary">Android</a>
+    <span id="health" class="dim"></span>
+  </div>
+  <div class="header-account-bar">
+    <a href="/#account" class="btn" id="nav-auth-pill" title="Click to view Account">Guest (Not Signed In)</a>
+    <a href="/#account" id="nav-account-btn" class="btn">Account</a>
   </div>
 </header>"""
-    footer_and_script = f"""<footer>
-  <div>
-    <strong>OCTI for Android</strong> &bull; Copyright &copy; 2026, Charles Chiou &bull;
-    <a href="/" class="js-site-host">{host_esc}</a> &bull;
-    <a href="/#play">Browser-Play</a> &bull;
-    <a href="/software/windows/octi/">Windows Client</a> &bull;
-    <a href="/software/android/octi/">Android APK</a> &bull;
-    <a href="/robots/">Robots</a> &bull;
-    <a href="/journal/">Journal</a> &bull;
-    <a href="/privacy/">Privacy Policy</a> &bull;
-    <a href="/data-deletion/">Data Deletion</a>
-  </div>
-</footer>
-
-<script>
+    footer_and_script = f"""<script>
 (function() {{
   if (window.location && window.location.host) {{
     var els = document.querySelectorAll('.js-site-host, [data-dynamic-host]');
@@ -1027,11 +1135,103 @@ footer a:hover {{ text-decoration: underline; }}
       els[i].textContent = window.location.host;
     }}
   }}
-  var copyBtns = document.querySelectorAll('[data-copy-text]');
+
+  function fmtSize(bytes) {{
+    var n = Number(bytes) || 0;
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  }}
+
+  function fmtMinSdk(sdk) {{
+    var map = {{24:'Android 7.0+',26:'Android 8.0+',28:'Android 9+',29:'Android 10+',30:'Android 11+',31:'Android 12+',33:'Android 13+',34:'Android 14+',35:'Android 15+'}};
+    var n = Number(sdk);
+    if (!n) return 'Android 7.0+ (API 24)';
+    return (map[n] || ('Android API ' + n + '+')) + ' (API ' + n + ')';
+  }}
+
+  function setText(selector, val) {{
+    var nodes = document.querySelectorAll(selector);
+    for (var i = 0; i < nodes.length; i++) {{
+      nodes[i].textContent = val;
+    }}
+  }}
+
+  // Live header status & server version (matches main arena tabs)
+  fetch('/api/v1/health')
+    .then(function(r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }})
+    .then(function(data) {{
+      var brandVer = document.getElementById('brand-version-title');
+      if (brandVer && data && data.version) brandVer.textContent = 'OCTI v' + data.version;
+      var pill = document.getElementById('health');
+      if (pill) {{
+        pill.textContent = (data && data.status === 'ok') ? 'Server Online' : 'Server Degraded';
+        pill.style.color = '#10b981';
+      }}
+    }})
+    .catch(function() {{}});
+
+  // Live signed-in account pill (matches main arena tabs)
+  try {{
+    var tok = localStorage.getItem('octi_jwt_token');
+    if (tok) {{
+      fetch('/api/v1/profile/me', {{ headers: {{ 'Authorization': 'Bearer ' + tok }} }})
+        .then(function(r) {{ if (!r.ok) throw new Error(); return r.json(); }})
+        .then(function(res) {{
+          var u = (res && res.user) ? res.user : res;
+          var pill = document.getElementById('nav-auth-pill');
+          if (pill && u && u.handle) {{
+            pill.textContent = '@' + u.handle;
+            pill.style.borderColor = '#10b981';
+            pill.style.color = '#065f46';
+            pill.style.background = '#ecfdf5';
+          }}
+        }})
+        .catch(function() {{}});
+    }}
+  }} catch (e) {{}}
+
+  // Live release metadata from version.json (never stale)
+  var manifestEl = document.querySelector('[data-manifest-url]');
+  var manifestUrl = manifestEl ? manifestEl.getAttribute('data-manifest-url') : 'version.json';
+  fetch(manifestUrl, {{ cache: 'no-store' }})
+    .then(function(r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }})
+    .then(function(m) {{
+      if (!m || typeof m !== 'object') return;
+      var ver = m.versionName ? ('v' + m.versionName) : '';
+      var build = m.versionCode ? (' (Build ' + m.versionCode + ')') : '';
+      var sizeStr = m.sizeBytes ? fmtSize(m.sizeBytes) : '';
+      var dateStr = m.publishedAt ? String(m.publishedAt).split('T')[0] : '';
+      var apk = m.apkFilename || 'octi.apk';
+      var sha = m.sha256 || '';
+      if (ver) setText('[data-live="version"]', ver + build);
+      if (sizeStr) setText('[data-live="size"]', sizeStr);
+      if (dateStr) setText('[data-live="date"]', dateStr);
+      if (m.minSdk) setText('[data-live="minsdk"]', fmtMinSdk(m.minSdk));
+      if (m.targetSdk) setText('[data-live="targetsdk"]', 'API ' + m.targetSdk);
+      if (m.apkFilename) setText('[data-live="apk"]', apk);
+      if (m.applicationId) setText('[data-live="appid"]', m.applicationId);
+      if (m.releaseNotes) setText('[data-live="notes"]', m.releaseNotes);
+      if (sha) {{
+        setText('[data-live="sha256"]', sha);
+        setText('[data-live="sh-verify"]', 'echo "' + sha + '  ' + apk + '" | sha256sum -c');
+        var copyBtns = document.querySelectorAll('[data-copy-sha]');
+        for (var c = 0; c < copyBtns.length; c++) {{
+          copyBtns[c].setAttribute('data-copy-text', sha);
+          copyBtns[c].disabled = false;
+        }}
+      }}
+    }})
+    .catch(function() {{
+      setText('[data-live="notes"]', 'See version.json for current release metadata and SHA-256 checksum.');
+    }});
+
+  var copyBtns = document.querySelectorAll('[data-copy-sha], [data-copy-text]');
   for (var j = 0; j < copyBtns.length; j++) {{
     copyBtns[j].addEventListener('click', function() {{
       var btn = this;
       var txt = btn.getAttribute('data-copy-text') || '';
+      if (!txt) return;
       if (navigator.clipboard && navigator.clipboard.writeText) {{
         navigator.clipboard.writeText(txt).then(function() {{
           var prev = btn.textContent;
@@ -1078,7 +1278,7 @@ def render_android_install_guide_html(
     why_p2 = (
         f"<strong>2. Cryptographic Signing &amp; One-Time Setup:</strong> Every release APK (<code>{app_id}</code>) is cryptographically signed with the official release key and published alongside its <strong>SHA-256 digest</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once you complete this initial install, all future updates are verified and installed directly inside the app via <code>com.selfso.selfupdate</code>!"
         if is_selfso
-        else f"<strong>2. Cryptographic Signing &amp; One-Time Setup:</strong> Every release APK (<code>{app_id}</code>) is signed with the official OCTI release key and published alongside its <strong>SHA-256 digest</strong> (<code>{sha_short}</code>) in <code>version.json</code>. Once you complete this first install, all future updates are verified and installed directly inside OCTI!"
+        else f"<strong>2. Cryptographic Signing &amp; One-Time Setup:</strong> Every release APK (<code>{app_id}</code>) is signed with the official OCTI release key and published alongside its <strong>SHA-256 digest</strong> in <code>version.json</code>. Once you complete this first install, all future updates are verified and installed directly inside OCTI!"
     )
     step5_ota_line = (
         "OTA Self-Update Active (selfupdate)"
@@ -1218,7 +1418,7 @@ def render_android_install_guide_html(
         if is_selfso
         else """
       <!-- Comprehensive Android Sideloading, Settings Permissions & Google Onboarding Guide -->
-      <section id="android-install-guide" class="section-panel">
+      <section id="android-install-guide" class="panel">
         <div class="section-header">
           <h2>How to Install on Android (Direct APK) &amp; Sign In with Google</h2>
           <span class="pill-tag warn">5-Step Visual Walkthrough</span>
@@ -1676,9 +1876,9 @@ def render_android_install_guide_html(
 """
 
 
-def _render_octi_android_hero_svg(version_name: str) -> str:
+def _render_octi_android_hero_svg() -> str:
     """Render the signature OCTI Android phone preview SVG."""
-    return f"""<svg viewBox="0 0 360 250" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OCTI Android Mobile App Preview">
+    return """<svg viewBox="0 0 360 250" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OCTI Android Mobile App Preview">
             <defs>
               <radialGradient id="andPodGlow" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
@@ -1691,7 +1891,7 @@ def _render_octi_android_hero_svg(version_name: str) -> str:
 
             <!-- App Top Bar -->
             <rect x="98" y="30" width="164" height="24" rx="5" fill="#1e293b"/>
-            <text x="108" y="46" fill="#fde047" font-family="-apple-system, sans-serif" font-size="10.5" font-weight="800">OCTI v{version_name}</text>
+            <text x="108" y="46" fill="#fde047" font-family="-apple-system, sans-serif" font-size="10.5" font-weight="800">OCTI Android</text>
             <text x="205" y="46" fill="#6ee7b7" font-family="ui-monospace, monospace" font-size="9.5" font-weight="700">1500 ELO</text>
 
             <!-- Zoomed Octagonal Pod Board Canvas -->
@@ -1745,19 +1945,9 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
         octi_app = octi_app or {}
         meta = KNOWN_APPS.get(octi_app.get("slug", "octi"), KNOWN_APPS["octi"])
         title = html.escape(octi_app.get("title") or meta.get("title") or "OCTI Strategy Game")
-        version_name = html.escape(str(octi_app.get("versionName", "1.0")))
-        version_code = int(octi_app.get("versionCode", 1))
         app_id_esc = html.escape(octi_app.get("applicationId", "com.selfso.octi"))
-        min_sdk_str = html.escape(format_min_sdk(octi_app.get("minSdk")))
-        target_sdk = octi_app.get("targetSdk")
-        target_sdk_str = html.escape(f"API {target_sdk}" if target_sdk else "API 35")
-        size_bytes = int(octi_app.get("sizeBytes", 0))
-        size_str = html.escape(format_size_bytes(size_bytes))
-        pub_date = html.escape(format_date(octi_app.get("publishedAt", "")))
-        sha256 = html.escape(octi_app.get("sha256", ""))
-        release_notes = html.escape(octi_app.get("releaseNotes", ""))
         apk_filename = html.escape(octi_app.get("apkFilename") or meta.get("apkFilename") or "octi.apk")
-        apk_url = html.escape(octi_app.get("apkUrl") or f"octi/{apk_filename}")
+        apk_href = f"octi/{apk_filename}"
 
         meta_desc = f"Download {title} APK for Android — zoomed 8-direction prong touch dial, native JNI C++17 AI, live multiplayer voice tables, and in-app OTA updates."
         head_and_header, footer_and_script = _render_site_chrome(
@@ -1767,7 +1957,7 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
             apk_filename=apk_filename,
             app_title=title,
             app_id=app_id_esc,
-            sha256_hint=sha256,
+            sha256_hint="",
             base_url=base_url,
         )
         return f"""{head_and_header}
@@ -1778,62 +1968,62 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
       <div>
         <div class="hero-badge">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>
-          ANDROID 7.0+ &bull; DIRECT OTA APK &bull; v{version_name}
+          ANDROID 7.0+ &bull; DIRECT OTA APK
         </div>
         <h1>{title} for Android</h1>
         <p>
           Native Kotlin &amp; Jetpack Compose edition of OCTI and OCTI for Kids (OFK), powered by our JNI C++17 engine. Engineered for touch with a zoomed 8-direction prong-socket selector, offline AI opponents, live multiplayer &amp; voice tables, and seamless in-app OTA updates.
         </p>
         <div class="hero-actions">
-          <a href="{apk_url}" class="btn btn-gold" download>
+          <a href="{apk_href}" class="btn btn-gold" download>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Download {apk_filename} ({size_str})
+            Download {apk_filename}
           </a>
           <a href="octi/" class="btn btn-hero-ghost">Release Details &amp; Notes &rarr;</a>
           <a href="#android-install-guide" class="btn btn-hero-ghost">Android Sideload Guide &darr;</a>
         </div>
         <div class="hero-pills">
-          <span class="hero-pill"><strong>v{version_name}</strong> (Build {version_code})</span>
-          <span class="hero-pill"><strong>{min_sdk_str}</strong></span>
-          <span class="hero-pill"><strong>{size_str}</strong> &bull; Direct APK</span>
-          <span class="hero-pill"><strong>Updated</strong> {pub_date}</span>
+          <span class="hero-pill"><strong>Zoomed Prong Dial</strong> &bull; Touch UX</span>
+          <span class="hero-pill"><strong>JNI C++17 AI</strong> &bull; 10 Themes</span>
+          <span class="hero-pill"><strong>P2P Voice</strong> &amp; Google SSO</span>
+          <span class="hero-pill"><strong>In-App OTA</strong> &bull; SHA-256 Verified</span>
         </div>
       </div>
       <div class="hero-art">
-        {_render_octi_android_hero_svg(version_name)}
+        {_render_octi_android_hero_svg()}
       </div>
     </div>
   </section>
 
-  <section class="section-panel" id="octi">
+  <section class="panel" id="octi" data-manifest-url="octi/version.json">
     <div class="section-header">
-      <h2>Current Android Release &bull; v{version_name}</h2>
+      <h2>Current Android Release</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <a href="/software/windows/octi/" class="btn">Looking for Windows? &rarr;</a>
         <a href="octi/version.json" class="btn">version.json</a>
       </div>
     </div>
     <div class="release-notes-box">
-      <div class="release-notes-label">What&rsquo;s New in v{version_name}</div>
-      <p>{release_notes}</p>
+      <div class="release-notes-label">Latest Release Notes</div>
+      <p data-live="notes">Loaded live from <a href="octi/version.json">octi/version.json</a>.</p>
     </div>
     <div class="spec-grid">
-      <div class="spec-item"><div class="spec-label">Version</div><div class="spec-value">v{version_name} (Build {version_code})</div></div>
-      <div class="spec-item"><div class="spec-label">Package Size</div><div class="spec-value">{size_str}</div></div>
-      <div class="spec-item"><div class="spec-label">Published</div><div class="spec-value">{pub_date}</div></div>
-      <div class="spec-item"><div class="spec-label">Minimum Android</div><div class="spec-value">{min_sdk_str}</div></div>
-      <div class="spec-item"><div class="spec-label">Target SDK</div><div class="spec-value">{target_sdk_str}</div></div>
+      <div class="spec-item"><div class="spec-label">Version</div><div class="spec-value" data-live="version">See version.json</div></div>
+      <div class="spec-item"><div class="spec-label">Package Size</div><div class="spec-value" data-live="size">See version.json</div></div>
+      <div class="spec-item"><div class="spec-label">Published</div><div class="spec-value" data-live="date">See version.json</div></div>
+      <div class="spec-item"><div class="spec-label">Minimum Android</div><div class="spec-value" data-live="minsdk">Android 7.0+ (API 24)</div></div>
+      <div class="spec-item"><div class="spec-label">Target SDK</div><div class="spec-value" data-live="targetsdk">See version.json</div></div>
       <div class="spec-item"><div class="spec-label">Distribution</div><div class="spec-value">Direct Signed APK + OTA</div></div>
-      <div class="spec-item"><div class="spec-label">Package File</div><div class="spec-value mono">{apk_filename}</div></div>
-      <div class="spec-item"><div class="spec-label">Application ID</div><div class="spec-value mono">{app_id_esc}</div></div>
+      <div class="spec-item"><div class="spec-label">Package File</div><div class="spec-value mono" data-live="apk">{apk_filename}</div></div>
+      <div class="spec-item"><div class="spec-label">Application ID</div><div class="spec-value mono" data-live="appid">{app_id_esc}</div></div>
     </div>
     <div class="checksum-bar">
       <span class="checksum-tag">SHA-256</span>
-      <span class="checksum-hash">{sha256}</span>
-      <button type="button" class="btn" data-copy-text="{sha256}">Copy</button>
+      <span class="checksum-hash" data-live="sha256">Loaded live from version.json</span>
+      <button type="button" class="btn" data-copy-sha disabled>Copy</button>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <a href="{apk_url}" class="btn btn-primary" download>Download {apk_filename}</a>
+      <a href="{apk_href}" class="btn btn-primary" download>Download {apk_filename}</a>
       <a href="octi/" class="btn">Full Release Page &rarr;</a>
       <a href="/#play" class="btn">Play in Browser</a>
       <a href="version.json" class="btn">Catalog Manifest</a>
@@ -1842,13 +2032,13 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
 
 {guide_html}
 
-  <section class="section-panel">
+  <section class="panel">
     <div class="section-header">
       <h2>OTA Self-Update Architecture &amp; Verification</h2>
       <span class="pill-tag emerald">SHA-256 Verified OTA</span>
     </div>
     <p class="section-sub">
-      {title} checks <code>{base_url_slash_esc}version.json</code> over HTTPS, verifies the cryptographic SHA-256 digest of streaming downloads, and commits in-place updates via Android&rsquo;s standard <code>PackageInstaller</code> Session API. You can also verify the APK manually:
+      {title} checks <code>{base_url_slash_esc}version.json</code> over HTTPS, verifies the cryptographic SHA-256 digest of streaming downloads, and commits in-place updates via Android&rsquo;s standard <code>PackageInstaller</code> Session API. You can also verify the APK manually against the current manifest:
     </p>
     <div class="terminal-box">
       <div class="terminal-header">
@@ -1862,7 +2052,7 @@ def render_portal_html(catalog_data: Dict[str, Any], base_url: str) -> str:
       <div class="terminal-body">
         <div class="terminal-line">
           <span class="terminal-prompt">$</span>
-          <span>echo "{sha256}  {apk_filename}" | sha256sum -c</span>
+          <span data-live="sh-verify">echo "&lt;sha256 from version.json&gt;  {apk_filename}" | sha256sum -c</span>
         </div>
         <div style="color: #34d399; margin-bottom: 10px; font-size: 12px;">{apk_filename}: OK</div>
         <div class="terminal-line">
@@ -2061,7 +2251,7 @@ def render_app_html(
             apk_filename=apk_filename,
             app_title=title,
             app_id=app_id,
-            sha256_hint=sha256,
+            sha256_hint="",
             base_url=base_url,
         )
         return f"""{head_and_header}
@@ -2073,14 +2263,14 @@ def render_app_html(
       <div>
         <div class="hero-badge">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>
-          ANDROID 7.0+ &bull; DIRECT OTA APK &bull; v{version_name}
+          ANDROID 7.0+ &bull; DIRECT OTA APK
         </div>
         <h1>{title} for Android</h1>
         <p>{description}</p>
         <div class="hero-actions">
           <a href="{apk_filename}" class="btn btn-gold" download>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Download {apk_filename} ({size_str})
+            Download {apk_filename}
           </a>
           <a href="#android-install-guide" class="btn btn-hero-ghost">
             &#9888; Android Unknown Apps, Play Protect &amp; Sign-In Guide &darr;
@@ -2088,23 +2278,22 @@ def render_app_html(
           <a href="/#play" class="btn btn-hero-ghost">Play in Browser &rarr;</a>
         </div>
         <div class="hero-pills">
-          <span class="hero-pill"><strong>v{version_name}</strong> (Build {version_code})</span>
-          <span class="hero-pill"><strong>{min_sdk_str}</strong></span>
-          <span class="hero-pill"><strong>{size_str}</strong> &bull; Direct APK</span>
-          <span class="hero-pill"><strong>Updated</strong> {pub_date}</span>
-          <span class="hero-pill"><strong>In-App OTA</strong> &amp; Google SSO</span>
+          <span class="hero-pill"><strong>Zoomed Prong Dial</strong> &bull; Touch UX</span>
+          <span class="hero-pill"><strong>JNI C++17 AI</strong> &bull; 10 Themes</span>
+          <span class="hero-pill"><strong>P2P Voice</strong> &amp; Google SSO</span>
+          <span class="hero-pill"><strong>In-App OTA</strong> &bull; SHA-256 Verified</span>
         </div>
       </div>
       <div class="hero-art">
-        {_render_octi_android_hero_svg(version_name)}
+        {_render_octi_android_hero_svg()}
       </div>
     </div>
   </section>
 
-  <!-- Release Specifications & What's New -->
-  <section class="section-panel" id="release-specs">
+  <!-- Current Release (Loaded Live from version.json) -->
+  <section class="panel" id="release-specs" data-manifest-url="version.json">
     <div class="section-header">
-      <h2>Release Specifications &bull; v{version_name}</h2>
+      <h2>Current Android Release</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <a href="/software/windows/octi/" class="btn">Get Windows Desktop &rarr;</a>
         <a href="version.json" class="btn">version.json</a>
@@ -2112,30 +2301,30 @@ def render_app_html(
     </div>
 
     <div class="release-notes-box">
-      <div class="release-notes-label">Release Notes &bull; v{version_name}</div>
-      <p>{release_notes}</p>
+      <div class="release-notes-label">Latest Release Notes</div>
+      <p data-live="notes">Loaded live from <a href="version.json">version.json</a>.</p>
     </div>
 
     <div class="spec-grid">
       <div class="spec-item">
         <div class="spec-label">Version</div>
-        <div class="spec-value">v{version_name} <span style="font-weight:500;color:var(--muted);font-size:12.5px;">(Build {version_code})</span></div>
+        <div class="spec-value" data-live="version">See version.json</div>
       </div>
       <div class="spec-item">
         <div class="spec-label">Package Size</div>
-        <div class="spec-value">{size_str} <span style="font-weight:500;color:var(--muted);font-size:12px;">({size_bytes:,} B)</span></div>
+        <div class="spec-value" data-live="size">See version.json</div>
       </div>
       <div class="spec-item">
         <div class="spec-label">Published Date</div>
-        <div class="spec-value">{pub_date}</div>
+        <div class="spec-value" data-live="date">See version.json</div>
       </div>
       <div class="spec-item">
         <div class="spec-label">Minimum Android</div>
-        <div class="spec-value">{min_sdk_str}</div>
+        <div class="spec-value" data-live="minsdk">Android 7.0+ (API 24)</div>
       </div>
       <div class="spec-item">
         <div class="spec-label">Target SDK</div>
-        <div class="spec-value">{target_sdk_str}</div>
+        <div class="spec-value" data-live="targetsdk">See version.json</div>
       </div>
       <div class="spec-item">
         <div class="spec-label">Distribution</div>
@@ -2143,24 +2332,24 @@ def render_app_html(
       </div>
       <div class="spec-item">
         <div class="spec-label">Package File</div>
-        <div class="spec-value mono">{apk_filename}</div>
+        <div class="spec-value mono" data-live="apk">{apk_filename}</div>
       </div>
       <div class="spec-item">
         <div class="spec-label">Application ID</div>
-        <div class="spec-value mono">{app_id}</div>
+        <div class="spec-value mono" data-live="appid">{app_id}</div>
       </div>
     </div>
 
     <div class="checksum-bar">
       <span class="checksum-tag">SHA-256</span>
-      <span class="checksum-hash">{sha256}</span>
-      <button type="button" class="btn" data-copy-text="{sha256}">Copy</button>
+      <span class="checksum-hash" data-live="sha256">Loaded live from version.json</span>
+      <button type="button" class="btn" data-copy-sha disabled>Copy</button>
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <a href="{apk_filename}" class="btn btn-primary" download>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Download APK ({size_str})
+        Download {apk_filename}
       </a>
       <a href="#android-install-guide" class="btn btn-amber-soft">&#9888; Android Unknown Apps, Play Protect &amp; Sign-In Guide &darr;</a>
       <a href="/" class="btn">OCTI Online Arena</a>
@@ -2169,7 +2358,7 @@ def render_app_html(
   </section>
 
   <!-- Mobile Capabilities -->
-  <section class="section-panel">
+  <section class="panel">
     <div class="section-header">
       <h2>Engineered for Touch OCTI Play</h2>
       <span class="pill-tag emerald">Kotlin &bull; Jetpack Compose &bull; JNI C++17</span>
@@ -2196,13 +2385,13 @@ def render_app_html(
 {guide_html}
 
   <!-- Cryptographic Integrity Verification -->
-  <section class="section-panel" id="verify-checksum">
+  <section class="panel" id="verify-checksum">
     <div class="section-header">
       <h2>Cryptographic SHA-256 Verification</h2>
       <span class="pill-tag emerald">{apk_filename}</span>
     </div>
     <p class="section-sub">
-      Confirm the downloaded APK matches the official published checksum before sideloading:
+      Confirm the downloaded APK matches the official published checksum in <code>version.json</code> before sideloading:
     </p>
     <div class="terminal-box">
       <div class="terminal-header">
@@ -2216,7 +2405,7 @@ def render_app_html(
       <div class="terminal-body">
         <div class="terminal-line">
           <span class="terminal-prompt">$</span>
-          <span>echo "{sha256}  {apk_filename}" | sha256sum -c</span>
+          <span data-live="sh-verify">echo "&lt;sha256 from version.json&gt;  {apk_filename}" | sha256sum -c</span>
         </div>
         <div style="color: #34d399; margin-bottom: 10px; font-size: 12px;">{apk_filename}: OK</div>
         <div class="terminal-line">

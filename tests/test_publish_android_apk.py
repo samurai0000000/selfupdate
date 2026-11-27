@@ -463,15 +463,23 @@ class TestPublishAndroidApk(unittest.TestCase):
             self.assertNotIn("selfso.com", text.lower(), f"Leak found in {rel}")
             self.assertIn("www.octi.net", text, f"Expected www.octi.net in {rel}")
 
+        manifest_data = json.loads((custom_web / "octi/version.json").read_text(encoding="utf-8"))
         for rel in ("index.html", "octi/index.html"):
             text = (custom_web / rel).read_text(encoding="utf-8")
             self.assertNotIn("/css/main.css", text, f"Selfso stylesheet leaked in {rel}")
             self.assertNotIn("Built with Pure Static HTML", text, f"Selfso footer leaked in {rel}")
+            self.assertNotIn("<footer", text.lower(), f"Unexpected footer in OCTI page {rel}")
             self.assertNotIn("engineered for robotics", text.lower(), f"Selfso copy leaked in {rel}")
             self.assertNotIn("com.selfso.selfupdate", text, f"Selfso package leaked in {rel}")
             self.assertIn("/favicon.svg", text, f"Expected OCTI favicon in {rel}")
             self.assertIn("/#tournaments", text, f"Expected OCTI nav in {rel}")
             self.assertIn("/#puzzles", text, f"Expected OCTI puzzles nav in {rel}")
+            self.assertIn("max-width: 1420px", text, f"Expected 1420px OCTI main width in {rel}")
+            self.assertIn("header-account-bar", text, f"Expected OCTI 2-row header in {rel}")
+            self.assertIn("data-manifest-url=", text, f"Expected live version.json hydration in {rel}")
+            self.assertNotIn("2.7.0", text, f"Stale hardcoded version leaked in {rel}")
+            self.assertNotIn("20700", text, f"Stale hardcoded build code leaked in {rel}")
+            self.assertNotIn(manifest_data["sha256"], text, f"Stale hardcoded SHA-256 leaked in {rel}")
 
     def test_octi_cli_standalone_defaults_isolated_from_www(self):
         dummy_apk = self.workspace_root / "octi/android/app/build/outputs/apk/release/app-release.apk"

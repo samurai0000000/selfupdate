@@ -260,9 +260,16 @@ class TestEndToEndManifest(unittest.TestCase):
             self.assertTrue(app_html_file.is_file(), f"App HTML page missing for {slug}")
             html_text = app_html_file.read_text(encoding="utf-8")
             self.assertTrue(html_text.startswith("<!DOCTYPE html>"))
-            self.assertIn(expected_hashes[slug], html_text)
-            self.assertIn(spec["version_name"], html_text)
-            self.assertIn(str(spec["version_code"]), html_text)
+            if slug == "octi":
+                # Standalone OCTI pages hydrate live metadata from version.json instead of baking stale values
+                self.assertIn('data-manifest-url="version.json"', html_text)
+                self.assertNotIn(expected_hashes[slug], html_text)
+                self.assertNotIn(spec["version_name"], html_text)
+                self.assertNotIn(str(spec["version_code"]), html_text)
+            else:
+                self.assertIn(expected_hashes[slug], html_text)
+                self.assertIn(spec["version_name"], html_text)
+                self.assertIn(str(spec["version_code"]), html_text)
             self.assertIn(meta["apkFilename"], html_text)
             self.assertIn("download", html_text)
 
