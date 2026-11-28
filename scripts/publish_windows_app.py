@@ -546,10 +546,6 @@ header > .header-account-bar {{
   gap: 6px;
   justify-self: start;
 }}
-.header-account-bar #nav-account-btn {{
-  padding: 6px 11px;
-  font-size: 13px;
-}}
 .header-right {{
   grid-column: 2;
   grid-row: 2;
@@ -560,6 +556,11 @@ header > .header-account-bar {{
   flex-wrap: nowrap;
   white-space: nowrap;
   min-width: 0;
+}}
+.header-right #nav-admin-btn,
+.header-right #nav-analytics-btn {{
+  padding: 5px 11px;
+  font-size: 12.5px;
 }}
 #nav-auth-pill {{
   border-color: #3b82f6;
@@ -1066,10 +1067,6 @@ code {{
     gap: 6px;
     flex-wrap: wrap;
   }}
-  .header-account-bar #nav-account-btn {{
-    padding: 5px 8px !important;
-    font-size: 12px !important;
-  }}
   .brand-sub, #health {{
     display: none !important;
   }}
@@ -1103,6 +1100,54 @@ code {{
   }}
   .panel, .guide-step-card {{
     padding: 14px;
+  }}
+}}
+
+.octi-site-footer {{
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin-top: 24px;
+}}
+.octi-site-footer-inner {{
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}}
+.octi-site-footer p {{
+  margin: 0;
+}}
+.octi-site-footer strong {{
+  color: var(--dim);
+  font-weight: 600;
+}}
+.octi-site-footer a {{
+  color: var(--dim);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}}
+.octi-site-footer a:hover {{
+  color: var(--fg);
+}}
+.octi-site-footer-links {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+}}
+@media (max-width: 768px) {{
+  .octi-site-footer-inner {{
+    padding: 14px 10px;
+  }}
+}}
+@media print {{
+  .octi-site-footer {{
+    display: none !important;
   }}
 }}
 </style>
@@ -1140,13 +1185,28 @@ code {{
   </nav>
   <div class="header-right">
     <span id="health" class="dim"></span>
+    <a href="/#admin" class="btn" id="nav-admin-btn" style="display:none">Admin</a>
+    <a href="/#analytics" class="btn" id="nav-analytics-btn" style="display:none">Analytics</a>
   </div>
   <div class="header-account-bar">
     <a href="/#account" class="btn" id="nav-auth-pill" title="Click to view Account">Guest (Not Signed In)</a>
-    <a href="/#account" id="nav-account-btn" class="btn">Account</a>
   </div>
 </header>"""
-    footer_and_script = f"""<script>
+    footer_and_script = f"""<footer class="octi-site-footer" role="contentinfo" lang="en" translate="no">
+  <div class="octi-site-footer-inner">
+    <p>
+      <strong>OCTI</strong> and <strong>OCTI for Kids (OFK)</strong> were invented by <strong>Donald P. Green</strong> (U.S. Patent No. 6,182,967). OCTI is a trademark of Donald P. Green.
+    </p>
+    <p class="octi-site-footer-links">
+      <span>Website, online arena, AI engines, and client software: <strong>Copyright &copy; 2026 Charles Chiou.</strong> All rights reserved.</span>
+      <span aria-hidden="true">&middot;</span>
+      <a href="/privacy/">Privacy Policy</a>
+      <span aria-hidden="true">&middot;</span>
+      <a href="/data-deletion/">Data Deletion</a>
+    </p>
+  </div>
+</footer>
+<script>
 (function() {{
   if (window.location && window.location.host) {{
     var els = document.querySelectorAll('.js-site-host, [data-dynamic-host]');
@@ -1198,6 +1258,11 @@ code {{
             pill.style.color = '#065f46';
             pill.style.background = '#ecfdf5';
           }}
+          var adminBtn = document.getElementById('nav-admin-btn');
+          var analyticsBtn = document.getElementById('nav-analytics-btn');
+          var isAdmin = !!(u && u.is_admin === true);
+          if (adminBtn) adminBtn.style.display = isAdmin ? '' : 'none';
+          if (analyticsBtn) analyticsBtn.style.display = isAdmin ? '' : 'none';
         }})
         .catch(function() {{}});
     }}
